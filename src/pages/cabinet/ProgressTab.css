@@ -1,0 +1,131 @@
+.progress-hero {
+  background: linear-gradient(135deg, var(--surf-hi), var(--surface));
+  border-radius: 22px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  margin-top: 14px;
+  text-align: center;
+}
+
+.progress-circle-wrap {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  margin: 0 auto 12px;
+}
+
+.progress-circle-bg, .progress-circle-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.progress-circle-bg {
+  background: var(--surf-lo);
+  box-shadow: var(--shadow-in);
+}
+
+.progress-svg {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+
+.progress-svg circle {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 12;
+}
+
+.progress-svg .track { stroke: rgba(127,127,127,0.15); }
+.progress-svg .fill { stroke: url(#gradOrange); transition: stroke-dashoffset 0.6s; }
+
+.progress-num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-num .big {
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.progress-num .of {
+  font-size: 12px;
+  color: var(--dim);
+  margin-top: 4px;
+}
+
+.progress-title {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.progress-subtitle {
+  font-size: 12px;
+  color: var(--dim);
+  line-height: 1.5;
+}
+
+.unlock-card {
+  background: linear-gradient(135deg, rgba(126,217,87,0.15), rgba(126,217,87,0.05));
+  border: 1px solid rgba(126,217,87,0.3);
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.unlock-ico {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(165deg, #9ee07a, #5fb83d);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+  box-shadow: -2px 3px 8px rgba(0,0,0,0.3), inset 2px 2px 0 rgba(255,255,255,0.4);
+}
+
+.unlock-info { flex: 1; }
+.unlock-title { font-size: 14px; font-weight: 800; color: #7ed957; }
+.unlock-desc { font-size: 11px; color: var(--dim); margin-top: 3px; line-height: 1.4; }
+
+.stat-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.stat-block {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+.stat-block .num {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--accent);
+}
+
+.stat-block .lbl {
+  font-size: 10px;
+  color: var(--faint);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 4px;
+}

@@ -1,0 +1,123 @@
+.booking-card {
+  background: var(--surface);
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+  margin-bottom: 10px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.booking-date {
+  width: 56px;
+  flex-shrink: 0;
+  background: var(--surf-lo);
+  border-radius: 12px;
+  padding: 8px 4px;
+  text-align: center;
+  box-shadow: var(--shadow-in);
+}
+
+.booking-day {
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.booking-mon {
+  font-size: 10px;
+  color: var(--dim);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.booking-body { flex: 1; min-width: 0; }
+
+.booking-time {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 2px;
+}
+
+.booking-type {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.booking-meta {
+  font-size: 11px;
+  color: var(--dim);
+  margin-top: 3px;
+}
+
+.booking-status {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 5px;
+}
+
+.status-confirmed {
+  background: rgba(126,217,87,0.15);
+  color: #7ed957;
+}
+
+.status-pending {
+  background: rgba(247,201,72,0.15);
+  color: var(--gold);
+}
+
+.status-cancelled {
+  background: rgba(239,68,68,0.15);
+  color: #ef4444;
+}
+
+.booking-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--surf-lo);
+  border: none;
+  cursor: pointer;
+  box-shadow: var(--shadow-in);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--dim);
+}
+
+.empty-state-emoji {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.empty-state-desc {
+  font-size: 13px;
+  line-height: 1.5;
+}

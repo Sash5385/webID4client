@@ -1,0 +1,477 @@
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { sendSmsCode, verifySmsCode, resetRecaptcha } from '../firebase/auth'
+import { signInWithEmail, signUpWithEmail } from '../firebase/auth-email'
+import { saveUserProfile, getUserProfile } from '../firebase/db'
+import { useTheme } from '../hooks/useTheme'
+import { normalizePhone, formatPhone } from '../utils/format'
+import './Auth.css'
+
+const TSCS = [
+  { id: '8045', name: 'ТСЦ 8045', area: 'Святошинський р-н, вул. Тулузи 1' },
+  { id: '8042', name: 'ТСЦ 8042', area: 'Соломʼянський р-н, вул. Героїв Севастополя' },
+  { id: '8043', name: 'ТСЦ 8043', area: 'Деснянський р-н, вул. Берковецька' },
+]
+
+const EXPERIENCES = [
+  { id: 'novice', name: 'Початківець', desc: 'Без досвіду або менше 10 годин' },
+  { id: 'basic', name: 'Базовий', desc: 'Закінчена автошкола, потрібно шліфувати' },
+  { id: 'licensed', name: 'З правами', desc: 'Є посвідчення, велика перерва' },
+]
+
+export default function Auth({ user, profile, onProfileSaved }) {
+  const { theme, toggle } = useTheme()
+  const nav = useNavigate()
+
+  // step: 'email' | 'phone' | 'sms' | 'survey'
+  const [step, setStep] = useState(user && !profile ? 'survey' : 'email')
+  
+  // email step
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+
+  // phone step
+  const [phoneInput, setPhoneInput] = useState('')
+  const [phone, setPhone] = useState('')
+  const [phoneError, setPhoneError] = useState('')
+  const [sending, setSending] = useState(false)
+
+  // sms step
+  const [code, setCode] = useState('')
+  const [codeError, setCodeError] = useState('')
+  const [verifying, setVerifying] = useState(false)
+  const [resendTimer, setResendTimer] = useState(45)
+  const codeInputRef = useRef(null)
+
+  // survey step
+  const [name, setName] = useState('')
+  const [studentType, setStudentType] = useState('school')
+  const [tscId, setTscId] = useState('8045')
+  const [experience, setExperience] = useState('novice')
+  const [filmingConsent, setFilmingConsent] = useState(true)
+  const [termsAgreed, setTermsAgreed] = useState(false)
+  const [savingProfile, setSavingProfile] = useState(false)
+
+  useEffect(() => {
+    if (user && !profile) setStep('survey')
+  }, [user, profile])
+
+  useEffect(() => {
+    if (step === 'sms' && resendTimer > 0) {
+      const t = setInterval(() => setResendTimer(p => p - 1), 1000)
+      return () => clearInterval(t)
+    }
+  }, [step, resendTimer])
+
+  useEffect(() => {
+    if (step === 'sms' && codeInputRef.current) codeInputRef.current.focus()
+  }, [step])
+
+  // ─── PHONE ───────────────────────────────────────────
+  const handleSendCode = async () => {
+    setPhoneError('')
+    const normalized = normalizePhone('+380' + phoneInput)
+    if (!normalized) {
+      setPhoneError('Введи коректний номер')
+      return
+    }
+    setSending(true)
+    try {
+      await sendSmsCode(normalized)
+      setPhone(normalized)
+      setStep('sms')
+      setResendTimer(45)
+    } catch (e) {
+      console.error(e)
+      setPhoneError(e.message || 'Не вдалось надіслати SMS')
+      await resetRecaptcha()
+    } finally {
+      setSending(false)
+    }
+  }
+
+  // ─── SMS ─────────────────────────────────────────────
+  const handleVerifyCode = async () => {
+    setCodeError('')
+    if (code.length !== 6) {
+      setCodeError('Введи 6-значний код')
+      return
+    }
+    setVerifying(true)
+    try {
+      const u = await verifySmsCode(code)
+      const existing = await getUserProfile(u.uid)
+      if (existing) {
+        nav('/cabinet')
+      } else {
+        setStep('survey')
+      }
+    } catch (e) {
+      console.error(e)
+      setCodeError('Невірний код')
+    } finally {
+      setVerifying(false)
+    }
+  }
+
+  const handleResend = async () => {
+    setCodeError('')
+    setSending(true)
+    try {
+      await resetRecaptcha()
+      await sendSmsCode(phone)
+      setResendTimer(45)
+      setCode('')
+    } catch (e) {
+      setCodeError(e.message || 'Не вдалось повторно надіслати')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  // ─── SURVEY ──────────────────────────────────────────
+  const handleSubmitSurvey = async () => {
+    if (!name.trim()) { alert('Введи імʼя'); return }
+    if (!termsAgreed) { alert('Прийми умови користування'); return }
+    
+    setSavingProfile(true)
+    try {
+      const uid = user?.uid
+      if (!uid) throw new Error('Користувач не авторизований')
+
+      const data = {
+        name: name.trim(),
+        phone: user.phoneNumber || phone || email,
+        studentType,
+        tscCenter: studentType === 'school' ? tscId : null,
+        experience: studentType === 'private' ? experience : null,
+        filmingConsent,
+        termsAccepted: true,
+        createdAt: Date.now()
+      }
+
+      await saveUserProfile(uid, data)
+      if (onProfileSaved) await onProfileSaved()
+      nav('/cabinet')
+    } catch (e) {
+      console.error(e)
+      alert('Не вдалось зберегти профіль')
+    } finally {
+      setSavingProfile(false)
+    }
+  }
+
+  // ─── EMAIL AUTH ──────────────────────────────────────
+  const handleEmailAuth = async () => {
+    setPhoneError('')
+    if (!email || !password) { 
+      setPhoneError('Заповни обидва поля')
+      return 
+    }
+    if (password.length < 6) {
+      setPhoneError('Пароль мінімум 6 символів')
+      return
+    }
+    setSending(true)
+    try {
+      let u
+      try {
+        u = await signInWithEmail(email, password)
+      } catch {
+        u = await signUpWithEmail(email, password)
+      }
+      const existing = await getUserProfile(u.uid)
+      if (existing) {
+        nav('/cabinet')
+      } else {
+        setStep('survey')
+      }
+    } catch (e) {
+      console.error(e)
+      setPhoneError(e.message || 'Помилка входу')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div className="auth-page">
+      <div className="auth-container">
+        <Link to="/" className="auth-back">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </Link>
+
+        <button className="theme-toggle" onClick={toggle}>
+          {theme === 'dark' ? '🌙' : '☀️'}
+        </button>
+
+        <div className="auth-logo">
+          <div className="logo-icon">🚗</div>
+          <div className="logo-text">ID4Drive</div>
+        </div>
+
+        {/* EMAIL STEP */}
+        {step === 'email' && (
+          <div className="fade-up" style={{display:'flex', flexDirection:'column', flex:1}}>
+            <header className="auth-header">
+              <div className="step-indicator">Тест</div>
+              <h1 className="auth-title">Вхід через Email</h1>
+              <p className="auth-subtitle">Тимчасовий варіант для тестування</p>
+            </header>
+
+            <div className="auth-body">
+              <input
+                type="email"
+                placeholder="test@id4drive.pro"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                autoFocus
+                style={{
+                  width:'100%', padding:'14px', borderRadius:'12px',
+                  background:'var(--surf-lo)', border:'1px solid var(--border)',
+                  color:'var(--text)', fontSize:'15px', marginBottom:'12px'
+                }}
+              />
+              <input
+                type="password"
+                placeholder="Пароль (мін. 6 символів)"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                style={{
+                  width:'100%', padding:'14px', borderRadius:'12px',
+                  background:'var(--surf-lo)', border:'1px solid var(--border)',
+                  color:'var(--text)', fontSize:'15px'
+                }}
+              />
+              {phoneError && <div style={{color:'var(--accent)',fontSize:'13px',marginTop:'8px'}}>{phoneError}</div>}
+              
+              <button 
+                onClick={() => setStep('phone')} 
+                style={{
+                  background:'transparent', border:'none', color:'var(--dim)',
+                  fontSize:'12px', marginTop:'12px', cursor:'pointer', textDecoration:'underline'
+                }}
+              >
+                Увійти через SMS →
+              </button>
+            </div>
+
+            <div className="bottom-spacer">
+              <button className="btn-primary" onClick={handleEmailAuth} disabled={sending}>
+                {sending ? 'Входимо...' : 'Увійти / Зареєструватись →'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* PHONE STEP */}
+        {step === 'phone' && (
+          <div className="fade-up" style={{display:'flex', flexDirection:'column', flex:1}}>
+            <header className="auth-header">
+              <div className="step-indicator">Крок 1 з 3</div>
+              <h1 className="auth-title">Введи свій <span className="highlight">телефон</span></h1>
+              <p className="auth-subtitle">Надішлемо SMS-код для підтвердження. Без паролів і email — лише номер.</p>
+            </header>
+
+            <div className="auth-body">
+              <div className="phone-input-group">
+                <div className="phone-code">+380</div>
+                <input
+                  className="phone-input"
+                  type="tel"
+                  placeholder="98 922 5442"
+                  maxLength={13}
+                  inputMode="numeric"
+                  value={phoneInput}
+                  onChange={e => setPhoneInput(e.target.value.replace(/\D/g, '').slice(0, 9))}
+                  autoFocus
+                />
+              </div>
+
+              <div id="recaptcha-container"></div>
+
+              {phoneError && <div style={{color:'var(--accent)',fontSize:'13px',marginTop:'8px'}}>{phoneError}</div>}
+              
+              <button 
+                onClick={() => setStep('email')} 
+                style={{
+                  background:'transparent', border:'none', color:'var(--dim)',
+                  fontSize:'12px', marginTop:'12px', cursor:'pointer', textDecoration:'underline'
+                }}
+              >
+                ← Увійти через Email
+              </button>
+            </div>
+
+            <div className="bottom-spacer">
+              <button className="btn-primary" onClick={handleSendCode} disabled={sending || phoneInput.length < 9}>
+                {sending ? 'Надсилаємо...' : 'Надіслати код →'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* SMS STEP */}
+        {step === 'sms' && (
+          <div className="fade-up" style={{display:'flex', flexDirection:'column', flex:1}}>
+            <header className="auth-header">
+              <button className="back-btn" onClick={() => { setStep('phone'); resetRecaptcha(); }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <div className="step-indicator">Крок 2 з 3</div>
+              <h1 className="auth-title">Введи <span className="highlight">код</span> з SMS</h1>
+              <p className="auth-subtitle">Надіслали на {formatPhone(phone)}</p>
+            </header>
+
+            <div className="auth-body">
+              <input
+                ref={codeInputRef}
+                className="code-input"
+                type="tel"
+                placeholder="• • • • • •"
+                maxLength={6}
+                inputMode="numeric"
+                value={code}
+                onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
+              />
+              {codeError && <div style={{color:'var(--accent)',fontSize:'13px',marginTop:'8px'}}>{codeError}</div>}
+
+              {resendTimer > 0 ? (
+                <div className="resend-timer">Повторно надіслати через {resendTimer} сек</div>
+              ) : (
+                <button className="resend-btn" onClick={handleResend} disabled={sending}>
+                  {sending ? 'Надсилаємо...' : 'Надіслати ще раз'}
+                </button>
+              )}
+            </div>
+
+            <div className="bottom-spacer">
+              <button className="btn-primary" onClick={handleVerifyCode} disabled={verifying || code.length < 6}>
+                {verifying ? 'Перевіряємо...' : 'Підтвердити →'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* SURVEY STEP */}
+        {step === 'survey' && (
+          <div className="fade-up" style={{display:'flex', flexDirection:'column', flex:1}}>
+            <header className="auth-header">
+              <div className="step-indicator">Крок 3 з 3</div>
+              <h1 className="auth-title">Розкажи про себе</h1>
+              <p className="auth-subtitle">Допоможе підібрати програму навчання</p>
+            </header>
+
+            <div className="auth-body survey-form">
+              <div className="form-group">
+                <label className="form-label">Твоє імʼя</label>
+                <input
+                  type="text"
+                  placeholder="Олександр"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  className="form-input"
+                  autoFocus
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Тип навчання</label>
+                <div className="radio-group">
+                  <label className={`radio-card ${studentType === 'school' ? 'active' : ''}`}>
+                    <input
+                      type="radio"
+                      name="studentType"
+                      value="school"
+                      checked={studentType === 'school'}
+                      onChange={e => setStudentType(e.target.value)}
+                    />
+                    <div className="radio-content">
+                      <div className="radio-icon">🎓</div>
+                      <div>
+                        <div className="radio-title">Автошкола</div>
+                        <div className="radio-desc">Повний курс з ТСЦ, 40 годин</div>
+                      </div>
+                    </div>
+                  </label>
+                  <label className={`radio-card ${studentType === 'private' ? 'active' : ''}`}>
+                    <input
+                      type="radio"
+                      name="studentType"
+                      value="private"
+                      checked={studentType === 'private'}
+                      onChange={e => setStudentType(e.target.value)}
+                    />
+                    <div className="radio-content">
+                      <div className="radio-icon">🚗</div>
+                      <div>
+                        <div className="radio-title">Приватні уроки</div>
+                        <div className="radio-desc">Індивідуальний графік, 1 або 2 години</div>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {studentType === 'school' && (
+                <div className="form-group">
+                  <label className="form-label">ТСЦ для складання іспиту</label>
+                  <select value={tscId} onChange={e => setTscId(e.target.value)} className="form-select">
+                    {TSCS.map(t => (
+                      <option key={t.id} value={t.id}>{t.name} — {t.area}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {studentType === 'private' && (
+                <div className="form-group">
+                  <label className="form-label">Досвід водіння</label>
+                  <select value={experience} onChange={e => setExperience(e.target.value)} className="form-select">
+                    {EXPERIENCES.map(ex => (
+                      <option key={ex.id} value={ex.id}>{ex.name} — {ex.desc}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="form-group">
+                <label className="toggle-label">
+                  <input
+                    type="checkbox"
+                    checked={filmingConsent}
+                    onChange={e => setFilmingConsent(e.target.checked)}
+                  />
+                  <span>Згоден на зйомку для соцмереж (Instagram, TikTok)</span>
+                </label>
+              </div>
+
+              <div className="form-group">
+                <label className="toggle-label">
+                  <input
+                    type="checkbox"
+                    checked={termsAgreed}
+                    onChange={e => setTermsAgreed(e.target.checked)}
+                  />
+                  <span>Приймаю <a href="#terms" style={{color:'var(--accent)'}}>умови користування</a></span>
+                </label>
+              </div>
+            </div>
+
+            <div className="bottom-spacer">
+              <button 
+                className="btn-primary" 
+                onClick={handleSubmitSurvey} 
+                disabled={savingProfile || !termsAgreed}
+              >
+                {savingProfile ? 'Зберігаємо...' : 'Завершити реєстрацію →'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

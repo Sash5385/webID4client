@@ -1,0 +1,33 @@
+:root {
+  /* DARK (default) */
+  --bg: #1c1d21;
+  --bg-deep: #161719;
+  --surface: #26282c;
+  --surf-hi: #2e3034;
+  --surf-lo: #1f2125;
+  --border: rgba(255,255,255,0.05);
+  --text: #e8e8ea;
+  --dim: #8b8d93;
+  --faint: #5a5c62;
+  --accent: #ff5a3c;
+  --acc-hi: #ff7a5c;
+  --green: #7ed957;
+  --blue: #5b9bff;
+  --gold: #f7c948;
+  --shadow: 6px 6px 16px rgba(0,0,0,0.45), -3px -3px 10px rgba(255,255,255,0.025);
+  --shadow-in: inset 3px 3px 8px rgba(0,0,0,0.4), inset -2px -2px 6px rgba(255,255,255,0.025);
+}
+
+[data-theme="light"] {
+  --bg: #f0f1f5;
+  --bg-deep: #e4e6ec;
+  --surface: #ffffff;
+  --surf-hi: #f8f9fc;
+  --surf-lo: #e8eaf0;
+  --border: rgba(0,0,0,0.06);
+  --text: #1c1d21;
+  --dim: #6b6d75;
+  --faint: #a0a3ab;
+  --shadow: 8px 8px 20px rgba(174,178,189,0.45), -4px -4px 12px rgba(255,255,255,0.9);
+  --shadow-in: inset 3px 3px 8px rgba(174,178,189,0.4), inset -2px -2px 6px rgba(255,255,255,0.7);
+}
