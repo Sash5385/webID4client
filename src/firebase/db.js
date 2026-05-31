@@ -1,5 +1,5 @@
 ﻿import {
-  ref, get, set, update, push, onValue, off, remove, child
+  ref, get, set, update, push, onValue, off, remove, increment
 } from 'firebase/database'
 import { db } from './config'
 
@@ -116,4 +116,67 @@ export function getCompletedHours(bookings) {
   return bookings
     .filter(b => b.status === 'confirmed' && new Date(b.date) < new Date())
     .reduce((sum, b) => sum + (b.durationHours || 1), 0)
+}
+
+// ─── CHAT ────────────────────────────────────────────────────────
+export function subscribeStudentChat(uid, callback) {
+  const r = ref(db, `chats/${uid}`)
+  const handler = onValue(r, snap => {
+    const data = snap.val() || {}
+    const msgs = Object.entries(data)
+      .map(([id, m]) => ({ ...m, id }))
+      .sort((a, b) => (a.ts || 0) - (b.ts || 0))
+    callback(msgs)
+  })
+  return () => off(r, 'value', handler)
+}
+
+export async function sendStudentMessage(uid, text) {
+  const time = new Date().toLocaleTimeString('uk', { hour: '2-digit', minute: '2-digit' })
+  await push(ref(db, `chats/${uid}`), {
+    from: 'student',
+    text,
+    time,
+    ts: Date.now(),
+  })
+  await update(ref(db, `chatMeta/${uid}`), {
+    unreadForAdmin: increment(1),
+    lastMsg: text,
+    lastTs: Date.now(),
+  })
+}
+
+export async function markDirectChatRead(uid) {
+  await set(ref(db, `chatMeta/${uid}/unreadForStudent`), 0)
+}
+
+export function subscribeDirectUnread(uid, callback) {
+  const r = ref(db, `chatMeta/${uid}/unreadForStudent`)
+  const handler = onValue(r, snap => callback(snap.val() || 0))
+  return () => off(r, 'value', handler)
+}
+
+// ─── GENERAL CHAT ─────────────────────────────────────────────────
+export function subscribeGeneralChat(callback) {
+  const r = ref(db, 'chats/general')
+  const handler = onValue(r, snap => {
+    const data = snap.val() || {}
+    const msgs = Object.entries(data)
+      .map(([id, m]) => ({ ...m, id }))
+      .sort((a, b) => (a.ts || 0) - (b.ts || 0))
+    callback(msgs)
+  })
+  return () => off(r, 'value', handler)
+}
+
+export async function sendGeneralMessage(uid, name, text) {
+  const time = new Date().toLocaleTimeString('uk', { hour: '2-digit', minute: '2-digit' })
+  await push(ref(db, 'chats/general'), {
+    uid,
+    name,
+    from: 'student',
+    text,
+    time,
+    ts: Date.now(),
+  })
 }

@@ -6,6 +6,7 @@ import BookTab from './cabinet/BookTab'
 import BookingsTab from './cabinet/BookingsTab'
 import ProgressTab from './cabinet/ProgressTab'
 import ProfileTab from './cabinet/ProfileTab'
+import ChatTab from './cabinet/ChatTab'
 
 import './Cabinet.css'
 
@@ -13,6 +14,7 @@ const TITLES = {
   book: 'Записатись',
   bookings: 'Мої записи',
   progress: 'Прогрес',
+  chat: 'Чат',
   profile: 'Профіль'
 }
 
@@ -70,6 +72,7 @@ export default function Cabinet({ user, profile }) {
           <Route path="/" element={<BookTab user={user} profile={profile} bookingsData={bookingsData} />} />
           <Route path="/bookings" element={<BookingsTab user={user} profile={profile} bookingsData={bookingsData} />} />
           <Route path="/progress" element={<ProgressTab user={user} profile={profile} bookingsData={bookingsData} />} />
+          <Route path="/chat" element={<ChatTab user={user} profile={profile} />} />
           <Route path="/profile" element={<ProfileTab user={user} profile={profile} bookingsData={bookingsData} />} />
           <Route path="*" element={<Navigate to="/cabinet" />} />
         </Routes>
@@ -110,6 +113,14 @@ export default function Cabinet({ user, profile }) {
             </svg>
           </div>
           <div className="botnav-lbl">Прогрес</div>
+        </button>
+        <button className={`botnav-btn ${activeTab === 'chat' ? 'active' : ''}`} onClick={() => switchTab('chat')}>
+          <div className="botnav-ico">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <div className="botnav-lbl">Чат</div>
         </button>
         <button className={`botnav-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => switchTab('profile')}>
           <div className="botnav-ico">

@@ -1,0 +1,61 @@
+{
+  "rules": {
+    "admins": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "timeslots": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "bookings": {
+      ".read": "auth != null",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "queue": {
+      ".read": "auth != null",
+      "$slotKey": {
+        "entries": {
+          ".read": "auth != null",
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        }
+      }
+    },
+    "users": {
+      ".read": "auth != null",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "chats": {
+      "general": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      },
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).exists())",
+        ".write": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).exists())"
+      }
+    },
+    "chatMeta": {
+      "general": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      },
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).exists())",
+        ".write": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).exists())"
+      }
+    },
+    "settings": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}

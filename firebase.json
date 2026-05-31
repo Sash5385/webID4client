@@ -1,16 +1,18 @@
 {
+  "hosting": {
+    "site": "id4drive-booking-44182",
+    "public": "dist",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [{ "source": "**", "destination": "/index.html" }]
+  },
+  "database": {
+    "rules": "database.rules.json"
+  },
   "functions": [
     {
       "source": "functions",
       "codebase": "default",
-      "disallowLegacyRuntimeConfig": true,
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
-      ]
+      "ignore": ["node_modules", ".git", "firebase-debug.log", "*.local"]
     }
   ]
 }
