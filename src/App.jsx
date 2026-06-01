@@ -1,19 +1,21 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { useEffect, useState, useRef } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from './firebase/config'
-import { getUserProfile } from './firebase/db'
+import { getUserProfile, createBooking, markSlotsUnavailable } from './firebase/db'
 import { requestNotificationPermission, onForegroundMessage } from './firebase/push'
 
-import Landing from './pages/Landing'
 import Auth from './pages/Auth'
 import Cabinet from './pages/Cabinet'
-import BookPage from './pages/BookPage'
+import Landing from './pages/Landing'
+import PublicSchedule from './pages/PublicSchedule'
 
 export default function App() {
+  const navigate = useNavigate()
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const pendingBookingRef = useRef(null)
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
@@ -42,36 +44,73 @@ export default function App() {
   }, [user])
 
   const reloadProfile = async () => {
-    if (auth.currentUser) {
-      const p = await getUserProfile(auth.currentUser.uid)
-      setProfile(p)
+    if (!auth.currentUser) return
+    const p = await getUserProfile(auth.currentUser.uid)
+    setProfile(p)
+    const pb = pendingBookingRef.current
+    if (pb && p) {
+      try {
+        await createBooking(auth.currentUser.uid, {
+          date: pb.date,
+          time: pb.time,
+          serviceType: p.studentType || pb.serviceType,
+          serviceName: (p.studentType || pb.serviceType) === 'school' ? 'Автошкола' : 'Приватний',
+          durationHours: pb.duration,
+          studentName: p.name,
+          phone: p.phone || auth.currentUser.phoneNumber,
+          tscCenter: p.tscCenter,
+        })
+        await markSlotsUnavailable(pb.date, pb.time, pb.duration, 30)
+      } catch (e) {
+        console.error('Auto-book failed:', e)
+      }
+      pendingBookingRef.current = null
     }
+  }
+
+  const handleBook = (booking) => {
+    pendingBookingRef.current = booking
+    navigate('/auth')
   }
 
   if (loading) {
     return (
       <div style={{
         display:'flex', alignItems:'center', justifyContent:'center',
-        minHeight:'100vh', background:'var(--bg)', color:'var(--text)'
+        minHeight:'100vh', background:'var(--bg)'
       }}>
-        <div className="spinner"></div>
+        <div className="spinner" />
       </div>
     )
   }
 
   return (
     <Routes>
+      {/* Лендінг — завжди перший */}
       <Route path="/" element={<Landing user={user} />} />
-      <Route path="/book" element={
-        <BookPage user={user} profile={profile} onProfileSaved={reloadProfile} />
+
+      {/* Публічний розклад — перед авторизацією */}
+      <Route path="/schedule" element={
+        user && profile
+          ? <Navigate to="/cabinet" replace />
+          : <PublicSchedule onBook={handleBook} />
       } />
+
+      {/* Авторизація */}
       <Route path="/auth" element={
-        user && profile ? <Navigate to="/cabinet" /> : <Auth user={user} profile={profile} onProfileSaved={reloadProfile} />
+        user && profile
+          ? <Navigate to="/cabinet" replace />
+          : <Auth user={user} profile={profile} onProfileSaved={reloadProfile} />
       } />
+
+      {/* Кабінет */}
       <Route path="/cabinet/*" element={
-        user && profile ? <Cabinet user={user} profile={profile} /> : <Navigate to="/book" />
+        user && profile
+          ? <Cabinet user={user} profile={profile} />
+          : <Navigate to="/" replace />
       } />
-      <Route path="*" element={<Navigate to="/" />} />
+
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }

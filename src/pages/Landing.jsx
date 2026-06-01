@@ -6,7 +6,7 @@ export default function Landing({ user }) {
   const { theme, toggle } = useTheme()
   const nav = useNavigate()
 
-  const goAuth = () => nav(user ? '/cabinet' : '/auth')
+  const goAuth = () => nav(user ? '/cabinet' : '/schedule')
 
   return (
     <div className="landing-page">

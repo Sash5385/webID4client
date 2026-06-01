@@ -5,7 +5,7 @@ import { db } from './config'
 
 // ⚠️ ЗГЕНЕРУЙ VAPID KEY В Firebase Console:
 // Project Settings → Cloud Messaging → Web Push certificates → Generate key pair
-const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || 'ПІДСТАВИТИ_VAPID_KEY'
+const VAPID_KEY = 'BFT1t7hXhEcSsHdotLlG5xoIFNrdS11vU_jsHiD1UUMsskVINBW2het8ogOKioGTPK8X_-u1ivEQM0n0Dh6Zvqk'
 
 let messaging = null
 
@@ -30,12 +30,7 @@ export async function requestNotificationPermission(uid) {
   try {
     const token = await getToken(msg, { vapidKey: VAPID_KEY })
     if (token && uid) {
-      // Зберігаємо токен в Firebase, щоб бек міг слати сповіщення
-      await set(ref(db, `users/${uid}/fcmTokens/web`), {
-        token,
-        updatedAt: Date.now(),
-        userAgent: navigator.userAgent
-      })
+      await set(ref(db, `users/${uid}/fcmToken`), token)
     }
     return token
   } catch (e) {

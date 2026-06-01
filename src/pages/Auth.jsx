@@ -8,9 +8,8 @@ import { normalizePhone, formatPhone } from '../utils/format'
 import './Auth.css'
 
 const TSCS = [
-  { id: '8045', name: 'ТСЦ 8045', area: 'Святошинський р-н, вул. Тулузи 1' },
-  { id: '8042', name: 'ТСЦ 8042', area: 'Соломʼянський р-н, вул. Героїв Севастополя' },
-  { id: '8043', name: 'ТСЦ 8043', area: 'Деснянський р-н, вул. Берковецька' },
+  { id: '8041', name: 'ТСЦ 8041', area: 'вул. Перемоги 20' },
+  { id: '8042', name: 'ТСЦ 8042', area: 'вул. Мрії 19' },
 ]
 
 const EXPERIENCES = [
@@ -68,10 +67,15 @@ export default function Auth({ user, profile, onProfileSaved }) {
   const [resendTimer, setResendTimer] = useState(45)
   const codeInputRef = useRef(null)
 
+  // auth mode toggle
+  const [authMode, setAuthMode] = useState('sms')
+
   // survey step
   const [name, setName] = useState('')
+  const [surname, setSurname] = useState('')
+  const [surveyPhone, setSurveyPhone] = useState('')
   const [studentType, setStudentType] = useState('school')
-  const [tscId, setTscId] = useState('8045')
+  const [tscId, setTscId] = useState('8041')
   const [experience, setExperience] = useState('no_license')
   const [filmingConsent, setFilmingConsent] = useState(true)
   const [termsAgreed, setTermsAgreed] = useState(false)
@@ -127,6 +131,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
       const u = await verifySmsCode(code)
       const existing = await getUserProfile(u.uid)
       if (existing) {
+        if (onProfileSaved) await onProfileSaved()
         nav('/cabinet')
       } else {
         setStep('survey')
@@ -157,16 +162,18 @@ export default function Auth({ user, profile, onProfileSaved }) {
   // ─── SURVEY ──────────────────────────────────────────
   const handleSubmitSurvey = async () => {
     if (!name.trim()) { alert('Введи імʼя'); return }
+    if (!surname.trim()) { alert('Введи прізвище'); return }
+    if (!user?.phoneNumber && !surveyPhone.trim()) { alert('Введи номер телефону'); return }
     if (!termsAgreed) { alert('Прийми умови користування'); return }
-    
+
     setSavingProfile(true)
     try {
       const uid = user?.uid
       if (!uid) throw new Error('Користувач не авторизований')
 
       const data = {
-        name: name.trim(),
-        phone: user.phoneNumber || phone || email,
+        name: `${name.trim()} ${surname.trim()}`,
+        phone: user.phoneNumber || (surveyPhone.trim() ? `+380${surveyPhone.trim()}` : null) || phone || email,
         studentType,
         tscCenter: studentType === 'school' ? tscId : null,
         experience,
@@ -207,6 +214,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
       }
       const existing = await getUserProfile(u.uid)
       if (existing) {
+        if (onProfileSaved) await onProfileSaved()
         nav('/cabinet')
       } else {
         setStep('survey')
@@ -246,36 +254,74 @@ export default function Auth({ user, profile, onProfileSaved }) {
         </button>
       </div>
 
-      {/* ── PHONE ── */}
+      {/* ── PHONE / EMAIL ── */}
       {step === 'phone' && (
         <div className="fade-up" style={{display:'flex',flexDirection:'column',flex:1}}>
           <div className="auth-logo-block">
             <div className="auth-logo-icon">🚗</div>
             <div className="auth-logo-name">ID4Drive</div>
           </div>
-          <h1 className="auth-h1">Введи свій <span className="acc">телефон</span></h1>
-          <p className="auth-sub">Надішлемо SMS-код для підтвердження. Без паролів — лише номер.</p>
-          <div className="phone-card">
-            <div className="phone-flag">UA</div>
-            <div className="phone-code">+380</div>
-            <input
-              className="phone-input"
-              type="tel"
-              placeholder="__ ___ ____"
-              maxLength={9}
-              inputMode="numeric"
-              value={phoneInput}
-              onChange={e=>setPhoneInput(e.target.value.replace(/\D/g,'').slice(0,9))}
-              autoFocus
-            />
+
+          {/* Вкладки */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:20,background:'var(--surf-lo)',borderRadius:14,padding:4,boxShadow:'var(--shadow-in)'}}>
+            <button onClick={()=>setAuthMode('sms')} style={{
+              padding:'9px 0',borderRadius:11,border:'none',cursor:'pointer',fontWeight:700,fontSize:13,
+              background:authMode==='sms'?'var(--surface)':'transparent',
+              color:authMode==='sms'?'var(--text)':'var(--dim)',
+              boxShadow:authMode==='sms'?'var(--shadow)':'none',transition:'all .15s'
+            }}>📱 SMS</button>
+            <button onClick={()=>setAuthMode('email')} style={{
+              padding:'9px 0',borderRadius:11,border:'none',cursor:'pointer',fontWeight:700,fontSize:13,
+              background:authMode==='email'?'var(--surface)':'transparent',
+              color:authMode==='email'?'var(--text)':'var(--dim)',
+              boxShadow:authMode==='email'?'var(--shadow)':'none',transition:'all .15s'
+            }}>✉️ Email</button>
           </div>
-          <div id="recaptcha-container"/>
-          {phoneError && <div className="auth-error">{phoneError}</div>}
-          <div className="bottom-spacer">
-            <button className="btn-primary" onClick={handleSendCode} disabled={sending||phoneInput.length<9}>
-              {sending?'Надсилаємо...':'Надіслати код →'}
-            </button>
-          </div>
+
+          {authMode === 'sms' ? (<>
+            <h1 className="auth-h1">Введи свій <span className="acc">телефон</span></h1>
+            <p className="auth-sub">Надішлемо SMS-код для підтвердження.</p>
+            <div className="phone-card">
+              <div className="phone-flag">UA</div>
+              <div className="phone-code">+380</div>
+              <input
+                className="phone-input"
+                type="tel"
+                placeholder="__ ___ ____"
+                maxLength={9}
+                inputMode="numeric"
+                value={phoneInput}
+                onChange={e=>setPhoneInput(e.target.value.replace(/\D/g,'').slice(0,9))}
+                autoFocus
+              />
+            </div>
+            <div id="recaptcha-container"/>
+            {phoneError && <div className="auth-error">{phoneError}</div>}
+            <div style={{marginTop:16}}>
+              <button className="btn-primary" onClick={handleSendCode} disabled={sending||phoneInput.length<9}>
+                {sending?'Надсилаємо...':'Надіслати код →'}
+              </button>
+            </div>
+          </>) : (<>
+            <h1 className="auth-h1">Увійти через <span className="acc">Email</span></h1>
+            <p className="auth-sub">Введи пошту та пароль — зайдеш або зареєструєшся.</p>
+            <div className="field">
+              <div className="field-label">Email</div>
+              <input className="text-input" type="email" placeholder="you@example.com"
+                value={email} onChange={e=>setEmail(e.target.value)} autoFocus inputMode="email"/>
+            </div>
+            <div className="field">
+              <div className="field-label">Пароль</div>
+              <input className="text-input" type="password" placeholder="Мінімум 6 символів"
+                value={password} onChange={e=>setPassword(e.target.value)}/>
+            </div>
+            {phoneError && <div className="auth-error">{phoneError}</div>}
+            <div style={{marginTop:16}}>
+              <button className="btn-primary" onClick={handleEmailAuth} disabled={sending||!email||!password}>
+                {sending?'Входимо...':'Увійти / Зареєструватись →'}
+              </button>
+            </div>
+          </>)}
         </div>
       )}
 
@@ -323,16 +369,40 @@ export default function Auth({ user, profile, onProfileSaved }) {
           <p className="auth-sub">Допоможе підібрати програму навчання</p>
 
           <div className="field">
-            <div className="field-label">Твоє імʼя</div>
+            <div className="field-label">Імʼя *</div>
             <input className="text-input" type="text" placeholder="Олександр" value={name} onChange={e=>setName(e.target.value)} autoFocus/>
           </div>
+
+          <div className="field">
+            <div className="field-label">Прізвище *</div>
+            <input className="text-input" type="text" placeholder="Петренко" value={surname} onChange={e=>setSurname(e.target.value)}/>
+          </div>
+
+          {!user?.phoneNumber && (
+            <div className="field">
+              <div className="field-label">Телефон *</div>
+              <div className="phone-card" style={{marginTop:0}}>
+                <div className="phone-flag">UA</div>
+                <div className="phone-code">+380</div>
+                <input
+                  className="phone-input"
+                  type="tel"
+                  placeholder="__ ___ ____"
+                  maxLength={9}
+                  inputMode="numeric"
+                  value={surveyPhone}
+                  onChange={e=>setSurveyPhone(e.target.value.replace(/\D/g,'').slice(0,9))}
+                />
+              </div>
+            </div>
+          )}
 
           <div className="field">
             <div className="field-label">Тип навчання</div>
             <div className="choice-grid">
               {[
-                {id:'school', icon:'🎓', title:'Автошкола', desc:'40 год + ТСЦ іспит', bg:'linear-gradient(165deg,#5b9bff,#2563eb)'},
-                {id:'private', icon:'🚗', title:'Приватно', desc:'1 або 2 години', bg:'linear-gradient(165deg,#fb923c,#ea580c)'},
+                {id:'school', icon:'🎓', title:'Автошкола', desc:'40 годин', bg:'linear-gradient(165deg,#5b9bff,#2563eb)'},
+                {id:'private', icon:'🚗', title:'Приватний урок', desc:'Індивідуальне навчання', bg:'linear-gradient(165deg,#fb923c,#ea580c)'},
               ].map(t=>(
                 <div key={t.id} className={`tile-pick${studentType===t.id?' selected':''}`} onClick={()=>setStudentType(t.id)}>
                   <div className="ico" style={{background:t.bg}}>{t.icon}</div>
@@ -360,25 +430,26 @@ export default function Auth({ user, profile, onProfileSaved }) {
             </div>
           )}
 
-          <div className="field">
-            <div className="field-label">Досвід водіння</div>
-            <div className="select-list">
-              {EXPERIENCES.map(ex=>(
-                <div key={ex.id} className={`select-item${experience===ex.id?' selected':''}`} onClick={()=>setExperience(ex.id)}>
-                  <div className="select-radio"/>
-                  <div className="select-info">
-                    <div className="select-title">{ex.name}</div>
+          {studentType === 'private' && (
+            <div className="field">
+              <div className="field-label">Досвід водіння</div>
+              <div className="select-list">
+                {EXPERIENCES.map(ex=>(
+                  <div key={ex.id} className={`select-item${experience===ex.id?' selected':''}`} onClick={()=>setExperience(ex.id)}>
+                    <div className="select-radio"/>
+                    <div className="select-info">
+                      <div className="select-title">{ex.name}</div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="toggle-row" onClick={()=>setFilmingConsent(v=>!v)}>
             <div className="toggle-ico">🎬</div>
             <div className="toggle-info">
-              <div className="toggle-title">Зйомка для соцмереж</div>
-              <div className="toggle-desc">Instagram, TikTok</div>
+              <div className="toggle-title">Зйомка відео/аудіо для реклами автошколи</div>
             </div>
             <button className={`switch${filmingConsent?' on':''}`} onClick={e=>{e.stopPropagation();setFilmingConsent(v=>!v)}}>
               <div className="switch-knob"/>

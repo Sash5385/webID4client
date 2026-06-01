@@ -1,5 +1,5 @@
 ﻿import {
-  ref, get, set, update, push, onValue, off, remove, increment
+  ref, get, set, update, push, onValue, off, remove, increment, onDisconnect
 } from 'firebase/database'
 import { db } from './config'
 
@@ -73,14 +73,25 @@ export async function cancelBooking(uid, bookingId) {
 }
 
 // в”Ђв”Ђв”Ђ QUEUE (Р»РёСЃС‚ РѕС‡С–РєСѓРІР°РЅРЅСЏ) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
-export async function joinQueue(uid, date, time, studentType) {
+export async function joinQueue(uid, date, time, studentType, durationHours = 1) {
   const slotKey = `${date}_${time}`
   await set(ref(db, `queue/${slotKey}/entries/${uid}`), {
     uid,
     studentType,
+    durationHours,
     addedAt: Date.now(),
     status: 'waiting'
   })
+}
+
+export async function claimReservedSlot(date, time, uid) {
+  const slotKey = `${date}_${time}`
+  const slotId = `slot${time.replace(':', '')}`
+  const updates = {}
+  updates[`queue/${slotKey}/entries/${uid}/status`] = 'booked'
+  updates[`timeslots/${date}/${slotId}/reservedFor`] = null
+  updates[`timeslots/${date}/${slotId}/reservedUntil`] = null
+  await update(ref(db, '/'), updates)
 }
 
 export async function leaveQueue(uid, date, time) {
@@ -116,6 +127,41 @@ export function getCompletedHours(bookings) {
   return bookings
     .filter(b => b.status === 'confirmed' && new Date(b.date) < new Date())
     .reduce((sum, b) => sum + (b.durationHours || 1), 0)
+}
+
+// ─── TIMESLOTS ───────────────────────────────────────────────────
+export async function markSlotsUnavailable(date, startTime, durationHours, intervalMin = 30) {
+  const [h, m] = startTime.split(':').map(Number)
+  const startMin = h * 60 + m
+  const endMin = startMin + durationHours * 60
+  const updates = {}
+  for (let min = startMin; min < endMin; min += intervalMin) {
+    const slotH = String(Math.floor(min / 60)).padStart(2, '0')
+    const slotM = String(min % 60).padStart(2, '0')
+    const slotId = `slot${slotH}${slotM}`
+    updates[`timeslots/${date}/${slotId}/available`] = false
+    updates[`timeslots/${date}/${slotId}/time`] = `${slotH}:${slotM}`
+  }
+  await update(ref(db, '/'), updates)
+}
+
+// ─── VIEWING (live presence on slot) ─────────────────────────────
+export async function setViewingSlot(date, time, uid) {
+  const slotId = `slot${time.replace(':', '')}`
+  const r = ref(db, `timeslots/${date}/${slotId}/viewing/${uid}`)
+  await set(r, Date.now())
+  onDisconnect(r).remove()
+}
+
+export async function clearViewingSlot(date, time, uid) {
+  const slotId = `slot${time.replace(':', '')}`
+  await remove(ref(db, `timeslots/${date}/${slotId}/viewing/${uid}`))
+}
+
+// ─── ADMIN SETTINGS ──────────────────────────────────────────────
+export async function getAdminSettings() {
+  const snap = await get(ref(db, 'admin_settings'))
+  return snap.exists() ? snap.val() : { lunchEnabled: false, lunchStart: 12, lunchEnd: 13, workStart: 9, workEnd: 18, interval: 30 }
 }
 
 // ─── CHAT ────────────────────────────────────────────────────────

@@ -5,14 +5,13 @@ import { getInitials, formatPhone } from "../../utils/format";
 import "./ProfileTab.css";
 
 const TSC_LABELS = {
-  "8045": "ТСЦ 8045 — Святошинський",
-  "8042": "ТСЦ 8042 — Соломʼянський",
-  "8043": "ТСЦ 8043 — Деснянський",
+  "8041": "ТСЦ 8041 — вул. Перемоги 20",
+  "8042": "ТСЦ 8042 — вул. Мрії 19",
 };
 
 const STUDENT_TYPE_LABELS = {
   school: "Автошкола",
-  private: "Приватний учень",
+  private: "Приватний урок",
 };
 
 const EXPERIENCE_LABELS = {
@@ -68,7 +67,7 @@ export default function ProfileTab({ user, profile }) {
           </div>
         )}
         <div className="profile-row">
-          <span className="key">Зйомка для соцмереж</span>
+          <span className="key">Зйомка відео/аудіо для реклами</span>
           <span className="val">{profile.filmingConsent ? "Так" : "Ні"}</span>
         </div>
       </div>
