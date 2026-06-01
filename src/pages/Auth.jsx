@@ -48,8 +48,8 @@ export default function Auth({ user, profile, onProfileSaved }) {
   const { theme, toggle } = useTheme()
   const nav = useNavigate()
 
-  // step: 'email' | 'phone' | 'sms' | 'survey'
-  const [step, setStep] = useState(user && !profile ? 'survey' : 'email')
+  // step: 'phone' | 'sms' | 'survey'
+  const [step, setStep] = useState(user && !profile ? 'survey' : 'phone')
   
   // email step
   const [email, setEmail] = useState('')
@@ -237,60 +237,6 @@ export default function Auth({ user, profile, onProfileSaved }) {
           <div className="logo-text">ID4Drive</div>
         </div>
 
-        {/* EMAIL STEP */}
-        {step === 'email' && (
-          <div className="fade-up" style={{display:'flex', flexDirection:'column', flex:1}}>
-            <header className="auth-header">
-              <div className="step-indicator">Тест</div>
-              <h1 className="auth-title">Вхід через Email</h1>
-              <p className="auth-subtitle">Тимчасовий варіант для тестування</p>
-            </header>
-
-            <div className="auth-body">
-              <input
-                type="email"
-                placeholder="test@id4drive.pro"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                autoFocus
-                style={{
-                  width:'100%', padding:'14px', borderRadius:'12px',
-                  background:'var(--surf-lo)', border:'1px solid var(--border)',
-                  color:'var(--text)', fontSize:'15px', marginBottom:'12px'
-                }}
-              />
-              <input
-                type="password"
-                placeholder="Пароль (мін. 6 символів)"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                style={{
-                  width:'100%', padding:'14px', borderRadius:'12px',
-                  background:'var(--surf-lo)', border:'1px solid var(--border)',
-                  color:'var(--text)', fontSize:'15px'
-                }}
-              />
-              {phoneError && <div style={{color:'var(--accent)',fontSize:'13px',marginTop:'8px'}}>{phoneError}</div>}
-              
-              <button 
-                onClick={() => setStep('phone')} 
-                style={{
-                  background:'transparent', border:'none', color:'var(--dim)',
-                  fontSize:'12px', marginTop:'12px', cursor:'pointer', textDecoration:'underline'
-                }}
-              >
-                Увійти через SMS →
-              </button>
-            </div>
-
-            <div className="bottom-spacer">
-              <button className="btn-primary" onClick={handleEmailAuth} disabled={sending}>
-                {sending ? 'Входимо...' : 'Увійти / Зареєструватись →'}
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* PHONE STEP */}
         {step === 'phone' && (
           <div className="fade-up" style={{display:'flex', flexDirection:'column', flex:1}}>
@@ -319,15 +265,6 @@ export default function Auth({ user, profile, onProfileSaved }) {
 
               {phoneError && <div style={{color:'var(--accent)',fontSize:'13px',marginTop:'8px'}}>{phoneError}</div>}
               
-              <button 
-                onClick={() => setStep('email')} 
-                style={{
-                  background:'transparent', border:'none', color:'var(--dim)',
-                  fontSize:'12px', marginTop:'12px', cursor:'pointer', textDecoration:'underline'
-                }}
-              >
-                ← Увійти через Email
-              </button>
             </div>
 
             <div className="bottom-spacer">
