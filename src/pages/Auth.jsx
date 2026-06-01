@@ -169,7 +169,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
         phone: user.phoneNumber || phone || email,
         studentType,
         tscCenter: studentType === 'school' ? tscId : null,
-        experience: studentType === 'private' ? experience : null,
+        experience,
         filmingConsent,
         termsAccepted: true,
         createdAt: Date.now()
@@ -219,230 +219,196 @@ export default function Auth({ user, profile, onProfileSaved }) {
     }
   }
 
+  const [termsOpen, setTermsOpen] = useState(false)
+
+  const stepNum = step === 'phone' ? 0 : step === 'sms' ? 1 : 2
+
   return (
     <div className="auth-page">
-      <div className="auth-container">
-        <Link to="/" className="auth-back">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6"/>
-          </svg>
-        </Link>
 
-        <button className="theme-toggle" onClick={toggle}>
-          {theme === 'dark' ? '🌙' : '☀️'}
-        </button>
-
-        <div className="auth-logo">
-          <div className="logo-icon">🚗</div>
-          <div className="logo-text">ID4Drive</div>
+      {/* TOP BAR */}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 0'}}>
+        {step === 'sms'
+          ? <button className="back-btn" onClick={()=>{setStep('phone');resetRecaptcha()}}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+          : <Link to="/" className="back-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </Link>
+        }
+        <div className="step-indicator">
+          {[0,1,2].map(i => (
+            <div key={i} className={`step-dot ${i===stepNum?'active':i<stepNum?'done':''}`}/>
+          ))}
         </div>
+        <button className="back-btn" onClick={toggle} style={{border:'none',cursor:'pointer',fontSize:16}}>
+          {theme==='dark'?'🌙':'☀️'}
+        </button>
+      </div>
 
-        {/* PHONE STEP */}
-        {step === 'phone' && (
-          <div className="fade-up" style={{display:'flex', flexDirection:'column', flex:1}}>
-            <header className="auth-header">
-              <div className="step-indicator">Крок 1 з 3</div>
-              <h1 className="auth-title">Введи свій <span className="highlight">телефон</span></h1>
-              <p className="auth-subtitle">Надішлемо SMS-код для підтвердження. Без паролів і email — лише номер.</p>
-            </header>
+      {/* ── PHONE ── */}
+      {step === 'phone' && (
+        <div className="fade-up" style={{display:'flex',flexDirection:'column',flex:1}}>
+          <div className="auth-logo-block">
+            <div className="auth-logo-icon">🚗</div>
+            <div className="auth-logo-name">ID4Drive</div>
+          </div>
+          <h1 className="auth-h1">Введи свій <span className="acc">телефон</span></h1>
+          <p className="auth-sub">Надішлемо SMS-код для підтвердження. Без паролів — лише номер.</p>
+          <div className="phone-card">
+            <div className="phone-flag">UA</div>
+            <div className="phone-code">+380</div>
+            <input
+              className="phone-input"
+              type="tel"
+              placeholder="__ ___ ____"
+              maxLength={9}
+              inputMode="numeric"
+              value={phoneInput}
+              onChange={e=>setPhoneInput(e.target.value.replace(/\D/g,'').slice(0,9))}
+              autoFocus
+            />
+          </div>
+          <div id="recaptcha-container"/>
+          {phoneError && <div className="auth-error">{phoneError}</div>}
+          <div className="bottom-spacer">
+            <button className="btn-primary" onClick={handleSendCode} disabled={sending||phoneInput.length<9}>
+              {sending?'Надсилаємо...':'Надіслати код →'}
+            </button>
+          </div>
+        </div>
+      )}
 
-            <div className="auth-body">
-              <div className="phone-input-group">
-                <div className="phone-code">+380</div>
-                <input
-                  className="phone-input"
-                  type="tel"
-                  placeholder="98 922 5442"
-                  maxLength={13}
-                  inputMode="numeric"
-                  value={phoneInput}
-                  onChange={e => setPhoneInput(e.target.value.replace(/\D/g, '').slice(0, 9))}
-                  autoFocus
-                />
+      {/* ── SMS ── */}
+      {step === 'sms' && (
+        <div className="fade-up" style={{display:'flex',flexDirection:'column',flex:1}}>
+          <h1 className="auth-h1" style={{marginTop:16}}>Код з <span className="acc">SMS</span></h1>
+          <p className="auth-sub">Надіслали на {formatPhone(phone)}</p>
+          <div className="code-grid" onClick={()=>codeInputRef.current?.focus()}>
+            {Array(6).fill(null).map((_,i)=>(
+              <div key={i} className={`code-cell${i<code.length?' filled':''}${i===code.length?' active':''}`}>
+                {code[i]||''}
               </div>
+            ))}
+          </div>
+          <input
+            ref={codeInputRef}
+            className="code-input-hidden"
+            type="tel"
+            maxLength={6}
+            inputMode="numeric"
+            value={code}
+            onChange={e=>setCode(e.target.value.replace(/\D/g,'').slice(0,6))}
+            autoFocus
+          />
+          <div className="timer-row">
+            {resendTimer>0
+              ? <>Повторно надіслати через <span className="accent">{resendTimer} сек</span></>
+              : <button className="resend-link" onClick={handleResend} disabled={sending}>{sending?'Надсилаємо...':'Надіслати ще раз'}</button>
+            }
+          </div>
+          {codeError && <div className="auth-error">{codeError}</div>}
+          <div className="bottom-spacer">
+            <button className="btn-primary" onClick={handleVerifyCode} disabled={verifying||code.length<6}>
+              {verifying?'Перевіряємо...':'Підтвердити →'}
+            </button>
+          </div>
+        </div>
+      )}
 
-              <div id="recaptcha-container"></div>
+      {/* ── SURVEY ── */}
+      {step === 'survey' && (
+        <div className="fade-up" style={{display:'flex',flexDirection:'column',flex:1}}>
+          <h1 className="auth-h1" style={{marginTop:8}}>Розкажи <span className="acc">про себе</span></h1>
+          <p className="auth-sub">Допоможе підібрати програму навчання</p>
 
-              {phoneError && <div style={{color:'var(--accent)',fontSize:'13px',marginTop:'8px'}}>{phoneError}</div>}
-              
-            </div>
+          <div className="field">
+            <div className="field-label">Твоє імʼя</div>
+            <input className="text-input" type="text" placeholder="Олександр" value={name} onChange={e=>setName(e.target.value)} autoFocus/>
+          </div>
 
-            <div className="bottom-spacer">
-              <button className="btn-primary" onClick={handleSendCode} disabled={sending || phoneInput.length < 9}>
-                {sending ? 'Надсилаємо...' : 'Надіслати код →'}
-              </button>
+          <div className="field">
+            <div className="field-label">Тип навчання</div>
+            <div className="choice-grid">
+              {[
+                {id:'school', icon:'🎓', title:'Автошкола', desc:'40 год + ТСЦ іспит', bg:'linear-gradient(165deg,#5b9bff,#2563eb)'},
+                {id:'private', icon:'🚗', title:'Приватно', desc:'1 або 2 години', bg:'linear-gradient(165deg,#fb923c,#ea580c)'},
+              ].map(t=>(
+                <div key={t.id} className={`tile-pick${studentType===t.id?' selected':''}`} onClick={()=>setStudentType(t.id)}>
+                  <div className="ico" style={{background:t.bg}}>{t.icon}</div>
+                  <div className="tile-title">{t.title}</div>
+                  <div className="tile-desc">{t.desc}</div>
+                </div>
+              ))}
             </div>
           </div>
-        )}
 
-        {/* SMS STEP */}
-        {step === 'sms' && (
-          <div className="fade-up" style={{display:'flex', flexDirection:'column', flex:1}}>
-            <header className="auth-header">
-              <button className="back-btn" onClick={() => { setStep('phone'); resetRecaptcha(); }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-              </button>
-              <div className="step-indicator">Крок 2 з 3</div>
-              <h1 className="auth-title">Введи <span className="highlight">код</span> з SMS</h1>
-              <p className="auth-subtitle">Надіслали на {formatPhone(phone)}</p>
-            </header>
-
-            <div className="auth-body">
-              <input
-                ref={codeInputRef}
-                className="code-input"
-                type="tel"
-                placeholder="• • • • • •"
-                maxLength={6}
-                inputMode="numeric"
-                value={code}
-                onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
-              />
-              {codeError && <div style={{color:'var(--accent)',fontSize:'13px',marginTop:'8px'}}>{codeError}</div>}
-
-              {resendTimer > 0 ? (
-                <div className="resend-timer">Повторно надіслати через {resendTimer} сек</div>
-              ) : (
-                <button className="resend-btn" onClick={handleResend} disabled={sending}>
-                  {sending ? 'Надсилаємо...' : 'Надіслати ще раз'}
-                </button>
-              )}
-            </div>
-
-            <div className="bottom-spacer">
-              <button className="btn-primary" onClick={handleVerifyCode} disabled={verifying || code.length < 6}>
-                {verifying ? 'Перевіряємо...' : 'Підтвердити →'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* SURVEY STEP */}
-        {step === 'survey' && (
-          <div className="fade-up" style={{display:'flex', flexDirection:'column', flex:1}}>
-            <header className="auth-header">
-              <div className="step-indicator">Крок 3 з 3</div>
-              <h1 className="auth-title">Розкажи про себе</h1>
-              <p className="auth-subtitle">Допоможе підібрати програму навчання</p>
-            </header>
-
-            <div className="auth-body survey-form">
-              <div className="form-group">
-                <label className="form-label">Твоє імʼя</label>
-                <input
-                  type="text"
-                  placeholder="Олександр"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  className="form-input"
-                  autoFocus
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Тип навчання</label>
-                <div className="radio-group">
-                  <label className={`radio-card ${studentType === 'school' ? 'active' : ''}`}>
-                    <input
-                      type="radio"
-                      name="studentType"
-                      value="school"
-                      checked={studentType === 'school'}
-                      onChange={e => setStudentType(e.target.value)}
-                    />
-                    <div className="radio-content">
-                      <div className="radio-icon">🎓</div>
-                      <div>
-                        <div className="radio-title">Автошкола</div>
-                        <div className="radio-desc">Повний курс з ТСЦ, 40 годин</div>
-                      </div>
+          {studentType==='school' && (
+            <div className="field">
+              <div className="field-label">ТСЦ для іспиту</div>
+              <div className="select-list">
+                {TSCS.map(t=>(
+                  <div key={t.id} className={`select-item${tscId===t.id?' selected':''}`} onClick={()=>setTscId(t.id)}>
+                    <div className="select-radio"/>
+                    <div className="select-info">
+                      <div className="select-title">{t.name}</div>
+                      <div className="select-sub">{t.area}</div>
                     </div>
-                  </label>
-                  <label className={`radio-card ${studentType === 'private' ? 'active' : ''}`}>
-                    <input
-                      type="radio"
-                      name="studentType"
-                      value="private"
-                      checked={studentType === 'private'}
-                      onChange={e => setStudentType(e.target.value)}
-                    />
-                    <div className="radio-content">
-                      <div className="radio-icon">🚗</div>
-                      <div>
-                        <div className="radio-title">Приватні уроки</div>
-                        <div className="radio-desc">Індивідуальний графік, 1 або 2 години</div>
-                      </div>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              {studentType === 'school' && (
-                <div className="form-group">
-                  <label className="form-label">ТСЦ для складання іспиту</label>
-                  <select value={tscId} onChange={e => setTscId(e.target.value)} className="form-select">
-                    {TSCS.map(t => (
-                      <option key={t.id} value={t.id}>{t.name} — {t.area}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div className="form-group">
-                <label className="form-label">Досвід водіння</label>
-                {EXPERIENCES.map(ex => (
-                  <label key={ex.id} className="toggle-label" style={{marginBottom:8}}>
-                    <input
-                      type="radio"
-                      name="experience"
-                      value={ex.id}
-                      checked={experience === ex.id}
-                      onChange={() => setExperience(ex.id)}
-                    />
-                    <span>{ex.name}</span>
-                  </label>
+                  </div>
                 ))}
               </div>
-
-              <div className="form-group">
-                <label className="toggle-label">
-                  <input
-                    type="checkbox"
-                    checked={filmingConsent}
-                    onChange={e => setFilmingConsent(e.target.checked)}
-                  />
-                  <span>Згоден на зйомку для соцмереж (Instagram, TikTok)</span>
-                </label>
-              </div>
-
-              <div className="form-group" id="terms">
-                <label className="form-label">Умови використання</label>
-                <div style={{background:'var(--surface)',borderRadius:10,padding:'10px 12px',maxHeight:160,overflowY:'auto',marginBottom:10,fontSize:12,lineHeight:1.6,color:'var(--dim)',whiteSpace:'pre-wrap'}}>
-                  {TERMS_TEXT}
-                </div>
-                <label className="toggle-label">
-                  <input
-                    type="checkbox"
-                    checked={termsAgreed}
-                    onChange={e => setTermsAgreed(e.target.checked)}
-                  />
-                  <span>Я ознайомився та погоджуюсь з умовами</span>
-                </label>
-              </div>
             </div>
+          )}
 
-            <div className="bottom-spacer">
-              <button 
-                className="btn-primary" 
-                onClick={handleSubmitSurvey} 
-                disabled={savingProfile || !termsAgreed}
-              >
-                {savingProfile ? 'Зберігаємо...' : 'Завершити реєстрацію →'}
-              </button>
+          <div className="field">
+            <div className="field-label">Досвід водіння</div>
+            <div className="select-list">
+              {EXPERIENCES.map(ex=>(
+                <div key={ex.id} className={`select-item${experience===ex.id?' selected':''}`} onClick={()=>setExperience(ex.id)}>
+                  <div className="select-radio"/>
+                  <div className="select-info">
+                    <div className="select-title">{ex.name}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        )}
-      </div>
+
+          <div className="toggle-row" onClick={()=>setFilmingConsent(v=>!v)}>
+            <div className="toggle-ico">🎬</div>
+            <div className="toggle-info">
+              <div className="toggle-title">Зйомка для соцмереж</div>
+              <div className="toggle-desc">Instagram, TikTok</div>
+            </div>
+            <button className={`switch${filmingConsent?' on':''}`} onClick={e=>{e.stopPropagation();setFilmingConsent(v=>!v)}}>
+              <div className="switch-knob"/>
+            </button>
+          </div>
+
+          <button className={`terms-survey-btn${termsAgreed?' agreed':''}`} onClick={()=>termsAgreed?setTermsAgreed(false):setTermsOpen(v=>!v)}>
+            <div className="terms-survey-ico">{termsAgreed?'✓':'📋'}</div>
+            <div className="terms-survey-text">
+              <div className="lbl">{termsAgreed?'Прийнято':'Обовʼязково'}</div>
+              <div>{termsAgreed?'Умови прийнято':'Переглянути умови'}</div>
+            </div>
+          </button>
+
+          {termsOpen && !termsAgreed && (
+            <div style={{background:'var(--surface)',borderRadius:14,padding:'14px 16px',marginTop:-8,marginBottom:12,boxShadow:'var(--shadow)'}}>
+              <pre style={{fontSize:12,lineHeight:1.7,color:'var(--dim)',whiteSpace:'pre-wrap',fontFamily:'inherit',margin:0,maxHeight:200,overflowY:'auto'}}>{TERMS_TEXT}</pre>
+              <button className="btn-primary" style={{marginTop:12}} onClick={()=>{setTermsAgreed(true);setTermsOpen(false)}}>
+                Погоджуюсь ✓
+              </button>
+            </div>
+          )}
+
+          <div className="bottom-spacer">
+            <button className="btn-primary" onClick={handleSubmitSurvey} disabled={savingProfile||!termsAgreed}>
+              {savingProfile?'Зберігаємо...':'Завершити реєстрацію →'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
