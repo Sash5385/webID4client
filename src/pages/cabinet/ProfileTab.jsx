@@ -16,10 +16,11 @@ const STUDENT_TYPE_LABELS = {
 };
 
 const EXPERIENCE_LABELS = {
-  none: "Без досвіду",
-  little: "Трохи їздив",
-  some: "Маю права, потрібна практика",
-  much: "Маю досвід, потрібна підготовка до іспиту",
+  no_license: "Не маю посвідчення, збираюсь складати іспит",
+  has_license: "Маю посвідчення, не маю досвіду водіння",
+  novice: "Початківець",
+  basic: "Базовий",
+  licensed: "З правами",
 };
 
 export default function ProfileTab({ user, profile }) {

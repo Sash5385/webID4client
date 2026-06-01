@@ -14,10 +14,35 @@ const TSCS = [
 ]
 
 const EXPERIENCES = [
-  { id: 'novice', name: 'Початківець', desc: 'Без досвіду або менше 10 годин' },
-  { id: 'basic', name: 'Базовий', desc: 'Закінчена автошкола, потрібно шліфувати' },
-  { id: 'licensed', name: 'З правами', desc: 'Є посвідчення, велика перерва' },
+  { id: 'no_license', name: 'Не маю посвідчення, збираюсь складати іспит' },
+  { id: 'has_license', name: 'Маю посвідчення, не маю досвіду водіння' },
 ]
+
+const TERMS_TEXT = `Умови відвідування уроків водіння
+
+1. Скасування та перенесення:
+Скасування або перенесення заняття можливі не пізніше ніж за 24 години до початку.
+У разі неявки учня на заняття без попередження, заняття підлягає компенсації в повному обсязі.
+Оплата здійснюється по завершенню заняття готівкою або переказом на картку.
+
+2. Запізнення:
+У разі запізнення учня час заняття не продовжується.
+
+3. Стан учня:
+До заняття не допускаються учні в стані алкогольного або наркотичного сп'яніння.
+
+4. Документи:
+Учень зобов'язаний мати при собі документ, що посвідчує особу, а також водійське посвідчення (за наявності).
+
+5. Відповідальність та безпека:
+Учень зобов'язаний дотримуватися вказівок інструктора, не перевищувати дозволену швидкість та правила дорожнього руху.
+Інструктор має право припинити заняття у разі створення загрози безпеці.
+
+6. Погодні та дорожні умови:
+У разі несприятливих погодних умов або форс-мажорних обставин заняття може бути перенесене за домовленістю сторін.
+
+7. Згода з умовами:
+Запис на заняття означає повну згоду з даними умовами.`
 
 export default function Auth({ user, profile, onProfileSaved }) {
   const { theme, toggle } = useTheme()
@@ -47,7 +72,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
   const [name, setName] = useState('')
   const [studentType, setStudentType] = useState('school')
   const [tscId, setTscId] = useState('8045')
-  const [experience, setExperience] = useState('novice')
+  const [experience, setExperience] = useState('no_license')
   const [filmingConsent, setFilmingConsent] = useState(true)
   const [termsAgreed, setTermsAgreed] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
@@ -426,16 +451,21 @@ export default function Auth({ user, profile, onProfileSaved }) {
                 </div>
               )}
 
-              {studentType === 'private' && (
-                <div className="form-group">
-                  <label className="form-label">Досвід водіння</label>
-                  <select value={experience} onChange={e => setExperience(e.target.value)} className="form-select">
-                    {EXPERIENCES.map(ex => (
-                      <option key={ex.id} value={ex.id}>{ex.name} — {ex.desc}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              <div className="form-group">
+                <label className="form-label">Досвід водіння</label>
+                {EXPERIENCES.map(ex => (
+                  <label key={ex.id} className="toggle-label" style={{marginBottom:8}}>
+                    <input
+                      type="radio"
+                      name="experience"
+                      value={ex.id}
+                      checked={experience === ex.id}
+                      onChange={() => setExperience(ex.id)}
+                    />
+                    <span>{ex.name}</span>
+                  </label>
+                ))}
+              </div>
 
               <div className="form-group">
                 <label className="toggle-label">
@@ -448,14 +478,18 @@ export default function Auth({ user, profile, onProfileSaved }) {
                 </label>
               </div>
 
-              <div className="form-group">
+              <div className="form-group" id="terms">
+                <label className="form-label">Умови використання</label>
+                <div style={{background:'var(--surface)',borderRadius:10,padding:'10px 12px',maxHeight:160,overflowY:'auto',marginBottom:10,fontSize:12,lineHeight:1.6,color:'var(--dim)',whiteSpace:'pre-wrap'}}>
+                  {TERMS_TEXT}
+                </div>
                 <label className="toggle-label">
                   <input
                     type="checkbox"
                     checked={termsAgreed}
                     onChange={e => setTermsAgreed(e.target.checked)}
                   />
-                  <span>Приймаю <a href="#terms" style={{color:'var(--accent)'}}>умови користування</a></span>
+                  <span>Я ознайомився та погоджуюсь з умовами</span>
                 </label>
               </div>
             </div>
