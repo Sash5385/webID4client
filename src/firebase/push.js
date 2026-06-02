@@ -30,7 +30,7 @@ export async function requestNotificationPermission(uid) {
   try {
     const token = await getToken(msg, { vapidKey: VAPID_KEY })
     if (token && uid) {
-      await set(ref(db, `users/${uid}/fcmToken`), token)
+      await set(ref(db, `users/${uid}/fcmTokens/web/token`), token)
     }
     return token
   } catch (e) {

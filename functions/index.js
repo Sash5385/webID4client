@@ -34,6 +34,48 @@ async function sendPush(uid, title, body, urlPath) {
   }
 }
 
+// ─── 0. onNewBooking ─────────────────────────────────────────────
+// When a student creates a new booking — notify the admin
+exports.onNewBooking = onValueCreated(
+  {
+    ref: "bookings/{uid}/{bookingId}",
+    region: REGION,
+    instance: INSTANCE,
+  },
+  async (event) => {
+    const booking = event.data.val();
+    if (!booking) return;
+
+    const tokenSnap = await db.ref("admin/fcmToken").get();
+    const token = tokenSnap.val();
+    if (!token) return;
+
+    const name = booking.studentName || "Учень";
+    const date = booking.date || "";
+    const time = booking.time || "";
+    const slot = date && time ? `${date} о ${time}` : date || time;
+
+    try {
+      await messaging.send({
+        token,
+        notification: { title: "📚 Новий запис", body: `${name} — ${slot}` },
+        data: { url: "/" },
+        webpush: {
+          notification: { icon: "/favicon.svg", badge: "/favicon.svg" },
+          fcmOptions: { link: "/" },
+        },
+      });
+    } catch (err) {
+      if (
+        err.code === "messaging/registration-token-not-registered" ||
+        err.code === "messaging/invalid-registration-token"
+      ) {
+        await db.ref("admin/fcmToken").remove();
+      }
+    }
+  }
+);
+
 // ─── 1. onBookingStatusChanged ────────────────────────────────────
 // Triggers when admin confirms or cancels a booking — notify the student
 exports.onBookingStatusChanged = onValueWritten(
