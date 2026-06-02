@@ -34,8 +34,40 @@ async function sendPush(uid, title, body, urlPath) {
   }
 }
 
+// ─── HELPER: send FCM to admin ───────────────────────────────────
+async function sendAdminPush(title, body) {
+  // Try both token paths (legacy and current)
+  const paths = ["admin/fcmToken", "admin/fcmTokens/web/token"];
+  let token = null;
+  let tokenPath = null;
+  for (const p of paths) {
+    const snap = await db.ref(p).get();
+    if (snap.val()) { token = snap.val(); tokenPath = p; break; }
+  }
+  console.log("Admin token path:", tokenPath, "token exists:", !!token);
+  if (!token) { console.log("No admin FCM token found"); return; }
+  try {
+    await messaging.send({
+      token,
+      notification: { title, body },
+      webpush: {
+        notification: { icon: "/favicon.svg", badge: "/favicon.svg" },
+        fcmOptions: { link: "/" },
+      },
+    });
+    console.log("Admin push sent OK");
+  } catch (err) {
+    console.error("Admin push error:", err.code, err.message);
+    if (
+      err.code === "messaging/registration-token-not-registered" ||
+      err.code === "messaging/invalid-registration-token"
+    ) {
+      await db.ref(tokenPath).remove();
+    }
+  }
+}
+
 // ─── 0. onNewBooking ─────────────────────────────────────────────
-// When a student creates a new booking — notify the admin
 exports.onNewBooking = onValueCreated(
   {
     ref: "bookings/{uid}/{bookingId}",
@@ -44,35 +76,13 @@ exports.onNewBooking = onValueCreated(
   },
   async (event) => {
     const booking = event.data.val();
+    console.log("onNewBooking triggered:", booking?.date, booking?.time, booking?.studentName);
     if (!booking) return;
-
-    const tokenSnap = await db.ref("admin/fcmToken").get();
-    const token = tokenSnap.val();
-    if (!token) return;
-
     const name = booking.studentName || "Учень";
     const date = booking.date || "";
     const time = booking.time || "";
     const slot = date && time ? `${date} о ${time}` : date || time;
-
-    try {
-      await messaging.send({
-        token,
-        notification: { title: "📚 Новий запис", body: `${name} — ${slot}` },
-        data: { url: "/" },
-        webpush: {
-          notification: { icon: "/favicon.svg", badge: "/favicon.svg" },
-          fcmOptions: { link: "/" },
-        },
-      });
-    } catch (err) {
-      if (
-        err.code === "messaging/registration-token-not-registered" ||
-        err.code === "messaging/invalid-registration-token"
-      ) {
-        await db.ref("admin/fcmToken").remove();
-      }
-    }
+    await sendAdminPush("📚 Новий запис", `${name} — ${slot}`);
   }
 );
 
