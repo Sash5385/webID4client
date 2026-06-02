@@ -68,10 +68,38 @@ export async function createBooking(uid, booking) {
 }
 
 export async function cancelBooking(uid, bookingId) {
+  const snap = await get(ref(db, `bookings/${uid}/${bookingId}`))
+  const booking = snap.val()
+  if (!booking) return
+
   await update(ref(db, `bookings/${uid}/${bookingId}`), {
     status: 'cancelled',
-    cancelledAt: Date.now()
+    cancelledAt: Date.now(),
+    cancelledBy: 'student',
   })
+
+  // Відновити вільні слоти, видалити 30-хв фантоми
+  if (booking.date && booking.time) {
+    const [h, m] = booking.time.split(':').map(Number)
+    const startMin = h * 60 + m
+    const durMin = (booking.durationHours || 1) * 60
+    const updates = {}
+    for (let i = 0; i < durMin; i += 30) {
+      const slotMin = startMin + i
+      const slotH = String(Math.floor(slotMin / 60)).padStart(2, '0')
+      const slotM = String(slotMin % 60).padStart(2, '0')
+      const path = `timeslots/${booking.date}/slot${slotH}${slotM}`
+      if (i % 60 === 0) {
+        // Годинний слот — відновлюємо
+        updates[`${path}/available`] = true
+        updates[`${path}/time`] = `${slotH}:${slotM}`
+      } else {
+        // 30-хв фантом (створений markSlotsUnavailable) — видаляємо
+        updates[path] = null
+      }
+    }
+    await update(ref(db, '/'), updates)
+  }
 }
 
 // в”Ђв”Ђв”Ђ QUEUE (Р»РёСЃС‚ РѕС‡С–РєСѓРІР°РЅРЅСЏ) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ

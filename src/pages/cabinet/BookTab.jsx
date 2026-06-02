@@ -143,16 +143,24 @@ export default function BookTab({ user, profile, bookingsData }) {
     setSubmitting(true)
     try {
       const dateStr = formatDateYMD(selectedDate)
+      const [bh, bm] = selectedTime.split(':').map(Number)
+      const bookStartMin = bh * 60 + bm
+      let surcharge = 0
+      for (let i = 0; i < durationHours; i++) {
+        const slotMin = bookStartMin + i * 60
+        const key = `slot${String(Math.floor(slotMin/60)).padStart(2,'0')}${String(slotMin%60).padStart(2,'0')}`
+        surcharge += slots[key]?.surcharge || 0
+      }
+      const totalPrice = (selectedService?.price || 0) + surcharge
       const currentSlot = slots[`slot${selectedTime.replace(':', '')}`]
-      const surcharge = currentSlot?.surcharge || 0
       await createBooking(user.uid, {
         date: dateStr,
         time: selectedTime,
         serviceType: selectedService.type,
         serviceId: selectedService.id,
         serviceName: selectedService.name,
-        price: selectedService.price,
-        surcharge,
+        price: totalPrice || undefined,
+        surcharge: surcharge || undefined,
         durationHours,
         studentName: profile.name,
         phone: profile.phone || user.phoneNumber,
@@ -188,18 +196,51 @@ export default function BookTab({ user, profile, bookingsData }) {
   const prevMonth = () => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))
   const nextMonth = () => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))
 
+  const basePrice = useMemo(() => {
+    const durMin = duration * 60
+    const svc = (adminSettings.services || []).find(s =>
+      s.active !== false && s.type === serviceType && Number(s.duration) === durMin
+    )
+    return svc?.price || 0
+  }, [serviceType, duration, adminSettings])
+
   const slotsList = useMemo(() => {
+    const isVip = profile?.isVip === true
     return Object.values(slots)
       .filter(slot => !slot.vipOnly || isVipStudent)
       .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
-      .map(slot => ({
-        ...slot,
-        lunchBlocked:   isBlockedByLunch(slot.time, durationHours),
-        overlapBlocked: slot.available !== false && wouldOverlapTaken(slot.time, durationHours),
-      }))
+      .map(slot => {
+        let vipBlocked = false
+        if (slot.vipOnly && !isVip) {
+          if (selectedDate) {
+            const [h, m] = (slot.time || '0:0').split(':').map(Number)
+            const slotDt = new Date(selectedDate)
+            slotDt.setHours(h, m, 0, 0)
+            vipBlocked = Date.now() + 48 * 60 * 60 * 1000 < slotDt.getTime()
+          } else {
+            vipBlocked = true
+          }
+        }
+        const [th, tm] = (slot.time || '0:0').split(':').map(Number)
+        const slotStartMin = th * 60 + tm
+        let totalSurcharge = 0
+        for (let i = 0; i < durationHours; i++) {
+          const coveredMin = slotStartMin + i * 60
+          const coveredKey = `slot${String(Math.floor(coveredMin/60)).padStart(2,'0')}${String(coveredMin%60).padStart(2,'0')}`
+          totalSurcharge += slots[coveredKey]?.surcharge || 0
+        }
+        return {
+          ...slot,
+          lunchBlocked:   isBlockedByLunch(slot.time, durationHours),
+          overlapBlocked: slot.available !== false && wouldOverlapTaken(slot.time, durationHours),
+          vipBlocked,
+          totalSurcharge,
+          totalPrice: (selectedService?.price || 0) + totalSurcharge,
+        }
+      })
       .filter(slot => !slot.lunchBlocked)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slots, durationHours, adminSettings])
+  }, [slots, durationHours, adminSettings, profile?.isVip, selectedDate, selectedService])
 
   const QueueIcons = ({ n }) => {
     const max = Math.min(n, 3)
@@ -338,25 +379,29 @@ export default function BookTab({ user, profile, bookingsData }) {
                   const isLunch = slot.lunchBlocked
                   const isOverlap = slot.overlapBlocked
                   const isMyReserved = !!(slot.offeredTo?.[user?.uid])
-                  const isOtherReserved = false
-                  const isTaken = !isAvailable && !isMyReserved && !isOtherReserved
-                  const isHardDisabled = isLunch || isOverlap || isOtherReserved
+                  const isVipLocked = slot.vipBlocked
+                  const isTaken = !isAvailable && !isMyReserved
+                  const isUnavailable = isLunch || isOverlap || isVipLocked || isTaken
                   return (
                     <div key={slot.time} style={{position:'relative'}}>
                       <button
                         className={`slot ${isMyReserved || isMyQueue ? 'my-queue' : isTaken ? 'taken' : ''} ${isSelected ? 'selected' : ''}`}
                         style={{width:'100%'}}
                         onClick={() => !isMyQueue && handleSlotClick(slot)}
-                        disabled={isHardDisabled}
-                        title={isLunch ? 'Обідня перерва' : isOverlap ? 'Перетин з іншим уроком' : isMyReserved ? 'Зарезервовано для вас!' : isTaken ? 'Зайнято — стати в чергу?' : undefined}
+                        disabled={isLunch || isOverlap}
+                        title={isLunch ? 'Обідня перерва' : isOverlap ? 'Перетин з іншим уроком' : isVipLocked ? 'VIP слот' : isMyReserved ? 'Зарезервовано для вас!' : isTaken ? 'Зайнято — стати в чергу?' : undefined}
                       >
                         <div className="slot-time">{slot.time}</div>
                         {isMyReserved ? (
                           <div style={{fontSize:8, color:'white', fontWeight:700}}>ваш!</div>
                         ) : isLunch ? (
                           <div style={{fontSize:8, opacity:0.5}}>обід</div>
+                        ) : isVipLocked ? (
+                          <div style={{fontSize:8, opacity:0.5}}>👑</div>
                         ) : isOverlap ? (
                           <div style={{fontSize:8, opacity:0.5}}>зайнято</div>
+                        ) : slot.totalSurcharge ? (
+                          <div style={{fontSize:8, color:'#f7c948', fontWeight:700}}>{slot.totalPrice}₴</div>
                         ) : isMyQueue ? (
                           <div className="slot-queue">
                             <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
@@ -364,8 +409,6 @@ export default function BookTab({ user, profile, bookingsData }) {
                           </div>
                         ) : q?.count > 0 ? (
                           <QueueIcons n={q.count} />
-                        ) : slot.surcharge ? (
-                          <div style={{fontSize:8, fontWeight:700, color:'var(--gold)'}}>+{slot.surcharge}₴</div>
                         ) : null}
                       </button>
                       {isMyQueue && (
@@ -374,12 +417,10 @@ export default function BookTab({ user, profile, bookingsData }) {
                           style={{
                             position:'absolute', top:-6, right:-6,
                             width:16, height:16, borderRadius:'50%',
-                            background:'rgba(239,68,68,0.9)',
-                            border:'none', cursor:'pointer',
+                            background:'rgba(239,68,68,0.9)', border:'none', cursor:'pointer',
                             display:'flex', alignItems:'center', justifyContent:'center',
                             fontSize:9, color:'white', fontWeight:900, lineHeight:1,
-                            boxShadow:'0 2px 6px rgba(239,68,68,0.6)',
-                            zIndex:5,
+                            boxShadow:'0 2px 6px rgba(239,68,68,0.6)', zIndex:5,
                           }}
                           title="Вийти з черги"
                         >✕</button>
@@ -402,11 +443,48 @@ export default function BookTab({ user, profile, bookingsData }) {
       )}
 
       {/* CTA */}
-      {selectedTime && selectedService && (
-        <button className="btn-primary" style={{marginTop:16}} onClick={handleBook} disabled={submitting}>
-          {submitting ? 'Записуємо...' : `✓ Записатись на ${formatDateYMD(selectedDate).slice(-5).replace('-','.')} о ${selectedTime}`}
-        </button>
-      )}
+      {selectedTime && selectedService && (() => {
+        const [sh, sm] = selectedTime.split(':').map(Number)
+        const startMin = sh * 60 + sm
+        let surcharge = 0
+        for (let i = 0; i < durationHours; i++) {
+          const slotMin = startMin + i * 60
+          const key = `slot${String(Math.floor(slotMin/60)).padStart(2,'0')}${String(slotMin%60).padStart(2,'0')}`
+          surcharge += slots[key]?.surcharge || 0
+        }
+        const baseP = selectedService.price || 0
+        const totalPrice = baseP + surcharge
+        const dateLabel = formatDateYMD(selectedDate).slice(-5).replace('-', '.')
+        return (
+          <>
+            {surcharge > 0 ? (
+              <div style={{
+                marginTop:12, padding:'12px 14px', borderRadius:12,
+                background:'rgba(247,201,72,0.08)', border:'1px solid rgba(247,201,72,0.35)',
+                display:'flex', flexDirection:'column', gap:4,
+              }}>
+                <div style={{fontSize:13, color:'#f7c948', fontWeight:700}}>
+                  ⚠️ Ціна за цей час: <strong>{totalPrice}₴</strong>
+                </div>
+                <div style={{fontSize:11, color:'rgba(247,201,72,0.7)'}}>
+                  Стандартна {baseP}₴ + надбавка +{surcharge}₴
+                </div>
+              </div>
+            ) : totalPrice > 0 ? (
+              <div style={{
+                marginTop:12, padding:'8px 14px', borderRadius:12,
+                background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)',
+                fontSize:12, color:'var(--dim)', textAlign:'center',
+              }}>
+                Вартість уроку: <strong style={{color:'var(--text)'}}>{totalPrice}₴</strong>
+              </div>
+            ) : null}
+            <button className="btn-primary" style={{marginTop:10}} onClick={handleBook} disabled={submitting}>
+              {submitting ? 'Записуємо...' : `✓ Записатись ${dateLabel} о ${selectedTime}${totalPrice ? ` · ${totalPrice}₴` : ''}`}
+            </button>
+          </>
+        )
+      })()}
 
       {/* DIALOG: успішний запис / черга */}
       {successData && (
