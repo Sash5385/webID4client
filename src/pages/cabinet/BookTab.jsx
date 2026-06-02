@@ -233,12 +233,14 @@ export default function BookTab({ user, profile, bookingsData }) {
       <div className="cal-card">
         <div className="cal-head">
           <button className="cal-nav-btn" onClick={prevMonth}>‹</button>
-          <div className="cal-month">{getMonthName(viewMonth.getMonth())} {viewMonth.getFullYear()}</div>
+          <div className="cal-month">
+            {getMonthName(viewMonth.getMonth())}
+            <span style={{color:'var(--faint)', fontWeight:600, marginLeft:5}}>{viewMonth.getFullYear()}</span>
+          </div>
           <button className="cal-nav-btn" onClick={nextMonth}>›</button>
         </div>
         <div className="cal-weekdays">
-          <div className="cal-wd">Пн</div><div className="cal-wd">Вт</div><div className="cal-wd">Ср</div>
-          <div className="cal-wd">Чт</div><div className="cal-wd">Пт</div><div className="cal-wd">Сб</div><div className="cal-wd">Нд</div>
+          {['Пн','Вт','Ср','Чт','Пт','Сб','Нд'].map(d => <div key={d} className="cal-wd">{d}</div>)}
         </div>
         <div className="cal-days">
           {days.map((d, i) => {
