@@ -125,7 +125,7 @@ export function getConfirmedSchoolHours(bookings) {
 
 export function getCompletedHours(bookings) {
   return bookings
-    .filter(b => b.status === 'confirmed' && new Date(b.date) < new Date())
+    .filter(b => b.status === 'confirmed')
     .reduce((sum, b) => sum + (b.durationHours || 1), 0)
 }
 

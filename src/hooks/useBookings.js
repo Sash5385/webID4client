@@ -28,7 +28,7 @@ export function useBookings(uid) {
   const schoolHours = getConfirmedSchoolHours(bookings)
   const completedHours = getCompletedHours(bookings)
   const upcoming = bookings.filter(b => b.status !== 'cancelled' && new Date(b.date) >= new Date(new Date().toDateString()))
-  const completed = bookings.filter(b => b.status === 'confirmed' && new Date(b.date) < new Date())
+  const completed = bookings.filter(b => b.status === 'confirmed')
 
   return {
     bookings,
