@@ -11,7 +11,7 @@ export default function ProgressTab({ user, profile, bookingsData }) {
   const percent = (current / target) * 100;
 
   const completed = useMemo(
-    () => bookings.filter(b => b.status === "confirmed"),
+    () => bookings.filter(b => b.status === "confirmed" && new Date(b.date) < new Date()),
     [bookings]
   );
 

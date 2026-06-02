@@ -119,13 +119,13 @@ export function subscribeQueueForSlot(date, time, callback) {
 // в”Ђв”Ђв”Ђ HELPERS в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 export function getConfirmedSchoolHours(bookings) {
   return bookings
-    .filter(b => b.serviceType === 'school' && b.status !== 'cancelled')
+    .filter(b => b.serviceType === 'school' && b.status !== 'cancelled' && new Date(b.date) < new Date())
     .reduce((sum, b) => sum + (b.durationHours || 1), 0)
 }
 
 export function getCompletedHours(bookings) {
   return bookings
-    .filter(b => b.status === 'confirmed')
+    .filter(b => b.status === 'confirmed' && new Date(b.date) < new Date())
     .reduce((sum, b) => sum + (b.durationHours || 1), 0)
 }
 
