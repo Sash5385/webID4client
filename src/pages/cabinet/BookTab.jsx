@@ -289,14 +289,15 @@ export default function BookTab({ user, profile, bookingsData }) {
                   const isOverlap = slot.overlapBlocked
                   const isMyReserved = slot.reservedFor === user?.uid
                   const isOtherReserved = slot.reservedFor && !isMyReserved
-                  const isUnavailable = isLunch || isOverlap || (!isAvailable && !isMyReserved) || isOtherReserved
+                  const isTaken = !isAvailable && !isMyReserved && !isOtherReserved
+                  const isHardDisabled = isLunch || isOverlap || isOtherReserved || isMyQueue
                   return (
                     <button
                       key={slot.time}
-                      className={`slot ${isMyReserved ? 'my-queue' : isUnavailable ? 'taken' : ''} ${isSelected ? 'selected' : ''} ${isMyQueue && !isUnavailable ? 'my-queue' : ''}`}
+                      className={`slot ${isMyReserved || isMyQueue ? 'my-queue' : isTaken ? 'taken' : ''} ${isSelected ? 'selected' : ''}`}
                       onClick={() => handleSlotClick(slot)}
-                      disabled={isUnavailable && !isMyReserved}
-                      title={isLunch ? 'Обідня перерва' : isOverlap ? 'Перетин з іншим уроком' : isMyReserved ? 'Зарезервовано для вас!' : isOtherReserved ? 'Пропонується іншому' : undefined}
+                      disabled={isHardDisabled}
+                      title={isLunch ? 'Обідня перерва' : isOverlap ? 'Перетин з іншим уроком' : isMyReserved ? 'Зарезервовано для вас!' : isOtherReserved ? 'Пропонується іншому' : isTaken ? 'Зайнято — стати в чергу?' : undefined}
                     >
                       <div className="slot-time">{slot.time}</div>
                       {isMyReserved ? (
