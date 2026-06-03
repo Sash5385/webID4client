@@ -1,9 +1,9 @@
 .user-banner {
-  background: linear-gradient(135deg, var(--surf-hi), var(--surface));
-  border-radius: 12px;
+  background: linear-gradient(155deg, var(--surf-hi), var(--surface));
+  border-radius: 10px;
   padding: 6px 10px;
   box-shadow: var(--shadow);
-  margin-top: 6px;
+  margin-top: 4px;
   border: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -61,22 +61,22 @@
 }
 
 .svc-tile {
-  background: var(--surface);
-  border-radius: 18px;
-  padding: 16px 12px;
+  background: linear-gradient(155deg, var(--surf-hi), var(--surface));
+  border-radius: 13px;
+  padding: 14px 10px;
   box-shadow: var(--shadow);
   text-align: center;
   cursor: pointer;
-  border: 2px solid transparent;
-  transition: transform .15s;
+  border: 1px solid var(--border);
+  transition: transform .15s, box-shadow .15s;
 }
 
 .svc-tile:active:not(.locked) { transform: scale(0.97); }
 .svc-tile.selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(255,90,60,0.2), var(--shadow);
+  box-shadow: 0 0 0 2px var(--accent), var(--shadow);
+  border-color: transparent;
 }
-.svc-tile.locked { opacity: 0.5; cursor: not-allowed; }
+.svc-tile.locked { opacity: 0.4; cursor: not-allowed; }
 
 .svc-tile .ico {
   width: 44px;

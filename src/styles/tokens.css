@@ -5,7 +5,7 @@
   --surface: #26282c;
   --surf-hi: #2e3034;
   --surf-lo: #1f2125;
-  --border: rgba(255,255,255,0.05);
+  --border: rgba(255,255,255,0.06);
   --text: #e8e8ea;
   --dim: #8b8d93;
   --faint: #5a5c62;
@@ -14,8 +14,8 @@
   --green: #7ed957;
   --blue: #5b9bff;
   --gold: #f7c948;
-  --shadow: 6px 6px 16px rgba(0,0,0,0.45), -3px -3px 10px rgba(255,255,255,0.025);
-  --shadow-in: inset 3px 3px 8px rgba(0,0,0,0.4), inset -2px -2px 6px rgba(255,255,255,0.025);
+  --shadow: 0 2px 10px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.04);
+  --shadow-in: inset 2px 2px 6px rgba(0,0,0,0.45), inset -1px -1px 3px rgba(255,255,255,0.02);
 }
 
 [data-theme="light"] {

@@ -1,22 +1,25 @@
 .booking-card {
-  background: var(--surface);
-  border-radius: 18px;
-  padding: 14px;
+  background: linear-gradient(155deg, var(--surf-hi), var(--surface));
+  border-radius: 14px;
+  padding: 12px;
   box-shadow: var(--shadow);
-  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
+  overflow: hidden;
 }
 
 .booking-date {
-  width: 56px;
+  width: 48px;
   flex-shrink: 0;
-  background: var(--surf-lo);
-  border-radius: 12px;
-  padding: 8px 4px;
+  background: linear-gradient(135deg, var(--bg-deep), var(--surf-lo));
+  border-radius: 10px;
+  padding: 7px 4px;
   text-align: center;
   box-shadow: var(--shadow-in);
+  border: 1px solid var(--border);
 }
 
 .booking-day {
