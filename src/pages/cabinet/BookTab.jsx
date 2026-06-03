@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { subscribeSlotsForDate, createBooking, joinQueue, subscribeQueueForSlot, getAdminSettings, getAdminServices, markSlotsUnavailable, claimReservedSlot, setViewingSlot, clearViewingSlot } from '../../firebase/db'
+import { subscribeSlotsForDate, createBooking, joinQueue, leaveQueue, subscribeQueueForSlot, getAdminSettings, getAdminServices, markSlotsUnavailable, claimReservedSlot, setViewingSlot, clearViewingSlot } from '../../firebase/db'
 import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay } from '../../utils/date'
 import { getInitials, pluralize } from '../../utils/format'
 import './BookTab.css'
@@ -357,10 +357,17 @@ export default function BookTab({ user, profile, bookingsData }) {
                       ) : isOverlap ? (
                         <div style={{fontSize:8, opacity:0.5}}>зайнято</div>
                       ) : isMyQueue ? (
-                        <div className="slot-queue">
-                          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
-                          <span className="slot-queue-num">ти {q.count}-й</span>
-                        </div>
+                        <>
+                          <div className="slot-queue">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+                            <span className="slot-queue-num">ти {q.count}-й</span>
+                          </div>
+                          <div
+                            style={{fontSize:7, color:'rgba(255,255,255,0.6)', marginTop:1, cursor:'pointer', textDecoration:'underline'}}
+                            onClick={async e => { e.stopPropagation(); await leaveQueue(user.uid, formatDateYMD(selectedDate), slot.time) }}
+                          >вийти</div>
+                        </>
+
                       ) : q?.count > 0 ? (
                         <QueueIcons n={q.count} />
                       ) : slot.surcharge ? (
