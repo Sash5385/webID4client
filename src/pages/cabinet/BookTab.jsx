@@ -14,6 +14,7 @@ const FALLBACK_SERVICES = [
 export default function BookTab({ user, profile, bookingsData }) {
   const isSchool = profile?.studentType === 'school'
   const canPrivate = bookingsData.canBookPrivate || profile?.studentType === 'private'
+  const isVipStudent = profile?.isVip === true
   const [services, setServices] = useState([])
   const [servicesLoaded, setServicesLoaded] = useState(false)
   const [selectedService, setSelectedService] = useState(null)
@@ -177,6 +178,7 @@ export default function BookTab({ user, profile, bookingsData }) {
 
   const slotsList = useMemo(() => {
     return Object.values(slots)
+      .filter(slot => !slot.vipOnly || isVipStudent)
       .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
       .map(slot => ({
         ...slot,

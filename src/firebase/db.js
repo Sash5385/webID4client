@@ -5,8 +5,10 @@ import { db } from './config'
 
 // в”Ђв”Ђв”Ђ USERS в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 export async function getUserProfile(uid) {
-  const snap = await get(ref(db, `users/${uid}/profile`))
-  return snap.exists() ? snap.val() : null
+  const snap = await get(ref(db, `users/${uid}`))
+  if (!snap.exists()) return null
+  const data = snap.val()
+  return { ...(data.profile || {}), isVip: data.isVip || false }
 }
 
 export async function saveUserProfile(uid, profile) {
