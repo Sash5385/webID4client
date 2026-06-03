@@ -137,10 +137,17 @@
 }
 
 .cal-card {
-  background: var(--surf-lo);
-  border-radius: 16px;
+  background: linear-gradient(135deg, var(--bg-deep), rgba(0,0,0,0.4));
+  border-radius: 14px;
   padding: 10px 8px 8px;
+  box-shadow: inset 2px 2px 8px rgba(0,0,0,0.45), inset -1px -1px 0 rgba(255,255,255,0.03), 0 1px 0 rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+[data-theme="light"] .cal-card {
+  background: var(--surf-lo);
   box-shadow: var(--shadow-in);
+  border-color: var(--border);
 }
 
 .cal-head {
@@ -151,15 +158,15 @@
 }
 
 .cal-nav-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--surface);
-  border: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--surf-hi);
+  border: 1px solid rgba(255,255,255,0.07);
   cursor: pointer;
   color: var(--text);
-  box-shadow: var(--shadow);
-  font-size: 14px;
+  box-shadow: -1px 2px 6px rgba(0,0,0,0.4), inset 1px 1px 0 rgba(255,255,255,0.1);
+  font-size: 13px;
   font-weight: 900;
   display: flex;
   align-items: center;
@@ -170,39 +177,42 @@
 .cal-nav-btn:active { transform: scale(0.9); }
 
 .cal-month {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 900;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.5px;
   color: var(--text);
   text-align: center;
+  text-transform: uppercase;
 }
 
 .cal-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  margin-bottom: 3px;
-  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
   padding-bottom: 4px;
 }
+
+[data-theme="light"] .cal-weekdays { border-bottom-color: var(--border); }
 
 .cal-wd {
   text-align: center;
   font-size: 8px;
   color: var(--faint);
   font-weight: 800;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   text-transform: uppercase;
 }
 
 .cal-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
+  gap: 2px;
 }
 
 .cal-day {
   aspect-ratio: 1;
-  border-radius: 6px;
+  border-radius: 7px;
   background: transparent;
   display: flex;
   align-items: center;
@@ -211,13 +221,19 @@
   font-weight: 700;
   cursor: pointer;
   position: relative;
-  color: var(--text);
+  color: var(--dim);
   border: none;
   transition: background .12s;
 }
-.cal-day:not(.disabled):not(.selected):hover { background: var(--surf-hi); }
+.cal-day:not(.disabled):not(.selected):hover {
+  background: rgba(255,255,255,0.06);
+}
 
 .cal-day.empty { cursor: default; visibility: hidden; }
+
+.cal-day.has-slots {
+  color: var(--text);
+}
 
 .cal-day.has-slots::after {
   content: '';
@@ -229,34 +245,32 @@
   height: 3px;
   border-radius: 50%;
   background: var(--green);
+  box-shadow: 0 0 4px rgba(99,211,120,0.7);
 }
 
 .cal-day.selected {
-  background: linear-gradient(165deg, var(--acc-hi), var(--accent));
+  background: linear-gradient(155deg, rgba(255,90,60,0.55), rgba(255,90,60,0.22));
   color: white;
-  box-shadow: 0 2px 8px rgba(255,90,60,0.45), inset 1px 1px 0 rgba(255,255,255,0.25);
+  border: 1px solid rgba(255,90,60,0.6);
+  box-shadow: -1px 3px 10px rgba(0,0,0,0.4), inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(0,0,0,0.25), 0 0 8px rgba(255,90,60,0.3);
   border-radius: 8px;
 }
 
-.cal-day.selected::after { background: white; }
+.cal-day.selected::after { background: white; box-shadow: none; }
 
 .cal-day.today:not(.selected) {
-  color: var(--accent);
+  color: var(--gold);
   font-weight: 900;
+  background: rgba(247,201,72,0.12);
+  box-shadow: inset 0 0 0 1.5px rgba(247,201,72,0.45);
+  border-radius: 7px;
 }
 
-.cal-day.today:not(.selected)::before {
-  content: '';
-  position: absolute;
-  inset: 2px;
-  border-radius: 5px;
-  border: 1.5px solid var(--accent);
-  opacity: 0.6;
-}
+.cal-day.today:not(.selected)::after { background: var(--gold); box-shadow: 0 0 4px rgba(247,201,72,0.8); }
 
 .cal-day.disabled {
   color: var(--faint);
-  opacity: 0.35;
+  opacity: 0.3;
   cursor: not-allowed;
 }
 
@@ -267,10 +281,11 @@
 }
 
 .slot {
-  background: var(--surf-lo);
+  background: linear-gradient(155deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
   border-radius: 7px;
   padding: 3px 2px;
-  box-shadow: var(--shadow-in);
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow: -1px 2px 6px rgba(0,0,0,0.4), inset 1px 1px 0 rgba(255,255,255,0.1), inset -1px -1px 0 rgba(0,0,0,0.2);
   text-align: center;
   font-size: 14px;
   font-weight: 800;
@@ -283,24 +298,37 @@
   align-items: center;
   justify-content: center;
   gap: 1px;
-  border: none;
+}
+
+[data-theme="light"] .slot {
+  background: var(--surf-hi);
+  border-color: var(--border);
+  box-shadow: var(--shadow);
 }
 
 .slot.selected {
-  background: linear-gradient(165deg, var(--acc-hi), var(--accent));
+  background: linear-gradient(155deg, rgba(255,90,60,0.55), rgba(255,90,60,0.22));
   color: white;
-  box-shadow: 0 4px 12px rgba(255,90,60,0.4), inset 2px 2px 0 rgba(255,255,255,0.3);
+  border-color: rgba(255,90,60,0.65);
+  box-shadow: -1px 3px 10px rgba(0,0,0,0.5), inset 1px 1px 0 rgba(255,255,255,0.22), inset -1px -1px 0 rgba(0,0,0,0.3), 0 0 10px rgba(255,90,60,0.35);
+}
+
+.slot.taken {
+  background: rgba(0,0,0,0.25);
+  border-color: rgba(255,255,255,0.03);
+  box-shadow: inset 1px 1px 4px rgba(0,0,0,0.3);
 }
 
 .slot.taken .slot-time {
   text-decoration: line-through;
-  opacity: 0.6;
+  opacity: 0.4;
 }
 
 .slot.my-queue {
-  background: linear-gradient(165deg, #fcd34d, #d97706);
+  background: linear-gradient(155deg, rgba(247,201,72,0.45), rgba(217,119,6,0.22));
   color: white;
-  box-shadow: 0 4px 12px rgba(217,119,6,0.4), inset 2px 2px 0 rgba(255,255,255,0.3);
+  border-color: rgba(247,201,72,0.6);
+  box-shadow: -1px 3px 10px rgba(0,0,0,0.5), inset 1px 1px 0 rgba(255,255,255,0.22), 0 0 8px rgba(247,201,72,0.3);
 }
 
 .slot.my-queue .slot-time { text-decoration: none; opacity: 1; }
