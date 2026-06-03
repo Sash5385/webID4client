@@ -48,12 +48,24 @@ export default function BookTab({ user, profile, bookingsData }) {
 
   const durationHours = selectedService ? Math.round(selectedService.duration / 60) : 1
 
+  function getLunchForDate(date) {
+    if (!date) return { lunchEnabled: adminSettings.lunchEnabled, lunchStart: adminSettings.lunchStart || 12, lunchEnd: adminSettings.lunchEnd || 13 }
+    const dateStr = formatDateYMD(date)
+    const ov = (adminSettings.dateOverrides || []).find(o => o.date === dateStr)
+    if (ov && ov.type !== 'closed') return { lunchEnabled: ov.lunchEnabled ?? adminSettings.lunchEnabled, lunchStart: ov.lunchStart ?? adminSettings.lunchStart ?? 12, lunchEnd: ov.lunchEnd ?? adminSettings.lunchEnd ?? 13 }
+    const dow = (date.getDay() + 6) % 7
+    const ws = (adminSettings.weekSchedule || [])[dow]
+    if (ws) return { lunchEnabled: ws.lunchEnabled ?? true, lunchStart: ws.lunchStart ?? 12, lunchEnd: ws.lunchEnd ?? 13 }
+    return { lunchEnabled: adminSettings.lunchEnabled, lunchStart: adminSettings.lunchStart || 12, lunchEnd: adminSettings.lunchEnd || 13 }
+  }
+
   function isBlockedByLunch(slotTime, durHours) {
-    if (!adminSettings.lunchEnabled) return false
+    const { lunchEnabled, lunchStart, lunchEnd } = getLunchForDate(selectedDate)
+    if (!lunchEnabled) return false
     const [h, m] = slotTime.split(':').map(Number)
     const startMin = h * 60 + m
     const endMin = startMin + durHours * 60
-    return startMin < adminSettings.lunchEnd * 60 && endMin > adminSettings.lunchStart * 60
+    return startMin < lunchEnd * 60 && endMin > lunchStart * 60
   }
 
   function wouldOverlapTaken(slotTime, durHours) {
