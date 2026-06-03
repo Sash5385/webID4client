@@ -219,8 +219,8 @@ export default function BookTab({ user, profile, bookingsData }) {
       {!servicesLoaded ? (
         <div style={{textAlign:'center', padding:'16px', color:'var(--dim)', fontSize:'13px'}}>Завантаження...</div>
       ) : (
-        <div style={{display:'flex', flexDirection:'column', gap:8}}>
-          {services.map(svc => {
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8}}>
+          {[...services].sort((a,b) => a.duration - b.duration || (a.type === 'school' ? -1 : 1)).map(svc => {
             const isLocked = svc.type === 'private' && !canPrivate
             const isSelected = selectedService?.id === svc.id
             const svcColor = svc.colorId === 'green' ? '#7ed957' : svc.colorId === 'yellow' ? '#f7c948' : svc.colorId === 'blue' ? '#5b9bff' : svc.colorId === 'purple' ? '#c084fc' : svc.colorId === 'red' ? '#ff5a3c' : svc.colorId === 'teal' ? '#2dd4bf' : svc.colorId === 'pink' ? '#f472b6' : svc.colorId === 'orange' ? '#fb923c' : svc.colorId === 'indigo' ? '#818cf8' : svc.colorId === 'lime' ? '#a3e635' : '#7ed957'
@@ -229,31 +229,31 @@ export default function BookTab({ user, profile, bookingsData }) {
                 key={svc.id}
                 className={`svc-tile${isSelected ? ' selected' : ''}${isLocked ? ' locked' : ''}`}
                 style={{
-                  display:'flex', alignItems:'center', gap:12, padding:'12px 14px',
-                  textAlign:'left', borderRadius:16,
+                  display:'flex', alignItems:'center', gap:10, padding:'10px 12px',
+                  textAlign:'left', borderRadius:14,
                   borderColor: isSelected ? svcColor : 'transparent',
                   boxShadow: isSelected ? `0 0 0 2px ${svcColor}55, var(--shadow)` : undefined,
                 }}
                 onClick={() => !isLocked && setSelectedService(svc)}
               >
                 <div style={{
-                  width:44, height:44, borderRadius:13, flexShrink:0,
+                  width:36, height:36, borderRadius:11, flexShrink:0,
                   background:`linear-gradient(155deg,${svcColor}cc,${svcColor}44)`,
                   border:`1.5px solid ${svcColor}55`,
                   display:'flex', alignItems:'center', justifyContent:'center',
-                  fontSize:20, boxShadow:`-2px 4px 10px rgba(0,0,0,0.4),inset 1px 1px 0 rgba(255,255,255,0.2)`
+                  fontSize:17, boxShadow:`-2px 4px 10px rgba(0,0,0,0.4),inset 1px 1px 0 rgba(255,255,255,0.2)`
                 }}>
                   {isLocked ? '🔒' : svc.type === 'school' ? '🎓' : '🚙'}
                 </div>
                 <div style={{flex:1, minWidth:0}}>
-                  <div style={{fontSize:14, fontWeight:800, marginBottom:2}}>{svc.name}</div>
-                  <div style={{fontSize:11, color:'var(--dim)'}}>
+                  <div style={{fontSize:12, fontWeight:800, marginBottom:1, lineHeight:1.2}}>{svc.name}</div>
+                  <div style={{fontSize:10, color:'var(--dim)'}}>
                     {Math.round(svc.duration / 60)} год
-                    {isLocked ? ' · після 40 уроків' : ` · ${svc.price} ₴`}
+                    {isLocked ? ' · після 40' : ` · ${svc.price} ₴`}
                   </div>
                 </div>
                 {isSelected && (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={svcColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={svcColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 )}
