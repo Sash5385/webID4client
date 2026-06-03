@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { sendSmsCode, verifySmsCode, resetRecaptcha } from '../firebase/auth'
-import { signInWithEmail, signUpWithEmail } from '../firebase/auth-email'
+import { signInWithEmail, signUpWithEmail, sendPasswordReset } from '../firebase/auth-email'
 import { saveUserProfile, getUserProfile } from '../firebase/db'
 import { useTheme } from '../hooks/useTheme'
 import { normalizePhone, formatPhone } from '../utils/format'
@@ -69,6 +69,13 @@ export default function Auth({ user, profile, onProfileSaved }) {
 
   // auth mode toggle
   const [authMode, setAuthMode] = useState('sms')
+
+  // forgot password
+  const [resetMode, setResetMode] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetSending, setResetSending] = useState(false)
+  const [resetDone, setResetDone] = useState(false)
+  const [resetError, setResetError] = useState('')
 
   // survey step
   const [name, setName] = useState('')
@@ -227,6 +234,20 @@ export default function Auth({ user, profile, onProfileSaved }) {
     }
   }
 
+  const handleSendReset = async () => {
+    setResetError('')
+    if (!resetEmail) { setResetError('Введи email'); return }
+    setResetSending(true)
+    try {
+      await sendPasswordReset(resetEmail)
+      setResetDone(true)
+    } catch (e) {
+      setResetError(e.code === 'auth/user-not-found' ? 'Акаунт з таким email не знайдено' : 'Помилка. Перевір email і спробуй ще раз')
+    } finally {
+      setResetSending(false)
+    }
+  }
+
   const [termsOpen, setTermsOpen] = useState(false)
 
   const stepNum = step === 'phone' ? 0 : step === 'sms' ? 1 : 2
@@ -302,6 +323,35 @@ export default function Auth({ user, profile, onProfileSaved }) {
                 {sending?'Надсилаємо...':'Надіслати код →'}
               </button>
             </div>
+          </>) : resetMode ? (<>
+            <h1 className="auth-h1">{resetDone ? <>Лист <span className="acc">надіслано</span></> : <>Відновлення <span className="acc">паролю</span></>}</h1>
+            {resetDone ? (<>
+              <div style={{textAlign:'center',marginTop:24}}>
+                <div style={{fontSize:56,marginBottom:16}}>📬</div>
+                <p className="auth-sub">Перевір <b>{resetEmail}</b><br/>і перейди за посиланням у листі.</p>
+              </div>
+              <div style={{marginTop:'auto'}}>
+                <button className="btn-primary" onClick={()=>{setResetMode(false);setResetDone(false);setResetEmail('')}}>
+                  Повернутись →
+                </button>
+              </div>
+            </>) : (<>
+              <p className="auth-sub">Вкажи email — надішлемо посилання для зміни паролю.</p>
+              <div className="field">
+                <div className="field-label">Email</div>
+                <input className="text-input" type="email" placeholder="you@example.com"
+                  value={resetEmail} onChange={e=>setResetEmail(e.target.value)} autoFocus inputMode="email"/>
+              </div>
+              {resetError && <div className="auth-error">{resetError}</div>}
+              <div style={{marginTop:16,display:'flex',flexDirection:'column',gap:10}}>
+                <button className="btn-primary" onClick={handleSendReset} disabled={resetSending||!resetEmail}>
+                  {resetSending ? 'Надсилаємо...' : 'Надіслати посилання →'}
+                </button>
+                <button onClick={()=>{setResetMode(false);setResetError('')}} style={{
+                  background:'none',border:'none',color:'var(--dim)',fontSize:13,cursor:'pointer',padding:'6px 0'
+                }}>← Назад</button>
+              </div>
+            </>)}
           </>) : (<>
             <h1 className="auth-h1">Увійти через <span className="acc">Email</span></h1>
             <p className="auth-sub">Введи пошту та пароль — зайдеш або зареєструєшся.</p>
@@ -311,7 +361,12 @@ export default function Auth({ user, profile, onProfileSaved }) {
                 value={email} onChange={e=>setEmail(e.target.value)} autoFocus inputMode="email"/>
             </div>
             <div className="field">
-              <div className="field-label">Пароль</div>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                <div className="field-label" style={{margin:0}}>Пароль</div>
+                <button onClick={()=>{setResetMode(true);setResetEmail(email);setResetError('');setResetDone(false)}} style={{
+                  background:'none',border:'none',color:'var(--accent)',fontSize:12,cursor:'pointer',fontWeight:700,padding:0
+                }}>Забули пароль?</button>
+              </div>
               <input className="text-input" type="password" placeholder="Мінімум 6 символів"
                 value={password} onChange={e=>setPassword(e.target.value)}/>
             </div>

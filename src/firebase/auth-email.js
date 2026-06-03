@@ -1,7 +1,8 @@
-﻿import { 
+﻿import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signOut as fbSignOut 
+  signOut as fbSignOut,
+  sendPasswordResetEmail as fbSendReset
 } from 'firebase/auth'
 import { auth } from './config'
 
@@ -17,4 +18,8 @@ export async function signInWithEmail(email, password) {
 
 export async function signOut() {
   await fbSignOut(auth)
+}
+
+export async function sendPasswordReset(email) {
+  await fbSendReset(auth, email)
 }
