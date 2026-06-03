@@ -4,11 +4,18 @@ import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay } from '..
 import { getInitials, pluralize } from '../../utils/format'
 import './BookTab.css'
 
+const FALLBACK_SERVICES = [
+  { id:'school-1h', name:'Автошкола 1 год',  type:'school',  duration:60,  price:0, colorId:'blue'   },
+  { id:'school-2h', name:'Автошкола 2 год',  type:'school',  duration:120, price:0, colorId:'blue'   },
+  { id:'private-1h',name:'Приватний 1 год',  type:'private', duration:60,  price:0, colorId:'purple' },
+  { id:'private-2h',name:'Приватний 2 год',  type:'private', duration:120, price:0, colorId:'purple' },
+]
+
 export default function BookTab({ user, profile, bookingsData }) {
   const isSchool = profile?.studentType === 'school'
   const canPrivate = bookingsData.canBookPrivate || profile?.studentType === 'private'
-
   const [services, setServices] = useState([])
+  const [servicesLoaded, setServicesLoaded] = useState(false)
   const [selectedService, setSelectedService] = useState(null)
   const [today] = useState(() => { const d = new Date(); d.setHours(0,0,0,0); return d })
   const [viewMonth, setViewMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
@@ -27,9 +34,15 @@ export default function BookTab({ user, profile, bookingsData }) {
   useEffect(() => {
     getAdminSettings().then(s => setAdminSettings(s)).catch(() => {})
     getAdminServices().then(list => {
-      setServices(list)
-      if (list.length > 0) setSelectedService(list[0])
-    }).catch(() => {})
+      const final = list.length > 0 ? list : FALLBACK_SERVICES
+      setServices(final)
+      setSelectedService(final[0])
+      setServicesLoaded(true)
+    }).catch(() => {
+      setServices(FALLBACK_SERVICES)
+      setSelectedService(FALLBACK_SERVICES[0])
+      setServicesLoaded(true)
+    })
   }, [])
 
   const durationHours = selectedService ? Math.round(selectedService.duration / 60) : 1
@@ -203,7 +216,7 @@ export default function BookTab({ user, profile, bookingsData }) {
 
       {/* 1. ПОСЛУГА */}
       <div className="section-title">1. Послуга</div>
-      {services.length === 0 ? (
+      {!servicesLoaded ? (
         <div style={{textAlign:'center', padding:'16px', color:'var(--dim)', fontSize:'13px'}}>Завантаження...</div>
       ) : (
         <div style={{display:'flex', flexDirection:'column', gap:8}}>
