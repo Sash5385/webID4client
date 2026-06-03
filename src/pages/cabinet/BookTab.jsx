@@ -229,34 +229,33 @@ export default function BookTab({ user, profile, bookingsData }) {
                 key={svc.id}
                 className={`svc-tile${isSelected ? ' selected' : ''}${isLocked ? ' locked' : ''}`}
                 style={{
-                  display:'flex', alignItems:'center', gap:10, padding:'10px 12px',
-                  textAlign:'left', borderRadius:14,
+                  display:'flex', flexDirection:'column', alignItems:'center', gap:8, padding:'12px 8px',
+                  textAlign:'center', borderRadius:14, position:'relative',
                   borderColor: isSelected ? svcColor : 'transparent',
                   boxShadow: isSelected ? `0 0 0 2px ${svcColor}55, var(--shadow)` : undefined,
                 }}
                 onClick={() => !isLocked && setSelectedService(svc)}
               >
-                <div style={{
-                  width:36, height:36, borderRadius:11, flexShrink:0,
-                  background:`linear-gradient(155deg,${svcColor}cc,${svcColor}44)`,
-                  border:`1.5px solid ${svcColor}55`,
-                  display:'flex', alignItems:'center', justifyContent:'center',
-                  fontSize:17, boxShadow:`-2px 4px 10px rgba(0,0,0,0.4),inset 1px 1px 0 rgba(255,255,255,0.2)`
-                }}>
-                  {isLocked ? '🔒' : svc.type === 'school' ? '🎓' : '🚙'}
-                </div>
-                <div style={{flex:1, minWidth:0}}>
-                  <div style={{fontSize:12, fontWeight:800, marginBottom:1, lineHeight:1.2}}>{svc.name}</div>
-                  <div style={{fontSize:10, color:'var(--dim)'}}>
-                    {Math.round(svc.duration / 60)} год
-                    {isLocked ? ' · після 40' : ` · ${svc.price} ₴`}
-                  </div>
-                </div>
                 {isSelected && (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={svcColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <svg style={{position:'absolute', top:8, right:8}} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={svcColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 )}
+                <div style={{
+                  width:40, height:40, borderRadius:12,
+                  background:`linear-gradient(155deg,${svcColor}cc,${svcColor}44)`,
+                  border:`1.5px solid ${svcColor}55`,
+                  display:'flex', alignItems:'center', justifyContent:'center',
+                  fontSize:19, boxShadow:`-2px 4px 10px rgba(0,0,0,0.4),inset 1px 1px 0 rgba(255,255,255,0.2)`
+                }}>
+                  {isLocked ? '🔒' : svc.type === 'school' ? '🎓' : '🚙'}
+                </div>
+                <div>
+                  <div style={{fontSize:11, fontWeight:800, lineHeight:1.3}}>{svc.name}</div>
+                  <div style={{fontSize:10, color:'var(--dim)', marginTop:1}}>
+                    {isLocked ? 'після 40 уроків' : `${svc.price} ₴`}
+                  </div>
+                </div>
               </div>
             )
           })}
