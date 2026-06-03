@@ -68,7 +68,8 @@
 }
 
 .cab-content {
-  padding: 0 16px;
+  padding: 0 16px 80px;
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
 }
 
 /* BOTTOM NAV */
