@@ -196,14 +196,6 @@ export default function BookTab({ user, profile, bookingsData }) {
   const prevMonth = () => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))
   const nextMonth = () => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))
 
-  const basePrice = useMemo(() => {
-    const durMin = duration * 60
-    const svc = (adminSettings.services || []).find(s =>
-      s.active !== false && s.type === serviceType && Number(s.duration) === durMin
-    )
-    return svc?.price || 0
-  }, [serviceType, duration, adminSettings])
-
   const slotsList = useMemo(() => {
     const isVip = profile?.isVip === true
     return Object.values(slots)
