@@ -93,6 +93,7 @@ export async function claimReservedSlot(date, time, uid) {
   const slotId = `slot${time.replace(':', '')}`
   const updates = {}
   updates[`queue/${slotKey}/entries/${uid}/status`] = 'booked'
+  updates[`timeslots/${date}/${slotId}/offeredTo/${uid}`] = null
   updates[`timeslots/${date}/${slotId}/reservedFor`] = null
   updates[`timeslots/${date}/${slotId}/reservedUntil`] = null
   await update(ref(db, '/'), updates)

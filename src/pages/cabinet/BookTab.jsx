@@ -122,14 +122,14 @@ export default function BookTab({ user, profile, bookingsData }) {
 
   const handleSlotClick = (slot) => {
     if (slot.lunchBlocked || slot.overlapBlocked) return
-    if (slot.reservedFor === user?.uid) {
+    if (slot.offeredTo?.[user?.uid]) {
       // Слот зарезервований для мене → одразу до бронювання
       setSelectedTime(slot.time)
       return
     }
     if (slot.available === false) {
       // Зайнятий або зарезервований для іншого
-      if (slot.reservedFor) return // зарезервовано для когось іншого — не пропонуємо чергу
+      // якщо слот запропонований комусь — і не мені — дозволяємо стати в чергу
       const q = queueMap[slot.time]
       if (q?.mine) return
       setDialogSlot({ ...slot, queueCount: q?.count || 0 })
@@ -159,7 +159,7 @@ export default function BookTab({ user, profile, bookingsData }) {
         tscCenter: profile.tscCenter,
       })
       await markSlotsUnavailable(dateStr, selectedTime, durationHours, adminSettings.interval || 30)
-      if (currentSlot?.reservedFor === user?.uid) {
+      if (currentSlot?.offeredTo?.[user?.uid]) {
         await claimReservedSlot(dateStr, selectedTime, user.uid)
       }
       setSelectedTime(null)
@@ -337,8 +337,8 @@ export default function BookTab({ user, profile, bookingsData }) {
                   const isSelected = selectedTime === slot.time
                   const isLunch = slot.lunchBlocked
                   const isOverlap = slot.overlapBlocked
-                  const isMyReserved = slot.reservedFor === user?.uid
-                  const isOtherReserved = slot.reservedFor && !isMyReserved
+                  const isMyReserved = !!(slot.offeredTo?.[user?.uid])
+                  const isOtherReserved = false
                   const isTaken = !isAvailable && !isMyReserved && !isOtherReserved
                   const isHardDisabled = isLunch || isOverlap || isOtherReserved || isMyQueue
                   return (
