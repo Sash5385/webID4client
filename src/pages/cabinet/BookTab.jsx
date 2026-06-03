@@ -130,6 +130,8 @@ export default function BookTab({ user, profile, bookingsData }) {
     setSubmitting(true)
     try {
       const dateStr = formatDateYMD(selectedDate)
+      const currentSlot = slots[`slot${selectedTime.replace(':', '')}`]
+      const surcharge = currentSlot?.surcharge || 0
       await createBooking(user.uid, {
         date: dateStr,
         time: selectedTime,
@@ -137,18 +139,18 @@ export default function BookTab({ user, profile, bookingsData }) {
         serviceId: selectedService.id,
         serviceName: selectedService.name,
         price: selectedService.price,
+        surcharge,
         durationHours,
         studentName: profile.name,
         phone: profile.phone || user.phoneNumber,
         tscCenter: profile.tscCenter,
       })
       await markSlotsUnavailable(dateStr, selectedTime, durationHours, adminSettings.interval || 30)
-      const currentSlot = slots[`slot${selectedTime.replace(':', '')}`]
       if (currentSlot?.reservedFor === user?.uid) {
         await claimReservedSlot(dateStr, selectedTime, user.uid)
       }
       setSelectedTime(null)
-      setSuccessData({ type: 'booking', date: formatDateYMD(selectedDate), time: selectedTime, service: selectedService, durationHours })
+      setSuccessData({ type: 'booking', date: formatDateYMD(selectedDate), time: selectedTime, service: selectedService, surcharge, durationHours })
     } catch (e) {
       alert('Помилка: ' + e.message)
     } finally {
@@ -346,6 +348,8 @@ export default function BookTab({ user, profile, bookingsData }) {
                         </div>
                       ) : q?.count > 0 ? (
                         <QueueIcons n={q.count} />
+                      ) : slot.surcharge ? (
+                        <div style={{fontSize:8, fontWeight:700, color:'var(--gold)'}}>+{slot.surcharge}₴</div>
                       ) : null}
                     </button>
                   )
@@ -420,7 +424,10 @@ export default function BookTab({ user, profile, bookingsData }) {
               {successData.service?.price > 0 && (
                 <div className="dialog-info-row">
                   <span className="lbl">Ціна</span>
-                  <span className="val" style={{color:'var(--gold)'}}>{successData.service.price} ₴</span>
+                  <span className="val" style={{color:'var(--gold)'}}>
+                    {successData.service.price + (successData.surcharge || 0)} ₴
+                    {successData.surcharge > 0 && <span style={{fontSize:10, color:'var(--gold)', opacity:0.7}}> (+{successData.surcharge}₴)</span>}
+                  </span>
                 </div>
               )}
             </div>
