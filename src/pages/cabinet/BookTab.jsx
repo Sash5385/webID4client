@@ -395,12 +395,9 @@ export default function BookTab({ user, profile, bookingsData }) {
             <div className="dialog-title">
               {successData.type === 'booking' ? 'Урок заброньовано!' : 'Ти в черзі!'}
             </div>
-            <div className="dialog-sub">
-              {successData.type === 'booking'
-                ? 'Чекай підтвердження від інструктора. Нагадаємо за 24 год.'
-                : 'Як тільки слот звільниться — отримаєш push-сповіщення.'
-              }
-            </div>
+            {successData.type === 'queue' && (
+              <div className="dialog-sub">Як тільки слот звільниться — отримаєш push-сповіщення.</div>
+            )}
             <div className="dialog-info-card">
               <div className="dialog-info-row">
                 <span className="lbl">Дата</span>
