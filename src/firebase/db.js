@@ -166,6 +166,13 @@ export async function getAdminSettings() {
   return snap.exists() ? snap.val() : { lunchEnabled: false, lunchStart: 12, lunchEnd: 13, workStart: 9, workEnd: 18, interval: 30 }
 }
 
+export async function getAdminServices() {
+  const snap = await get(ref(db, 'admin_data/services'))
+  if (!snap.exists()) return []
+  const val = snap.val()
+  return Array.isArray(val) ? val.filter(s => s && s.active && !s.archived) : []
+}
+
 // ─── CHAT ────────────────────────────────────────────────────────
 export function subscribeStudentChat(uid, callback) {
   const r = ref(db, `chats/${uid}`)

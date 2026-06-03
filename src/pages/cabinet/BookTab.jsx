@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { subscribeSlotsForDate, createBooking, joinQueue, subscribeQueueForSlot, getAdminSettings, markSlotsUnavailable, claimReservedSlot, setViewingSlot, clearViewingSlot } from '../../firebase/db'
+import { subscribeSlotsForDate, createBooking, joinQueue, subscribeQueueForSlot, getAdminSettings, getAdminServices, markSlotsUnavailable, claimReservedSlot, setViewingSlot, clearViewingSlot } from '../../firebase/db'
 import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay } from '../../utils/date'
 import { getInitials, pluralize } from '../../utils/format'
 import './BookTab.css'
@@ -8,8 +8,8 @@ export default function BookTab({ user, profile, bookingsData }) {
   const isSchool = profile?.studentType === 'school'
   const canPrivate = bookingsData.canBookPrivate || profile?.studentType === 'private'
 
-  const [serviceType, setServiceType] = useState(profile?.studentType || 'school')
-  const [duration, setDuration] = useState(1)
+  const [services, setServices] = useState([])
+  const [selectedService, setSelectedService] = useState(null)
   const [today] = useState(() => { const d = new Date(); d.setHours(0,0,0,0); return d })
   const [viewMonth, setViewMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
   const [selectedDate, setSelectedDate] = useState(null)
@@ -26,20 +26,26 @@ export default function BookTab({ user, profile, bookingsData }) {
 
   useEffect(() => {
     getAdminSettings().then(s => setAdminSettings(s)).catch(() => {})
+    getAdminServices().then(list => {
+      setServices(list)
+      if (list.length > 0) setSelectedService(list[0])
+    }).catch(() => {})
   }, [])
 
-  function isBlockedByLunch(slotTime, durationHours) {
+  const durationHours = selectedService ? Math.round(selectedService.duration / 60) : 1
+
+  function isBlockedByLunch(slotTime, durHours) {
     if (!adminSettings.lunchEnabled) return false
     const [h, m] = slotTime.split(':').map(Number)
     const startMin = h * 60 + m
-    const endMin = startMin + durationHours * 60
+    const endMin = startMin + durHours * 60
     return startMin < adminSettings.lunchEnd * 60 && endMin > adminSettings.lunchStart * 60
   }
 
-  function wouldOverlapTaken(slotTime, durationHours) {
+  function wouldOverlapTaken(slotTime, durHours) {
     const [h, m] = slotTime.split(':').map(Number)
     const startMin = h * 60 + m
-    const endMin = startMin + durationHours * 60
+    const endMin = startMin + durHours * 60
     return Object.values(slots).some(s => {
       if (s.available !== false) return false
       const [sh, sm] = (s.time || '').split(':').map(Number)
@@ -107,28 +113,29 @@ export default function BookTab({ user, profile, bookingsData }) {
   }
 
   const handleBook = async () => {
-    if (!selectedDate || !selectedTime) return
+    if (!selectedDate || !selectedTime || !selectedService) return
     setSubmitting(true)
     try {
       const dateStr = formatDateYMD(selectedDate)
       await createBooking(user.uid, {
         date: dateStr,
         time: selectedTime,
-        serviceType,
-        serviceName: serviceType === 'school' ? 'Автошкола' : 'Приватний',
-        durationHours: duration,
+        serviceType: selectedService.type,
+        serviceId: selectedService.id,
+        serviceName: selectedService.name,
+        price: selectedService.price,
+        durationHours,
         studentName: profile.name,
         phone: profile.phone || user.phoneNumber,
         tscCenter: profile.tscCenter,
       })
-      await markSlotsUnavailable(dateStr, selectedTime, duration, adminSettings.interval || 30)
-      // Якщо слот був зарезервований для мене — знімаємо резерв
+      await markSlotsUnavailable(dateStr, selectedTime, durationHours, adminSettings.interval || 30)
       const currentSlot = slots[`slot${selectedTime.replace(':', '')}`]
       if (currentSlot?.reservedFor === user?.uid) {
         await claimReservedSlot(dateStr, selectedTime, user.uid)
       }
       setSelectedTime(null)
-      setSuccessData({ type: 'booking', date: formatDateYMD(selectedDate), time: selectedTime, service: serviceType, duration })
+      setSuccessData({ type: 'booking', date: formatDateYMD(selectedDate), time: selectedTime, service: selectedService, durationHours })
     } catch (e) {
       alert('Помилка: ' + e.message)
     } finally {
@@ -137,12 +144,12 @@ export default function BookTab({ user, profile, bookingsData }) {
   }
 
   const handleJoinQueue = async () => {
-    if (!dialogSlot || !selectedDate) return
+    if (!dialogSlot || !selectedDate || !selectedService) return
     setSubmitting(true)
     try {
-      await joinQueue(user.uid, formatDateYMD(selectedDate), dialogSlot.time, serviceType, duration, profile?.name || '', profile?.phone || user?.phoneNumber || '')
+      await joinQueue(user.uid, formatDateYMD(selectedDate), dialogSlot.time, selectedService.type, durationHours, profile?.name || '', profile?.phone || user?.phoneNumber || '')
       setDialogSlot(null)
-      setSuccessData({ type: 'queue', date: formatDateYMD(selectedDate), time: dialogSlot.time, service: serviceType, duration })
+      setSuccessData({ type: 'queue', date: formatDateYMD(selectedDate), time: dialogSlot.time, service: selectedService, durationHours })
     } catch (e) {
       alert('Помилка: ' + e.message)
     } finally {
@@ -158,11 +165,11 @@ export default function BookTab({ user, profile, bookingsData }) {
       .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
       .map(slot => ({
         ...slot,
-        lunchBlocked:   isBlockedByLunch(slot.time, duration),
-        overlapBlocked: slot.available !== false && wouldOverlapTaken(slot.time, duration),
+        lunchBlocked:   isBlockedByLunch(slot.time, durationHours),
+        overlapBlocked: slot.available !== false && wouldOverlapTaken(slot.time, durationHours),
       }))
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slots, duration, adminSettings])
+  }, [slots, durationHours, adminSettings])
 
   const QueueIcons = ({ n }) => {
     const max = Math.min(n, 3)
@@ -189,48 +196,62 @@ export default function BookTab({ user, profile, bookingsData }) {
           <div className="banner-greet">Привіт,</div>
           <div className="banner-name">{profile?.name?.split(' ')[0] || 'Учень'}</div>
           <div className="banner-tag">
-            {serviceType === 'school' ? '🎓 Автошкола' : '🚙 Приватний'}
+            {selectedService?.type === 'school' ? '🎓 Автошкола' : '🚙 Приватний'}
           </div>
         </div>
       </div>
 
-      {/* 1. ТИП УРОКУ */}
-      <div className="section-title">1. Тип уроку</div>
-      <div className="service-grid">
-        <div
-          className={`svc-tile ${serviceType === 'school' ? 'selected' : ''} ${!isSchool ? 'locked' : ''}`}
-          onClick={() => isSchool && setServiceType('school')}
-        >
-          <div className={`ico ${isSchool ? 'bk-ico-school' : 'bk-ico-locked'}`}>
-            {isSchool ? '🎓' : '🔒'}
-          </div>
-          <div className="svc-title">Автошкола</div>
-          <div className="svc-dur">{isSchool ? 'Курс ТСЦ' : 'недоступно'}</div>
+      {/* 1. ПОСЛУГА */}
+      <div className="section-title">1. Послуга</div>
+      {services.length === 0 ? (
+        <div style={{textAlign:'center', padding:'16px', color:'var(--dim)', fontSize:'13px'}}>Завантаження...</div>
+      ) : (
+        <div style={{display:'flex', flexDirection:'column', gap:8}}>
+          {services.map(svc => {
+            const isLocked = svc.type === 'private' && !canPrivate
+            const isSelected = selectedService?.id === svc.id
+            const svcColor = svc.colorId === 'green' ? '#7ed957' : svc.colorId === 'yellow' ? '#f7c948' : svc.colorId === 'blue' ? '#5b9bff' : svc.colorId === 'purple' ? '#c084fc' : svc.colorId === 'red' ? '#ff5a3c' : svc.colorId === 'teal' ? '#2dd4bf' : svc.colorId === 'pink' ? '#f472b6' : svc.colorId === 'orange' ? '#fb923c' : svc.colorId === 'indigo' ? '#818cf8' : svc.colorId === 'lime' ? '#a3e635' : '#7ed957'
+            return (
+              <div
+                key={svc.id}
+                className={`svc-tile${isSelected ? ' selected' : ''}${isLocked ? ' locked' : ''}`}
+                style={{
+                  display:'flex', alignItems:'center', gap:12, padding:'12px 14px',
+                  textAlign:'left', borderRadius:16,
+                  borderColor: isSelected ? svcColor : 'transparent',
+                  boxShadow: isSelected ? `0 0 0 2px ${svcColor}55, var(--shadow)` : undefined,
+                }}
+                onClick={() => !isLocked && setSelectedService(svc)}
+              >
+                <div style={{
+                  width:44, height:44, borderRadius:13, flexShrink:0,
+                  background:`linear-gradient(155deg,${svcColor}cc,${svcColor}44)`,
+                  border:`1.5px solid ${svcColor}55`,
+                  display:'flex', alignItems:'center', justifyContent:'center',
+                  fontSize:20, boxShadow:`-2px 4px 10px rgba(0,0,0,0.4),inset 1px 1px 0 rgba(255,255,255,0.2)`
+                }}>
+                  {isLocked ? '🔒' : svc.type === 'school' ? '🎓' : '🚙'}
+                </div>
+                <div style={{flex:1, minWidth:0}}>
+                  <div style={{fontSize:14, fontWeight:800, marginBottom:2}}>{svc.name}</div>
+                  <div style={{fontSize:11, color:'var(--dim)'}}>
+                    {Math.round(svc.duration / 60)} год
+                    {isLocked ? ' · після 40 уроків' : ` · ${svc.price} ₴`}
+                  </div>
+                </div>
+                {isSelected && (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={svcColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                )}
+              </div>
+            )
+          })}
         </div>
-        <div
-          className={`svc-tile ${serviceType === 'private' ? 'selected' : ''} ${!canPrivate ? 'locked' : ''}`}
-          onClick={() => canPrivate && setServiceType('private')}
-        >
-          <div className={`ico ${canPrivate ? 'bk-ico-private' : 'bk-ico-locked'}`}>
-            {canPrivate ? '🚙' : '🔒'}
-          </div>
-          <div className="svc-title">Приватний</div>
-          {canPrivate
-            ? <div className="svc-dur">Індивідуально</div>
-            : <div className="svc-lock">після 40 уроків</div>
-          }
-        </div>
-      </div>
+      )}
 
-      {/* 2. ТРИВАЛІСТЬ */}
-      <div className="section-title">2. Тривалість</div>
-      <div className="dur-switch">
-        <button className={`dur-pill ${duration === 1 ? 'active' : ''}`} onClick={() => setDuration(1)}>1 година</button>
-        <button className={`dur-pill ${duration === 2 ? 'active' : ''}`} onClick={() => setDuration(2)}>2 години</button>
-      </div>
-
-      {/* 3. ДАТА */}
-      <div className="section-title">3. Дата</div>
+      {/* 2. ДАТА */}
+      <div className="section-title">2. Дата</div>
       <div className="cal-card">
         <div className="cal-head">
           <button className="cal-nav-btn" onClick={prevMonth}>‹</button>
@@ -265,11 +286,11 @@ export default function BookTab({ user, profile, bookingsData }) {
         </div>
       </div>
 
-      {/* 4. ЧАС */}
+      {/* 3. ЧАС */}
       {selectedDate && (
         <>
           <div className="section-title">
-            4. Час ({selectedDate.toLocaleDateString('uk-UA', { weekday: 'short', day: 'numeric', month: 'long' })})
+            3. Час ({selectedDate.toLocaleDateString('uk-UA', { weekday: 'short', day: 'numeric', month: 'long' })})
           </div>
           {loading ? (
             <div style={{textAlign:'center', padding:'24px'}}><div className="spinner" style={{margin:'0 auto'}}></div></div>
@@ -332,7 +353,7 @@ export default function BookTab({ user, profile, bookingsData }) {
       )}
 
       {/* CTA */}
-      {selectedTime && (
+      {selectedTime && selectedService && (
         <button className="btn-primary" style={{marginTop:16}} onClick={handleBook} disabled={submitting}>
           {submitting ? 'Записуємо...' : `✓ Записатись на ${formatDateYMD(selectedDate).slice(-5).replace('-','.')} о ${selectedTime}`}
         </button>
@@ -380,13 +401,19 @@ export default function BookTab({ user, profile, bookingsData }) {
                 <span className="val">{successData.time}</span>
               </div>
               <div className="dialog-info-row">
-                <span className="lbl">Тип</span>
-                <span className="val">{successData.service === 'school' ? '🎓 Автошкола' : '🚙 Приватний'}</span>
+                <span className="lbl">Послуга</span>
+                <span className="val">{successData.service?.name || successData.service}</span>
               </div>
               <div className="dialog-info-row" style={{borderTop:'1px solid var(--border)', paddingTop:10, marginTop:4}}>
                 <span className="lbl">Тривалість</span>
-                <span className="val">{successData.duration} {successData.duration === 1 ? 'година' : 'години'}</span>
+                <span className="val">{successData.durationHours} {successData.durationHours === 1 ? 'година' : 'години'}</span>
               </div>
+              {successData.service?.price > 0 && (
+                <div className="dialog-info-row">
+                  <span className="lbl">Ціна</span>
+                  <span className="val" style={{color:'var(--gold)'}}>{successData.service.price} ₴</span>
+                </div>
+              )}
             </div>
             <div className="dialog-actions">
               <button className="dialog-btn primary" onClick={() => setSuccessData(null)}>Закрити</button>
