@@ -163,6 +163,17 @@ export async function clearViewingSlot(date, time, uid) {
   await remove(ref(db, `timeslots/${date}/${slotId}/viewing/${uid}`))
 }
 
+// ─── QUEUE OFFERS ────────────────────────────────────────────────
+export function subscribeQueueOffers(uid, callback) {
+  const r = ref(db, `users/${uid}/queueOffers`)
+  const handler = onValue(r, snap => callback(snap.val() || {}))
+  return () => off(r, 'value', handler)
+}
+
+export async function clearQueueOffer(uid, slotKey) {
+  await remove(ref(db, `users/${uid}/queueOffers/${slotKey}`))
+}
+
 // ─── ADMIN SETTINGS ──────────────────────────────────────────────
 export async function getAdminSettings() {
   const snap = await get(ref(db, 'admin_settings'))

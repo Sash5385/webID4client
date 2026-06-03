@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react'
 import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
 import { useBookings } from '../hooks/useBookings'
+import { subscribeQueueOffers, clearQueueOffer } from '../firebase/db'
 
 import BookTab from './cabinet/BookTab'
 import BookingsTab from './cabinet/BookingsTab'
@@ -27,6 +29,19 @@ export default function Cabinet({ user, profile }) {
   // Визначаємо активну вкладку з URL
   const path = loc.pathname.replace('/cabinet', '').replace('/', '')
   const activeTab = path || 'book'
+
+  const [queueOffers, setQueueOffers] = useState({})
+
+  useEffect(() => {
+    if (!user?.uid) return
+    return subscribeQueueOffers(user.uid, offers => {
+      const now = Date.now()
+      const valid = Object.fromEntries(
+        Object.entries(offers).filter(([, o]) => o.until > now)
+      )
+      setQueueOffers(valid)
+    })
+  }, [user?.uid])
 
   const switchTab = (tab) => {
     nav(`/cabinet/${tab === 'book' ? '' : tab}`)
@@ -65,6 +80,29 @@ export default function Cabinet({ user, profile }) {
           </button>
         </div>
       </header>
+
+      {/* QUEUE OFFER BANNERS */}
+      {Object.entries(queueOffers).map(([slotKey, offer]) => {
+        const minsLeft = Math.max(0, Math.round((offer.until - Date.now()) / 60000))
+        return (
+          <div key={slotKey} onClick={() => { switchTab('book'); clearQueueOffer(user.uid, slotKey) }}
+            style={{
+              margin:'6px 12px 0', padding:'10px 14px', borderRadius:12, cursor:'pointer',
+              background:'linear-gradient(135deg,rgba(99,211,120,0.2),rgba(99,211,120,0.08))',
+              border:'1.5px solid rgba(99,211,120,0.5)',
+              display:'flex', alignItems:'center', gap:10,
+            }}>
+            <span style={{fontSize:20}}>🎉</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13, fontWeight:800, color:'var(--green)'}}>Слот зарезервовано для вас!</div>
+              <div style={{fontSize:11, color:'var(--dim)', marginTop:2}}>
+                {offer.date} о {offer.time} · ще {minsLeft} хв
+              </div>
+            </div>
+            <div style={{fontSize:11, fontWeight:700, color:'var(--green)'}}>Записатись →</div>
+          </div>
+        )
+      })}
 
       {/* CONTENT */}
       <div className="cab-content">
