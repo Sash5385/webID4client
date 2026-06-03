@@ -3,6 +3,34 @@
   padding-bottom: 100px;
 }
 
+@media (min-width: 600px) {
+  .cabinet-page {
+    max-width: 430px;
+    margin: 0 auto;
+    height: 100vh;
+    min-height: unset;
+    padding-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 80px rgba(0,0,0,0.6);
+  }
+
+  .cab-content {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  .botnav {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+}
+
 .cab-topbar {
   position: sticky;
   top: 0;
