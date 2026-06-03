@@ -73,12 +73,14 @@ export async function cancelBooking(uid, bookingId) {
 }
 
 // в”Ђв”Ђв”Ђ QUEUE (Р»РёСЃС‚ РѕС‡С–РєСѓРІР°РЅРЅСЏ) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
-export async function joinQueue(uid, date, time, studentType, durationHours = 1) {
+export async function joinQueue(uid, date, time, studentType, durationHours = 1, name = '', phone = '') {
   const slotKey = `${date}_${time}`
   await set(ref(db, `queue/${slotKey}/entries/${uid}`), {
     uid,
     studentType,
     durationHours,
+    name,
+    phone,
     addedAt: Date.now(),
     status: 'waiting'
   })

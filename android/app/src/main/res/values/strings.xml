@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">id4drive</string>
+    <string name="title_activity_main">id4drive</string>
+    <string name="package_name">com.id4drive.app</string>
+    <string name="custom_url_scheme">com.id4drive.app</string>
+</resources>

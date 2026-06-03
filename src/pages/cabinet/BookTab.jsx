@@ -140,7 +140,7 @@ export default function BookTab({ user, profile, bookingsData }) {
     if (!dialogSlot || !selectedDate) return
     setSubmitting(true)
     try {
-      await joinQueue(user.uid, formatDateYMD(selectedDate), dialogSlot.time, serviceType, duration)
+      await joinQueue(user.uid, formatDateYMD(selectedDate), dialogSlot.time, serviceType, duration, profile?.name || '', profile?.phone || user?.phoneNumber || '')
       setDialogSlot(null)
       setSuccessData({ type: 'queue', date: formatDateYMD(selectedDate), time: dialogSlot.time, service: serviceType, duration })
     } catch (e) {
