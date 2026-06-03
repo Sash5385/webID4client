@@ -197,6 +197,7 @@ export default function BookTab({ user, profile, bookingsData }) {
         lunchBlocked:   isBlockedByLunch(slot.time, durationHours),
         overlapBlocked: slot.available !== false && wouldOverlapTaken(slot.time, durationHours),
       }))
+      .filter(slot => !slot.lunchBlocked)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slots, durationHours, adminSettings])
 
