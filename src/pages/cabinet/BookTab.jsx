@@ -229,8 +229,8 @@ export default function BookTab({ user, profile, bookingsData }) {
                 key={svc.id}
                 className={`svc-tile${isSelected ? ' selected' : ''}${isLocked ? ' locked' : ''}`}
                 style={{
-                  display:'flex', flexDirection:'column', alignItems:'center', gap:8, padding:'12px 8px',
-                  textAlign:'center', borderRadius:14, position:'relative',
+                  display:'flex', flexDirection:'column', alignItems:'center', gap:4, padding:'8px 6px',
+                  textAlign:'center', borderRadius:12, position:'relative',
                   borderColor: isSelected ? svcColor : 'transparent',
                   boxShadow: isSelected ? `0 0 0 2px ${svcColor}55, var(--shadow)` : undefined,
                 }}
@@ -242,17 +242,17 @@ export default function BookTab({ user, profile, bookingsData }) {
                   </svg>
                 )}
                 <div style={{
-                  width:40, height:40, borderRadius:12,
+                  width:28, height:28, borderRadius:8,
                   background:`linear-gradient(155deg,${svcColor}cc,${svcColor}44)`,
                   border:`1.5px solid ${svcColor}55`,
                   display:'flex', alignItems:'center', justifyContent:'center',
-                  fontSize:19, boxShadow:`-2px 4px 10px rgba(0,0,0,0.4),inset 1px 1px 0 rgba(255,255,255,0.2)`
+                  fontSize:13, boxShadow:`-2px 4px 10px rgba(0,0,0,0.4),inset 1px 1px 0 rgba(255,255,255,0.2)`
                 }}>
                   {isLocked ? '🔒' : svc.type === 'school' ? '🎓' : '🚙'}
                 </div>
                 <div>
-                  <div style={{fontSize:11, fontWeight:800, lineHeight:1.3}}>{svc.name}</div>
-                  <div style={{fontSize:10, color:'var(--dim)', marginTop:1}}>
+                  <div style={{fontSize:10, fontWeight:800, lineHeight:1.3}}>{svc.name}</div>
+                  <div style={{fontSize:9, color:'var(--dim)', marginTop:1}}>
                     {isLocked ? 'після 40 уроків' : `${svc.price} ₴`}
                   </div>
                 </div>
