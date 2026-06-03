@@ -50,15 +50,23 @@
 
 .cab-icon-btn {
   width: 28px; height: 28px; border-radius: 9px;
-  background: linear-gradient(135deg, var(--surf-hi), var(--surface));
-  box-shadow: var(--shadow);
+  background: linear-gradient(155deg, var(--surf-hi), var(--surface));
+  box-shadow: 0 3px 10px rgba(0,0,0,0.55),
+              inset 1px 1px 0 rgba(255,255,255,0.15),
+              inset -1px -1px 0 rgba(0,0,0,0.2);
   border: 1px solid var(--border);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  color: var(--dim); position: relative;
+  color: var(--dim); position: relative; overflow: hidden;
   transition: color .15s;
 }
-
+.cab-icon-btn::before {
+  content: ''; position: absolute;
+  top: -15%; right: -10%;
+  width: 65%; height: 60%;
+  background: radial-gradient(ellipse at top right, rgba(255,255,255,0.22) 0%, transparent 65%);
+  pointer-events: none;
+}
 .cab-icon-btn:active { box-shadow: var(--shadow-in); color: var(--text); }
 
 .cab-icon-btn .badge {

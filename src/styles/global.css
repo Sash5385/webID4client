@@ -91,17 +91,19 @@ button { font-family: inherit; }
   border-radius: 14px;
   font-size: 14px;
   font-weight: 800;
-  box-shadow: 0 4px 14px rgba(255,90,60,0.4), inset 1px 1px 0 rgba(255,255,255,0.2), inset -1px -1px 0 rgba(0,0,0,0.2);
+  box-shadow: 0 6px 20px rgba(255,90,60,0.5),
+              inset 1px 1px 0 rgba(255,255,255,0.35),
+              inset -1px -1px 0 rgba(0,0,0,0.25);
   position: relative; overflow: hidden;
   transition: transform .15s, box-shadow .15s;
   letter-spacing: 0.2px;
 }
 .btn-primary::before {
   content: ''; position: absolute;
-  top: 2px; right: 8%;
-  width: 50%; height: 35%;
-  background: radial-gradient(ellipse at top right, rgba(255,255,255,0.22) 0%, transparent 65%);
-  border-radius: 50%; filter: blur(1px); pointer-events: none;
+  top: -10%; right: -5%;
+  width: 60%; height: 60%;
+  background: radial-gradient(ellipse at top right, rgba(255,255,255,0.55) 0%, transparent 65%);
+  border-radius: 50%; filter: blur(2px); pointer-events: none;
 }
 .btn-primary:active:not(:disabled) { transform: scale(0.97); box-shadow: 0 2px 8px rgba(255,90,60,0.3); }
 .btn-primary:disabled {
