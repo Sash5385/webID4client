@@ -22,6 +22,7 @@ export default function BookTab({ user, profile, bookingsData }) {
   // Dialog state
   const [dialogSlot, setDialogSlot] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [successData, setSuccessData] = useState(null) // {type:'booking'|'queue', date, time, service, duration}
 
   useEffect(() => {
     getAdminSettings().then(s => setAdminSettings(s)).catch(() => {})
@@ -127,7 +128,7 @@ export default function BookTab({ user, profile, bookingsData }) {
         await claimReservedSlot(dateStr, selectedTime, user.uid)
       }
       setSelectedTime(null)
-      alert('Записано!')
+      setSuccessData({ type: 'booking', date: formatDateYMD(selectedDate), time: selectedTime, service: serviceType, duration })
     } catch (e) {
       alert('Помилка: ' + e.message)
     } finally {
@@ -141,7 +142,7 @@ export default function BookTab({ user, profile, bookingsData }) {
     try {
       await joinQueue(user.uid, formatDateYMD(selectedDate), dialogSlot.time, serviceType, duration)
       setDialogSlot(null)
-      alert('Ти в черзі! Сповістимо коли звільниться.')
+      setSuccessData({ type: 'queue', date: formatDateYMD(selectedDate), time: dialogSlot.time, service: serviceType, duration })
     } catch (e) {
       alert('Помилка: ' + e.message)
     } finally {
@@ -334,6 +335,63 @@ export default function BookTab({ user, profile, bookingsData }) {
         <button className="btn-primary" style={{marginTop:16}} onClick={handleBook} disabled={submitting}>
           {submitting ? 'Записуємо...' : `✓ Записатись на ${formatDateYMD(selectedDate).slice(-5).replace('-','.')} о ${selectedTime}`}
         </button>
+      )}
+
+      {/* DIALOG: успішний запис / черга */}
+      {successData && (
+        <div className="dialog-backdrop show" onClick={e => e.target.classList.contains('dialog-backdrop') && setSuccessData(null)}>
+          <div className="dialog">
+            <div className="dialog-handle"></div>
+            <div className="dialog-icon" style={{
+              background: successData.type === 'booking'
+                ? 'linear-gradient(165deg, #4ade80, #16a34a)'
+                : 'linear-gradient(165deg, #fcd34d, #d97706)'
+            }}>
+              {successData.type === 'booking' ? (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              ) : (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
+                  <circle cx="12" cy="7" r="4"/>
+                  <path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>
+                </svg>
+              )}
+            </div>
+            <div className="dialog-title">
+              {successData.type === 'booking' ? 'Урок заброньовано!' : 'Ти в черзі!'}
+            </div>
+            <div className="dialog-sub">
+              {successData.type === 'booking'
+                ? 'Чекай підтвердження від інструктора. Нагадаємо за 24 год.'
+                : 'Як тільки слот звільниться — отримаєш push-сповіщення.'
+              }
+            </div>
+            <div className="dialog-info-card">
+              <div className="dialog-info-row">
+                <span className="lbl">Дата</span>
+                <span className="val">
+                  {new Date(successData.date + 'T12:00:00').toLocaleDateString('uk-UA', { weekday:'short', day:'numeric', month:'long' })}
+                </span>
+              </div>
+              <div className="dialog-info-row">
+                <span className="lbl">Час</span>
+                <span className="val">{successData.time}</span>
+              </div>
+              <div className="dialog-info-row">
+                <span className="lbl">Тип</span>
+                <span className="val">{successData.service === 'school' ? '🎓 Автошкола' : '🚙 Приватний'}</span>
+              </div>
+              <div className="dialog-info-row" style={{borderTop:'1px solid var(--border)', paddingTop:10, marginTop:4}}>
+                <span className="lbl">Тривалість</span>
+                <span className="val">{successData.duration} {successData.duration === 1 ? 'година' : 'години'}</span>
+              </div>
+            </div>
+            <div className="dialog-actions">
+              <button className="dialog-btn primary" onClick={() => setSuccessData(null)}>Закрити</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* DIALOG: стати в чергу */}
