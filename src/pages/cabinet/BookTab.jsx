@@ -340,40 +340,51 @@ export default function BookTab({ user, profile, bookingsData }) {
                   const isMyReserved = !!(slot.offeredTo?.[user?.uid])
                   const isOtherReserved = false
                   const isTaken = !isAvailable && !isMyReserved && !isOtherReserved
-                  const isHardDisabled = isLunch || isOverlap || isOtherReserved || isMyQueue
+                  const isHardDisabled = isLunch || isOverlap || isOtherReserved
                   return (
-                    <button
-                      key={slot.time}
-                      className={`slot ${isMyReserved || isMyQueue ? 'my-queue' : isTaken ? 'taken' : ''} ${isSelected ? 'selected' : ''}`}
-                      onClick={() => handleSlotClick(slot)}
-                      disabled={isHardDisabled}
-                      title={isLunch ? 'Обідня перерва' : isOverlap ? 'Перетин з іншим уроком' : isMyReserved ? 'Зарезервовано для вас!' : isOtherReserved ? 'Пропонується іншому' : isTaken ? 'Зайнято — стати в чергу?' : undefined}
-                    >
-                      <div className="slot-time">{slot.time}</div>
-                      {isMyReserved ? (
-                        <div style={{fontSize:8, color:'white', fontWeight:700}}>ваш!</div>
-                      ) : isLunch ? (
-                        <div style={{fontSize:8, opacity:0.5}}>обід</div>
-                      ) : isOverlap ? (
-                        <div style={{fontSize:8, opacity:0.5}}>зайнято</div>
-                      ) : isMyQueue ? (
-                        <>
+                    <div key={slot.time} style={{position:'relative'}}>
+                      <button
+                        className={`slot ${isMyReserved || isMyQueue ? 'my-queue' : isTaken ? 'taken' : ''} ${isSelected ? 'selected' : ''}`}
+                        style={{width:'100%'}}
+                        onClick={() => !isMyQueue && handleSlotClick(slot)}
+                        disabled={isHardDisabled}
+                        title={isLunch ? 'Обідня перерва' : isOverlap ? 'Перетин з іншим уроком' : isMyReserved ? 'Зарезервовано для вас!' : isTaken ? 'Зайнято — стати в чергу?' : undefined}
+                      >
+                        <div className="slot-time">{slot.time}</div>
+                        {isMyReserved ? (
+                          <div style={{fontSize:8, color:'white', fontWeight:700}}>ваш!</div>
+                        ) : isLunch ? (
+                          <div style={{fontSize:8, opacity:0.5}}>обід</div>
+                        ) : isOverlap ? (
+                          <div style={{fontSize:8, opacity:0.5}}>зайнято</div>
+                        ) : isMyQueue ? (
                           <div className="slot-queue">
                             <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
                             <span className="slot-queue-num">ти {q.count}-й</span>
                           </div>
-                          <div
-                            style={{fontSize:7, color:'rgba(255,255,255,0.6)', marginTop:1, cursor:'pointer', textDecoration:'underline'}}
-                            onClick={async e => { e.stopPropagation(); await leaveQueue(user.uid, formatDateYMD(selectedDate), slot.time) }}
-                          >вийти</div>
-                        </>
-
-                      ) : q?.count > 0 ? (
-                        <QueueIcons n={q.count} />
-                      ) : slot.surcharge ? (
-                        <div style={{fontSize:8, fontWeight:700, color:'var(--gold)'}}>+{slot.surcharge}₴</div>
-                      ) : null}
-                    </button>
+                        ) : q?.count > 0 ? (
+                          <QueueIcons n={q.count} />
+                        ) : slot.surcharge ? (
+                          <div style={{fontSize:8, fontWeight:700, color:'var(--gold)'}}>+{slot.surcharge}₴</div>
+                        ) : null}
+                      </button>
+                      {isMyQueue && (
+                        <button
+                          onClick={() => leaveQueue(user.uid, formatDateYMD(selectedDate), slot.time)}
+                          style={{
+                            position:'absolute', top:-6, right:-6,
+                            width:16, height:16, borderRadius:'50%',
+                            background:'rgba(239,68,68,0.9)',
+                            border:'none', cursor:'pointer',
+                            display:'flex', alignItems:'center', justifyContent:'center',
+                            fontSize:9, color:'white', fontWeight:900, lineHeight:1,
+                            boxShadow:'0 2px 6px rgba(239,68,68,0.6)',
+                            zIndex:5,
+                          }}
+                          title="Вийти з черги"
+                        >✕</button>
+                      )}
+                    </div>
                   )
                 })}
               </div>
