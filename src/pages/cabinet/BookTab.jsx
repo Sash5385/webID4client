@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { subscribeSlotsForDate, createBooking, joinQueue, leaveQueue, subscribeQueueForSlot, getAdminSettings, getAdminServices, markSlotsUnavailable, claimReservedSlot, setViewingSlot, clearViewingSlot } from '../../firebase/db'
+import { subscribeSlotsForDate, createBooking, joinQueue, leaveQueue, subscribeQueueForSlot, getAdminSettings, getAdminServices, markSlotsUnavailable, claimReservedSlot, setViewingSlot, clearViewingSlot, getMonthAvailability } from '../../firebase/db'
 import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay } from '../../utils/date'
 import { getInitials, pluralize } from '../../utils/format'
 import './BookTab.css'
@@ -26,6 +26,7 @@ export default function BookTab({ user, profile, bookingsData }) {
   const [selectedTime, setSelectedTime] = useState(null)
   const [loading, setLoading] = useState(false)
   const [adminSettings, setAdminSettings] = useState({ lunchEnabled: true, lunchStart: 12, lunchEnd: 13 })
+  const [monthAvail, setMonthAvail] = useState({})
 
   // Dialog state
   const [dialogSlot, setDialogSlot] = useState(null)
@@ -117,6 +118,13 @@ export default function BookTab({ user, profile, bookingsData }) {
     setViewingSlot(dateStr, selectedTime, user.uid).catch(() => {})
     return () => { clearViewingSlot(dateStr, selectedTime, user.uid).catch(() => {}) }
   }, [selectedDate, selectedTime, user?.uid])
+
+  useEffect(() => {
+    setMonthAvail({})
+    getMonthAvailability(viewMonth.getFullYear(), viewMonth.getMonth())
+      .then(avail => setMonthAvail(avail))
+      .catch(() => {})
+  }, [viewMonth])
 
   const days = useMemo(() => getMonthGrid(viewMonth.getFullYear(), viewMonth.getMonth()), [viewMonth])
 
@@ -332,12 +340,13 @@ export default function BookTab({ user, profile, bookingsData }) {
             const disabled = isPast(d)
             const isToday = isSameDay(d, today)
             const selected = selectedDate && isSameDay(d, selectedDate)
-            // TODO: has-slots на основі реальних даних (зараз показуємо всім крім минулих)
-            const hasSlots = !disabled
+            const dateStr = formatDateYMD(d)
+            const avail = monthAvail[dateStr]
+            const dayClass = !disabled && avail ? `day-${avail}` : ''
             return (
               <button
                 key={i}
-                className={`cal-day ${disabled ? 'disabled' : ''} ${isToday ? 'today' : ''} ${selected ? 'selected' : ''} ${hasSlots && !disabled ? 'has-slots' : ''}`}
+                className={`cal-day ${disabled ? 'disabled' : ''} ${isToday ? 'today' : ''} ${selected ? 'selected' : ''} ${dayClass}`}
                 onClick={() => !disabled && setSelectedDate(d)}
                 disabled={disabled}
               >

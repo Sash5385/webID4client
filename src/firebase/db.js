@@ -29,6 +29,27 @@ export async function getSlotsForDate(date) {
   return snap.exists() ? snap.val() : {}
 }
 
+export async function getMonthAvailability(year, month) {
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const dates = Array.from({ length: daysInMonth }, (_, i) => {
+    const d = new Date(year, month, i + 1)
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  })
+  const results = await Promise.all(dates.map(async date => {
+    const snap = await get(ref(db, `timeslots/${date}`))
+    if (!snap.exists()) return [date, null]
+    const slotsObj = snap.val()
+    const slots = Object.values(slotsObj).filter(s => s && s.time)
+    if (slots.length === 0) return [date, null]
+    const free = slots.filter(s => s.available !== false).length
+    const taken = slots.filter(s => s.available === false).length
+    if (taken === 0) return [date, 'free']
+    if (free === 0) return [date, 'full']
+    return [date, 'partial']
+  }))
+  return Object.fromEntries(results)
+}
+
 export function subscribeSlotsForDate(date, callback) {
   const r = ref(db, `timeslots/${date}`)
   const handler = onValue(r, snap => {
