@@ -341,8 +341,10 @@ export default function BookTab({ user, profile, bookingsData }) {
             const isToday = isSameDay(d, today)
             const selected = selectedDate && isSameDay(d, selectedDate)
             const dateStr = formatDateYMD(d)
-            const avail = monthAvail[dateStr]
-            const dayClass = !disabled && avail ? `day-${avail}` : ''
+            const avail = monthAvail[dateStr]      // undefined=loading, null=empty, 'free'/'partial'/'full'
+            const dayClass = disabled ? '' :
+              avail === undefined ? 'has-slots' :  // loading - show neutral
+              avail ? `day-${avail}` : ''          // loaded: colored or plain
             return (
               <button
                 key={i}

@@ -1,6 +1,14 @@
 .landing-page {
   min-height: 100vh;
   padding-bottom: 40px;
+  background-image: linear-gradient(to bottom, rgba(28,29,33,0.72) 0%, rgba(28,29,33,0.88) 40%, rgba(28,29,33,0.97) 100%), url('/id4-hero.jpg');
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
+}
+
+[data-theme="light"] .landing-page {
+  background-image: linear-gradient(to bottom, rgba(240,241,245,0.75) 0%, rgba(240,241,245,0.92) 40%, rgba(240,241,245,0.99) 100%), url('/id4-hero.jpg');
 }
 
 @media (min-width: 600px) {
