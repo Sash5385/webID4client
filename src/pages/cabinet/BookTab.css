@@ -73,7 +73,7 @@
 
 .svc-tile:active:not(.locked) { transform: scale(0.97); }
 .svc-tile.selected {
-  box-shadow: 0 0 0 2px var(--accent), var(--shadow);
+  box-shadow: 0 0 0 2px var(--green), var(--shadow);
   border-color: transparent;
 }
 .svc-tile.locked { opacity: 0.4; cursor: not-allowed; }
@@ -131,9 +131,9 @@
 }
 
 .dur-pill.active {
-  background: linear-gradient(165deg, var(--acc-hi), var(--accent));
-  color: white;
-  box-shadow: 0 4px 12px rgba(255,90,60,0.4), inset 2px 2px 0 rgba(255,255,255,0.3);
+  background: linear-gradient(165deg, #7ed957, #4caf50);
+  color: #0d2a10;
+  box-shadow: 0 4px 12px rgba(99,211,120,0.45), inset 2px 2px 0 rgba(255,255,255,0.35);
 }
 
 .cal-card {
