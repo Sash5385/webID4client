@@ -167,9 +167,9 @@ export default function Landing({ user }) {
               <div className="feature-desc">Переноси урок прямо в додатку</div>
             </div>
             <div className="feature-card">
-              <div className="feature-icon fi-3">🎯</div>
-              <div className="feature-title">Цілі уроку</div>
-              <div className="feature-desc">Обери що відпрацювати з 10-го заняття</div>
+              <div className="feature-icon fi-3">🔔</div>
+              <div className="feature-title">Сповіщення</div>
+              <div className="feature-desc">Як тільки слот звільняється — ти дізнаєшся першим</div>
             </div>
             <div className="feature-card">
               <div className="feature-icon fi-4">⏰</div>
