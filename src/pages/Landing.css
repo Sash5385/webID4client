@@ -179,23 +179,22 @@
 }
 
 .hero-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  justify-content: center;
   gap: 8px;
-  margin-top: 28px;
-  position: relative;
+  margin-top: 20px;
 }
 
 .stat-card {
   background: var(--surface);
-  border-radius: 16px;
-  padding: 14px 8px;
+  border-radius: 12px;
+  padding: 8px 20px;
   box-shadow: var(--shadow);
   text-align: center;
 }
 
 .stat-num {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 900;
   color: var(--accent);
 }
@@ -205,7 +204,7 @@
   color: var(--faint);
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 /* SECTION */
