@@ -51,16 +51,12 @@ export default function Landing({ user }) {
 
           <div className="hero-stats">
             <div className="stat-card">
-              <div className="stat-num">10+</div>
+              <div className="stat-num">20+</div>
               <div className="stat-lbl">років досвіду</div>
             </div>
             <div className="stat-card">
-              <div className="stat-num">500+</div>
+              <div className="stat-num">2000+</div>
               <div className="stat-lbl">учнів</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-num">4.9</div>
-              <div className="stat-lbl">рейтинг</div>
             </div>
           </div>
         </section>
@@ -188,7 +184,7 @@ export default function Landing({ user }) {
               <div className="instructor-role">Інструктор з водіння</div>
               <div className="instructor-meta">
                 <span>📍 Київ, Верховинна 44</span>
-                <span>🚗 Стаж 10+ років</span>
+                <span>🚗 Стаж 20+ років</span>
                 <span>✅ Сертифікований</span>
               </div>
             </div>
