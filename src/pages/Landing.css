@@ -1,14 +1,6 @@
 .landing-page {
   min-height: 100vh;
   padding-bottom: 40px;
-  background-image: linear-gradient(to bottom, rgba(28,29,33,0.72) 0%, rgba(28,29,33,0.88) 40%, rgba(28,29,33,0.97) 100%), url('/id4-hero.jpg');
-  background-size: cover;
-  background-position: center top;
-  background-attachment: fixed;
-}
-
-[data-theme="light"] .landing-page {
-  background-image: linear-gradient(to bottom, rgba(240,241,245,0.75) 0%, rgba(240,241,245,0.92) 40%, rgba(240,241,245,0.99) 100%), url('/id4-hero.jpg');
 }
 
 @media (min-width: 600px) {
@@ -133,21 +125,45 @@
 
 /* HERO */
 .hero {
-  padding: 32px 16px 40px;
   text-align: center;
   position: relative;
 }
 
-.hero::before {
-  content: '';
-  position: absolute;
-  top: -20%;
-  left: -20%;
-  right: -20%;
-  height: 80%;
-  background: radial-gradient(circle at 50% 30%, rgba(255,90,60,0.15), transparent 60%);
-  pointer-events: none;
+.hero-img-wrap {
+  position: relative;
+  width: 100%;
+  line-height: 0;
 }
+
+.hero-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.hero-img-fade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom,
+    rgba(28,29,33,0.25) 0%,
+    rgba(28,29,33,0.55) 55%,
+    rgba(28,29,33,1) 100%
+  );
+}
+
+[data-theme="light"] .hero-img-fade {
+  background: linear-gradient(to bottom,
+    rgba(240,241,245,0.3) 0%,
+    rgba(240,241,245,0.75) 55%,
+    rgba(240,241,245,1) 100%
+  );
+}
+
+.hero-content {
+  padding: 20px 16px 36px;
+  text-align: center;
+}
+
 
 .hero h1 {
   font-size: 30px;

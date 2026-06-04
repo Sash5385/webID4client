@@ -45,18 +45,24 @@ export default function Landing({ user }) {
 
         {/* HERO */}
         <section className="hero">
-          <h1>Уроки водіння</h1>
-          <p>Онлайн-запис на уроки водіння в Києві.<br/>Автошкола та приватні уроки.</p>
-          <button className="hero-cta" onClick={goAuth}>📅 Записатись на урок</button>
+          <div className="hero-img-wrap">
+            <img src="/id4-hero.jpg" alt="" className="hero-img" />
+            <div className="hero-img-fade" />
+          </div>
+          <div className="hero-content">
+            <h1>Уроки водіння</h1>
+            <p>Онлайн-запис на уроки водіння в Києві.<br/>Автошкола та приватні уроки.</p>
+            <button className="hero-cta" onClick={goAuth}>📅 Записатись на урок</button>
 
-          <div className="hero-stats">
-            <div className="stat-card">
-              <div className="stat-num">20+</div>
-              <div className="stat-lbl">років досвіду</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-num">2000+</div>
-              <div className="stat-lbl">учнів</div>
+            <div className="hero-stats">
+              <div className="stat-card">
+                <div className="stat-num">20+</div>
+                <div className="stat-lbl">років досвіду</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-num">2000+</div>
+                <div className="stat-lbl">учнів</div>
+              </div>
             </div>
           </div>
         </section>
