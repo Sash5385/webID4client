@@ -45,7 +45,7 @@ export default function Landing({ user }) {
 
         {/* HERO */}
         <section className="hero">
-          <h1>Навчись водити<br/>з <span className="accent">впевненістю</span></h1>
+          <h1>Уроки водіння</h1>
           <p>Онлайн-запис на уроки водіння в Києві.<br/>Автошкола та приватні уроки.</p>
           <button className="hero-cta" onClick={goAuth}>📅 Записатись на урок</button>
 
