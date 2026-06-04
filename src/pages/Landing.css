@@ -127,17 +127,21 @@
 .hero {
   text-align: center;
   position: relative;
+  overflow: hidden;
 }
 
+/* Фото — абсолютний фон, займає розмір hero */
 .hero-img-wrap {
-  position: relative;
-  width: 100%;
-  line-height: 0;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
 }
 
 .hero-img {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 25%;
   display: block;
 }
 
@@ -145,23 +149,32 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(to bottom,
-    rgba(28,29,33,0.25) 0%,
-    rgba(28,29,33,0.55) 55%,
+    rgba(28,29,33,0.35) 0%,
+    rgba(28,29,33,0.65) 60%,
     rgba(28,29,33,1) 100%
   );
 }
 
 [data-theme="light"] .hero-img-fade {
   background: linear-gradient(to bottom,
-    rgba(240,241,245,0.3) 0%,
-    rgba(240,241,245,0.75) 55%,
+    rgba(240,241,245,0.4) 0%,
+    rgba(240,241,245,0.8) 60%,
     rgba(240,241,245,1) 100%
   );
 }
 
+/* Контент поверх фото */
 .hero-content {
-  padding: 20px 16px 36px;
+  position: relative;
+  z-index: 1;
+  padding: 48px 16px 40px;
   text-align: center;
+  /* Мінімальна висота = пропорція фото (портретна ~4:3 з урізанням) */
+  min-height: min(75vw, 340px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 
