@@ -238,8 +238,8 @@
 
 .cal-day {
   aspect-ratio: 1;
-  border-radius: 8px;
-  background: transparent;
+  border-radius: 7px;
+  background: linear-gradient(145deg, var(--surf-hi), var(--surface));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -248,53 +248,49 @@
   cursor: pointer;
   position: relative;
   color: var(--dim);
-  border: none;
-  transition: background .12s, box-shadow .12s;
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.45), -1px -1px 2px rgba(255,255,255,0.04);
+  transition: box-shadow .12s;
   overflow: hidden;
 }
-.cal-day:not(.disabled):not(.selected):hover {
-  background: rgba(255,255,255,0.07);
+.cal-day::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 55%; height: 50%;
+  background: radial-gradient(ellipse at top right, rgba(255,255,255,0.1), transparent 70%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+.cal-day:not(.disabled):not(.selected):not(.day-free):not(.day-partial):not(.day-full):hover {
+  box-shadow: 3px 3px 6px rgba(0,0,0,0.55), -1px -1px 3px rgba(255,255,255,0.06);
 }
 
 .cal-day.empty { cursor: default; visibility: hidden; }
 
 /* availability colors */
 .cal-day.day-free {
-  color: var(--text);
-  background: linear-gradient(155deg, rgba(99,211,120,0.22), rgba(99,211,120,0.08));
-  border: 1px solid rgba(99,211,120,0.35);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
-}
-.cal-day.day-free::before {
-  content: '';
-  position: absolute;
-  top: -30%; right: -20%;
-  width: 60%; height: 55%;
-  background: radial-gradient(ellipse at top right, rgba(255,255,255,0.22), transparent 65%);
-  pointer-events: none;
+  color: #7ed957;
+  background: linear-gradient(155deg, rgba(99,211,120,0.35), rgba(99,211,120,0.12));
+  border: 1px solid rgba(99,211,120,0.5);
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.5), -1px -1px 0 rgba(99,211,120,0.08), 0 0 8px rgba(99,211,120,0.15);
+  font-weight: 800;
 }
 
 .cal-day.day-partial {
-  color: var(--text);
-  background: linear-gradient(155deg, rgba(247,201,72,0.22), rgba(247,201,72,0.08));
-  border: 1px solid rgba(247,201,72,0.35);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
-}
-.cal-day.day-partial::before {
-  content: '';
-  position: absolute;
-  top: -30%; right: -20%;
-  width: 60%; height: 55%;
-  background: radial-gradient(ellipse at top right, rgba(255,255,255,0.22), transparent 65%);
-  pointer-events: none;
+  color: #f7c948;
+  background: linear-gradient(155deg, rgba(247,201,72,0.38), rgba(247,201,72,0.14));
+  border: 1px solid rgba(247,201,72,0.5);
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.5), -1px -1px 0 rgba(247,201,72,0.08), 0 0 8px rgba(247,201,72,0.15);
+  font-weight: 800;
 }
 
 .cal-day.day-full {
-  color: rgba(239,68,68,0.7);
-  background: linear-gradient(155deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05));
-  border: 1px solid rgba(239,68,68,0.25);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-  opacity: 0.65;
+  color: rgba(239,68,68,0.75);
+  background: linear-gradient(155deg, rgba(239,68,68,0.3), rgba(239,68,68,0.1));
+  border: 1px solid rgba(239,68,68,0.4);
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+  font-weight: 800;
 }
 
 .cal-day.selected {
@@ -366,13 +362,13 @@
 }
 
 .slot.selected {
-  background: linear-gradient(155deg, rgba(255,90,60,0.65), rgba(255,90,60,0.28));
+  background: linear-gradient(155deg, rgba(99,211,120,0.65), rgba(78,175,98,0.28));
   color: white;
-  border-color: rgba(255,90,60,0.7);
-  box-shadow: 0 4px 14px rgba(255,90,60,0.55),
+  border-color: rgba(99,211,120,0.7);
+  box-shadow: 0 4px 14px rgba(99,211,120,0.45),
               inset 1px 1px 0 rgba(255,255,255,0.4),
               inset -1px -1px 0 rgba(0,0,0,0.3),
-              0 0 12px rgba(255,90,60,0.4);
+              0 0 12px rgba(99,211,120,0.35);
 }
 
 .slot.taken {
