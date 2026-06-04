@@ -136,53 +136,41 @@
   box-shadow: 0 4px 12px rgba(99,211,120,0.45), inset 2px 2px 0 rgba(255,255,255,0.35);
 }
 
-/* ── GLASS CALENDAR ───────────────────────────────────────── */
+/* ── CALENDAR ─────────────────────────────────────────────── */
 
 .cal-card {
-  background: rgba(255,255,255,0.06);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 20px;
-  padding: 10px 8px 8px;
-  border: 1px solid rgba(255,255,255,0.12);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.1);
+  background: #0f1014;
+  border-radius: 18px;
+  padding: 12px 10px 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
   position: relative;
   overflow: hidden;
 }
 
-.cal-card::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
-  pointer-events: none;
-}
-
 [data-theme="light"] .cal-card {
-  background: rgba(255,255,255,0.45);
-  border-color: rgba(255,255,255,0.6);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.8);
+  background: #fff;
+  border-color: rgba(0,0,0,0.07);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.1);
 }
 
 .cal-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  padding: 0 2px;
 }
 
 .cal-nav-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.1);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.15);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #1e2028;
+  border: 1px solid rgba(255,255,255,0.1);
   cursor: pointer;
   color: var(--text);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 900;
   display: flex;
   align-items: center;
@@ -190,19 +178,19 @@
   transition: background .15s, transform .1s;
   flex-shrink: 0;
 }
-.cal-nav-btn:hover { background: rgba(255,255,255,0.16); }
-.cal-nav-btn:active { transform: scale(0.9); }
+.cal-nav-btn:hover { background: #2a2d38; }
+.cal-nav-btn:active { transform: scale(0.88); }
 
 [data-theme="light"] .cal-nav-btn {
-  background: rgba(255,255,255,0.7);
-  border-color: rgba(255,255,255,0.9);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: #f0f2f7;
+  border-color: rgba(0,0,0,0.07);
+  color: #222;
 }
 
 .cal-month {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 900;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   color: var(--text);
   text-align: center;
   text-transform: uppercase;
@@ -211,106 +199,107 @@
 .cal-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  margin-bottom: 5px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  padding-bottom: 5px;
+  margin-bottom: 6px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
-[data-theme="light"] .cal-weekdays { border-bottom-color: rgba(0,0,0,0.08); }
+[data-theme="light"] .cal-weekdays { border-bottom-color: rgba(0,0,0,0.06); }
 
 .cal-wd {
   text-align: center;
-  font-size: 8px;
+  font-size: 9px;
   color: var(--faint);
-  font-weight: 800;
-  letter-spacing: 1px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
 }
 
 .cal-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
+  gap: 4px;
 }
 
 .cal-day {
   aspect-ratio: 1;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 50%;
+  background: transparent;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
   position: relative;
   color: var(--dim);
-  transition: background .12s, border-color .12s;
-  overflow: hidden;
+  transition: background .12s, color .12s;
 }
 .cal-day:not(.disabled):not(.selected):not(.day-free):not(.day-partial):not(.day-full):hover {
-  background: rgba(255,255,255,0.1);
-  border-color: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.08);
+  color: var(--text);
 }
 
-[data-theme="light"] .cal-day {
-  background: rgba(255,255,255,0.35);
-  border-color: rgba(255,255,255,0.5);
-  color: var(--dim);
+[data-theme="light"] .cal-day { color: #888; }
+[data-theme="light"] .cal-day:not(.disabled):not(.selected):not(.day-free):not(.day-partial):not(.day-full):hover {
+  background: #f0f2f7;
+  color: #333;
 }
 
 .cal-day.empty { cursor: default; visibility: hidden; }
 
-/* availability colors — glass tint */
-.cal-day.day-free {
-  color: #7ed957;
-  background: rgba(99,211,120,0.18);
-  border: 1px solid rgba(99,211,120,0.4);
-  box-shadow: 0 0 10px rgba(99,211,120,0.12), inset 0 1px 0 rgba(255,255,255,0.15);
-  font-weight: 800;
+/* dot indicator */
+.cal-day.has-slots::after,
+.cal-day.day-free::after,
+.cal-day.day-partial::after,
+.cal-day.day-full::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
 }
 
-.cal-day.day-partial {
-  color: #f7c948;
-  background: rgba(247,201,72,0.18);
-  border: 1px solid rgba(247,201,72,0.4);
-  box-shadow: 0 0 10px rgba(247,201,72,0.12), inset 0 1px 0 rgba(255,255,255,0.15);
-  font-weight: 800;
-}
+.cal-day.has-slots { color: var(--text); font-weight: 600; }
+.cal-day.has-slots::after { background: var(--faint); }
 
-.cal-day.day-full {
-  color: rgba(239,68,68,0.7);
-  background: rgba(239,68,68,0.12);
-  border: 1px solid rgba(239,68,68,0.3);
-  font-weight: 800;
-}
+.cal-day.day-free { color: #4ade80; font-weight: 700; }
+.cal-day.day-free::after { background: #4ade80; box-shadow: 0 0 6px #4ade8088; }
+
+.cal-day.day-partial { color: #f7c948; font-weight: 700; }
+.cal-day.day-partial::after { background: #f7c948; box-shadow: 0 0 6px #f7c94888; }
+
+.cal-day.day-full { color: #f87171; font-weight: 700; opacity: 0.6; }
+.cal-day.day-full::after { background: #f87171; }
 
 .cal-day.selected {
-  background: rgba(255,90,60,0.35);
-  backdrop-filter: blur(4px);
-  color: white;
-  border: 1px solid rgba(255,90,60,0.55);
-  box-shadow: 0 4px 16px rgba(255,90,60,0.3), inset 0 1px 0 rgba(255,255,255,0.25);
-  border-radius: 10px;
+  background: var(--accent);
+  color: #fff !important;
   font-weight: 800;
+  border-radius: 50%;
+  box-shadow: 0 4px 14px rgba(255,90,60,0.5);
 }
-
-.cal-day.selected::after { background: white; box-shadow: none; }
+.cal-day.selected::after { display: none; }
 
 .cal-day.today:not(.selected) {
-  color: var(--gold);
+  color: var(--gold) !important;
   font-weight: 900;
-  background: rgba(247,201,72,0.15);
-  border: 1px solid rgba(247,201,72,0.4);
-  box-shadow: 0 0 10px rgba(247,201,72,0.15);
+}
+.cal-day.today:not(.selected)::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold);
+  opacity: 0.7;
 }
 
-.cal-day.today:not(.selected)::after { background: var(--gold); box-shadow: 0 0 4px rgba(247,201,72,0.8); }
-
 .cal-day.disabled {
-  color: var(--faint);
-  opacity: 0.25;
+  color: rgba(255,255,255,0.15);
   cursor: not-allowed;
 }
 
@@ -321,37 +310,33 @@
 }
 
 .slot {
-  background: rgba(255,255,255,0.07);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: #1e2028;
   border-radius: 10px;
-  padding: 4px 2px;
-  border: 1px solid rgba(255,255,255,0.1);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12);
+  padding: 5px 2px;
+  border: 1px solid rgba(255,255,255,0.07);
   text-align: center;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   color: var(--text);
   position: relative;
-  min-height: 24px;
+  min-height: 28px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 1px;
-  overflow: hidden;
   transition: background .12s, border-color .12s;
 }
 .slot:not(.taken):not(.selected):hover {
-  background: rgba(255,255,255,0.13);
-  border-color: rgba(255,255,255,0.18);
+  background: #262a36;
+  border-color: rgba(255,255,255,0.14);
 }
 
 [data-theme="light"] .slot {
-  background: rgba(255,255,255,0.55);
-  border-color: rgba(255,255,255,0.75);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  background: #f5f6fa;
+  border-color: rgba(0,0,0,0.07);
+  color: #222;
 }
 
 .slot.selected {
