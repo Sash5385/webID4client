@@ -94,8 +94,8 @@ export default function Landing({ user }) {
             <div className="flow-step">
               <div className="flow-num">1</div>
               <div className="flow-body">
-                <div className="flow-title">Реєстрація по SMS</div>
-                <div className="flow-desc">Один раз вводиш телефон і код</div>
+                <div className="flow-title">Реєстрація по SMS або Email</div>
+                <div className="flow-desc">Один раз вводиш номер телефону або email</div>
               </div>
             </div>
 
@@ -249,6 +249,13 @@ export default function Landing({ user }) {
               <div style={{flex:1}}>
                 <div className="contact-label">Telegram</div>
                 <div className="contact-val">@id4drive</div>
+              </div>
+            </a>
+            <a href="viber://chat?number=%2B380989225442" className="contact-row">
+              <div className="contact-ico" style={{background:'linear-gradient(165deg,#8b5cf6,#6d28d9)'}}>💬</div>
+              <div style={{flex:1}}>
+                <div className="contact-label">Viber</div>
+                <div className="contact-val">+380 98 922 5442</div>
               </div>
             </a>
             <a href="https://www.google.com/maps/dir/?api=1&destination=Верховинна+44,+Київ" target="_blank" rel="noreferrer" className="contact-row">
