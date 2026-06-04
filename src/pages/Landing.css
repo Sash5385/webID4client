@@ -3,6 +3,14 @@
   padding-bottom: 40px;
 }
 
+@media (min-width: 600px) {
+  .landing-page {
+    height: 100vh;
+    overflow-y: auto;
+    overscroll-behavior: none;
+  }
+}
+
 .landing-topbar {
   position: sticky;
   top: 0;
@@ -210,6 +218,7 @@
 /* SECTION */
 .lsection {
   padding: 32px 0 8px;
+  text-align: center;
 }
 
 .lsection-title {
@@ -219,7 +228,6 @@
   text-transform: uppercase;
   font-weight: 700;
   margin-bottom: 14px;
-  padding-left: 4px;
 }
 
 .lsection h2 {
