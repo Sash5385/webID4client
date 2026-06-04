@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getSlotsForDate, getAdminSettings } from '../firebase/db'
 import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay } from '../utils/date'
@@ -17,6 +17,14 @@ export default function PublicSchedule({ onBook }) {
   const [selectedTime, setSelectedTime] = useState(null)
   const [loading, setLoading] = useState(false)
   const [adminSettings, setAdminSettings] = useState({ lunchEnabled: false, lunchStart: 12, lunchEnd: 13 })
+  const timeSectionRef = useRef(null)
+
+  useEffect(() => {
+    if (!selectedDate || !timeSectionRef.current) return
+    setTimeout(() => {
+      timeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+  }, [selectedDate])
 
   useEffect(() => {
     getAdminSettings().then(s => setAdminSettings(s)).catch(() => {})
@@ -149,7 +157,7 @@ export default function PublicSchedule({ onBook }) {
       {/* 4. ЧАС */}
       {selectedDate && (
         <>
-          <div className="section-title">
+          <div ref={timeSectionRef} className="section-title">
             4. Час ({selectedDate.toLocaleDateString('uk-UA', { weekday:'short', day:'numeric', month:'long' })})
           </div>
           {loading ? (

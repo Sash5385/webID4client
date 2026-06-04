@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { subscribeSlotsForDate, createBooking, joinQueue, leaveQueue, subscribeQueueForSlot, getAdminSettings, getAdminServices, markSlotsUnavailable, claimReservedSlot, setViewingSlot, clearViewingSlot, getMonthAvailability } from '../../firebase/db'
 import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay } from '../../utils/date'
 import { getInitials, pluralize } from '../../utils/format'
@@ -27,6 +27,7 @@ export default function BookTab({ user, profile, bookingsData }) {
   const [loading, setLoading] = useState(false)
   const [adminSettings, setAdminSettings] = useState({ lunchEnabled: true, lunchStart: 12, lunchEnd: 13 })
   const [monthAvail, setMonthAvail] = useState({})
+  const timeSectionRef = useRef(null)
 
   // Dialog state
   const [dialogSlot, setDialogSlot] = useState(null)
@@ -80,6 +81,14 @@ export default function BookTab({ user, profile, bookingsData }) {
       return sMin >= startMin && sMin < endMin
     })
   }
+
+  // Авто-скрол до секції часу після вибору дати
+  useEffect(() => {
+    if (!selectedDate || !timeSectionRef.current) return
+    setTimeout(() => {
+      timeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+  }, [selectedDate])
 
   // Реальний-тайм підписка на слоти (щоб резервування оновлювалось одразу)
   useEffect(() => {
@@ -362,7 +371,7 @@ export default function BookTab({ user, profile, bookingsData }) {
       {/* 3. ЧАС */}
       {selectedDate && (
         <>
-          <div className="section-title">
+          <div ref={timeSectionRef} className="section-title">
             3. Час ({selectedDate.toLocaleDateString('uk-UA', { weekday: 'short', day: 'numeric', month: 'long' })})
           </div>
           {loading ? (
