@@ -29,25 +29,29 @@ export async function getSlotsForDate(date) {
   return snap.exists() ? snap.val() : {}
 }
 
-export async function getMonthAvailability(year, month) {
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const dates = Array.from({ length: daysInMonth }, (_, i) => {
-    const d = new Date(year, month, i + 1)
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+function classifyDay(slotsObj) {
+  if (!slotsObj) return null
+  const slots = Object.values(slotsObj).filter(s => s && s.time && !s.adminBlocked)
+  if (slots.length === 0) return null
+  const free  = slots.filter(s => s.available !== false).length
+  const taken = slots.filter(s => s.available === false).length
+  if (taken === 0) return 'free'
+  if (free  === 0) return 'full'
+  return 'partial'
+}
+
+export function subscribeMonthAvailability(year, month, callback) {
+  const prefix = `${year}-${String(month + 1).padStart(2, '0')}-`
+  const r = ref(db, 'timeslots')
+  const handler = onValue(r, snap => {
+    const all = snap.val() || {}
+    const result = {}
+    Object.entries(all).forEach(([date, slotsObj]) => {
+      if (date.startsWith(prefix)) result[date] = classifyDay(slotsObj)
+    })
+    callback(result)
   })
-  const results = await Promise.all(dates.map(async date => {
-    const snap = await get(ref(db, `timeslots/${date}`))
-    if (!snap.exists()) return [date, null]
-    const slotsObj = snap.val()
-    const slots = Object.values(slotsObj).filter(s => s && s.time)
-    if (slots.length === 0) return [date, null]
-    const free = slots.filter(s => s.available !== false).length
-    const taken = slots.filter(s => s.available === false).length
-    if (taken === 0) return [date, 'free']
-    if (free === 0) return [date, 'full']
-    return [date, 'partial']
-  }))
-  return Object.fromEntries(results)
+  return () => off(r, 'value', handler)
 }
 
 export function subscribeSlotsForDate(date, callback) {

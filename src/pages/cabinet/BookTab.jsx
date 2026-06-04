@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { subscribeSlotsForDate, createBooking, joinQueue, leaveQueue, subscribeQueueForSlot, getAdminSettings, getAdminServices, markSlotsUnavailable, claimReservedSlot, setViewingSlot, clearViewingSlot, getMonthAvailability } from '../../firebase/db'
+import { subscribeSlotsForDate, createBooking, joinQueue, leaveQueue, subscribeQueueForSlot, getAdminSettings, getAdminServices, markSlotsUnavailable, claimReservedSlot, setViewingSlot, clearViewingSlot, subscribeMonthAvailability } from '../../firebase/db'
 import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay } from '../../utils/date'
 import { getInitials, pluralize } from '../../utils/format'
 import './BookTab.css'
@@ -130,9 +130,12 @@ export default function BookTab({ user, profile, bookingsData }) {
 
   useEffect(() => {
     setMonthAvail({})
-    getMonthAvailability(viewMonth.getFullYear(), viewMonth.getMonth())
-      .then(avail => setMonthAvail(avail))
-      .catch(() => {})
+    const unsub = subscribeMonthAvailability(
+      viewMonth.getFullYear(),
+      viewMonth.getMonth(),
+      avail => setMonthAvail(avail)
+    )
+    return unsub
   }, [viewMonth])
 
   const days = useMemo(() => getMonthGrid(viewMonth.getFullYear(), viewMonth.getMonth()), [viewMonth])
