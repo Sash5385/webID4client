@@ -5,19 +5,36 @@
   padding: 0;
 }
 
-html, body, #root {
+html {
+  height: 100%;
+  background: var(--bg);
+}
+
+body {
+  height: 100%;
   background: var(--bg);
   color: var(--text);
   font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   transition: background .3s, color .3s;
-  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-body { overflow-x: hidden; overflow-y: auto; }
+#root {
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+}
 
 @media (min-width: 600px) {
-  html, body, #root {
-    height: 100vh;
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--surf-lo);
+  }
+  #root {
+    height: 100%;
     overflow: hidden;
     background: var(--surf-lo);
   }
