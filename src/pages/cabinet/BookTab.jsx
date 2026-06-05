@@ -84,10 +84,17 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     const startMin = h * 60 + m
     const endMin = startMin + durHours * 60
     return Object.values(slots).some(s => {
-      if (s.available !== false) return false
       const [sh, sm] = (s.time || '').split(':').map(Number)
       const sMin = sh * 60 + sm
-      return sMin >= startMin && sMin < endMin
+      if (sMin <= startMin || sMin >= endMin) return false // тільки слоти ВСЕРЕДИНІ діапазону
+      if (s.available === false) return true // зайнятий слот
+      // VIP слот всередині діапазону — блокуємо для звичайних учнів
+      if (s.vipOnly && !isVipStudent && selectedDate) {
+        const slotDt = new Date(selectedDate)
+        slotDt.setHours(Math.floor(sMin / 60), sMin % 60, 0, 0)
+        return Date.now() + 48 * 60 * 60 * 1000 < slotDt.getTime()
+      }
+      return false
     })
   }
 
@@ -179,6 +186,12 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         const slotMin = bookStartMin + i * 60
         const key = `slot${String(Math.floor(slotMin/60)).padStart(2,'0')}${String(slotMin%60).padStart(2,'0')}`
         surcharge += slots[key]?.surcharge || 0
+        // Фінальна перевірка: заборонити якщо будь-який покритий слот є VIP (для звичайних учнів)
+        if (i > 0 && !isVipStudent && slots[key]?.vipOnly) {
+          alert('Неможливо записатись: наступна година є VIP-слотом')
+          setSubmitting(false)
+          return
+        }
       }
       const totalPrice = (selectedService?.price || 0) + surcharge
       const currentSlot = slots[`slot${selectedTime.replace(':', '')}`]
