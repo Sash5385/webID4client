@@ -234,7 +234,7 @@ export async function getAdminSettings() {
 }
 
 export async function getAdminServices() {
-  const snap = await get(ref(db, 'admin_settings/services'))
+  const snap = await get(ref(db, 'admin_data/services'))
   if (!snap.exists()) return []
   const val = snap.val()
   const arr = Array.isArray(val) ? val : Object.values(val)
