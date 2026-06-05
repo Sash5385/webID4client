@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { cancelBooking, createBooking, markSlotsUnavailable, subscribeSlotsForDate, getAdminSettings } from '../../firebase/db'
+import { cancelBooking, createBooking, markSlotsUnavailable, subscribeSlotsForDate, getAdminSettings, subscribeMonthAvailability } from '../../firebase/db'
 import { parseYMD, getMonthShort, getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay } from '../../utils/date'
 import './BookingsTab.css'
 import './BookTab.css'
@@ -15,12 +15,19 @@ function RescheduleModal({ booking, user, onClose, onDone }) {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [adminSettings, setAdminSettings] = useState({ lunchEnabled: true, lunchStart: 12, lunchEnd: 13 })
+  const [monthAvail, setMonthAvail] = useState({})
 
   const durationHours = booking.durationHours || 1
 
   useEffect(() => {
     getAdminSettings().then(s => setAdminSettings(s)).catch(() => {})
   }, [])
+
+  useEffect(() => {
+    setMonthAvail({})
+    const unsub = subscribeMonthAvailability(viewMonth.getFullYear(), viewMonth.getMonth(), avail => setMonthAvail(avail))
+    return unsub
+  }, [viewMonth])
 
   useEffect(() => {
     if (!selectedDate) { setSlots({}); setSelectedTime(null); return }
@@ -122,12 +129,14 @@ function RescheduleModal({ booking, user, onClose, onDone }) {
               const disabled = isPast(d)
               const isToday = isSameDay(d, today)
               const selected = selectedDate && isSameDay(d, selectedDate)
-              // Skip same date as current booking
               const isCurrent = d && formatDateYMD(d) === booking.date
+              const dateStr = formatDateYMD(d)
+              const avail = monthAvail[dateStr]
+              const availClass = (!disabled && !isCurrent) ? (avail ? `day-${avail}` : '') : ''
               return (
                 <button
                   key={i}
-                  className={`cal-day ${disabled || isCurrent ? 'disabled' : ''} ${isToday ? 'today' : ''} ${selected ? 'selected' : ''}`}
+                  className={`cal-day ${disabled || isCurrent ? 'disabled' : ''} ${isToday ? 'today' : ''} ${selected ? 'selected' : ''} ${availClass}`}
                   onClick={() => !disabled && !isCurrent && setSelectedDate(d)}
                   disabled={disabled || isCurrent}
                 >
