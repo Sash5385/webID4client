@@ -5,10 +5,10 @@ import { getInitials, pluralize } from '../../utils/format'
 import './BookTab.css'
 
 const FALLBACK_SERVICES = [
-  { id:'school-1h', name:'Автошкола 1 год',  type:'school',  duration:60,  price:0, colorId:'blue'   },
-  { id:'school-2h', name:'Автошкола 2 год',  type:'school',  duration:120, price:0, colorId:'blue'   },
-  { id:'private-1h',name:'Приватний 1 год',  type:'private', duration:60,  price:0, colorId:'purple' },
-  { id:'private-2h',name:'Приватний 2 год',  type:'private', duration:120, price:0, colorId:'purple' },
+  { id:'sv1', name:'Автошкола 1 год',  type:'school',  duration:60,  price:600,  colorId:'blue'   },
+  { id:'sv2', name:'Автошкола 2 год',  type:'school',  duration:120, price:1100, colorId:'blue'   },
+  { id:'sv3', name:'Приватний 1 год',  type:'private', duration:60,  price:700,  colorId:'purple' },
+  { id:'sv4', name:'Приватний 2 год',  type:'private', duration:120, price:1300, colorId:'purple' },
 ]
 
 export default function BookTab({ user, profile, bookingsData, notifParams }) {
@@ -120,7 +120,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         const unsub = subscribeQueueForSlot(dateKey, slot.time, entries => {
           setQueueMap(prev => ({
             ...prev,
-            [slot.time]: { count: entries.length, mine: entries.some(e => e.uid === user?.uid) }
+            [slot.time]: { count: entries.length, mine: entries.some(e => e.uid === user?.uid && (e.status === 'waiting' || e.status === 'offered')) }
           }))
         })
         unsubs.push(unsub)
