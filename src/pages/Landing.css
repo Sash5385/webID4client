@@ -86,7 +86,9 @@
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: var(--surface);
+  background: rgba(0,0,0,0.30);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   box-shadow: var(--shadow);
   border: none;
   cursor: pointer;
@@ -185,7 +187,9 @@
 }
 
 .stat-card {
-  background: var(--surface);
+  background: rgba(0,0,0,0.30);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 12px;
   padding: 8px 20px;
   box-shadow: var(--shadow);
@@ -236,7 +240,9 @@
 }
 
 .service-card {
-  background: var(--surface);
+  background: rgba(0,0,0,0.30);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 18px;
   padding: 16px;
   box-shadow: var(--shadow);
@@ -297,7 +303,7 @@
   width: 28px;
   height: 28px;
   border-radius: 10px;
-  background: var(--surf-lo);
+  background: rgba(0,0,0,0.27);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -308,11 +314,13 @@
 
 /* FLOW (як працює) */
 .flow-card {
-  background: linear-gradient(135deg, var(--surf-hi), var(--surface));
+  background: rgba(0,0,0,0.30);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 22px;
   padding: 18px;
   box-shadow: var(--shadow);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255,255,255,0.10);
 }
 
 .flow-step {
@@ -374,7 +382,9 @@
 }
 
 .choice-tile {
-  background: var(--surf-lo);
+  background: rgba(0,0,0,0.27);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 12px;
   padding: 10px 8px;
   box-shadow: var(--shadow-in);
@@ -394,7 +404,9 @@
 
 .flow-progress {
   margin-top: 10px;
-  background: var(--surf-lo);
+  background: rgba(0,0,0,0.27);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 10px;
   box-shadow: var(--shadow-in);
   padding: 4px;
@@ -433,7 +445,9 @@
 }
 
 .feature-card {
-  background: var(--surface);
+  background: rgba(0,0,0,0.30);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 16px;
   padding: 14px;
   box-shadow: var(--shadow);
@@ -488,14 +502,16 @@
 
 /* INSTRUCTOR */
 .instructor-card {
-  background: linear-gradient(135deg, var(--surf-hi), var(--surface));
+  background: rgba(0,0,0,0.30);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 22px;
   padding: 20px;
   box-shadow: var(--shadow);
   display: flex;
   gap: 14px;
   align-items: center;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255,255,255,0.10);
 }
 
 .instructor-avatar {
@@ -557,7 +573,9 @@
 
 .review-card {
   flex: 0 0 280px;
-  background: var(--surface);
+  background: rgba(0,0,0,0.30);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 18px;
   padding: 16px;
   box-shadow: var(--shadow);
@@ -609,7 +627,9 @@
 }
 
 .contact-row {
-  background: var(--surface);
+  background: rgba(0,0,0,0.30);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 14px;
   padding: 12px 14px;
   box-shadow: var(--shadow);
@@ -658,11 +678,13 @@
 
 /* MAP */
 .map-card {
-  background: var(--surface);
+  background: rgba(0,0,0,0.30);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 20px;
   overflow: hidden;
   box-shadow: var(--shadow);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255,255,255,0.10);
 }
 
 .map-iframe {
@@ -739,7 +761,9 @@
 /* TERMS */
 .terms-btn {
   width: 100%;
-  background: var(--surface);
+  background: rgba(0,0,0,0.30);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 14px;
   padding: 14px;
   box-shadow: var(--shadow);

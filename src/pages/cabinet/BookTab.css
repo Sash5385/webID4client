@@ -61,14 +61,21 @@
 }
 
 .svc-tile {
-  background: linear-gradient(155deg, var(--surf-hi), var(--surface));
+  background: rgba(0,0,0,0.32);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 13px;
   padding: 14px 10px;
   box-shadow: var(--shadow);
   text-align: center;
   cursor: pointer;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255,255,255,0.10);
   transition: transform .15s, box-shadow .15s;
+}
+
+[data-theme="light"] .svc-tile {
+  background: rgba(255,255,255,0.60);
+  border-color: rgba(255,255,255,0.65);
 }
 
 .svc-tile:active:not(.locked) { transform: scale(0.97); }
@@ -139,19 +146,23 @@
 /* ── CALENDAR ─────────────────────────────────────────────── */
 
 .cal-card {
-  background: #0f1014;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-radius: 18px;
   padding: 6px 10px 5px;
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.13);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
   position: relative;
   overflow: hidden;
 }
 
 [data-theme="light"] .cal-card {
-  background: #fff;
-  border-color: rgba(0,0,0,0.07);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-color: rgba(255,255,255,0.7);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08);
 }
 
 .cal-head {
@@ -237,7 +248,7 @@
   transition: background .12s, color .12s;
 }
 .cal-day:not(.disabled):not(.selected):not(.day-free):not(.day-partial):not(.day-full):hover {
-  background: rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.30);
   color: var(--text);
 }
 

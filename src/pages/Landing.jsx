@@ -1,10 +1,37 @@
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
 import './Landing.css'
 
+const REVIEWS_URL = 'https://europe-west1-id4drive-booking-44182.cloudfunctions.net/getGoogleReviews'
+
+const AVATAR_COLORS = [
+  'linear-gradient(165deg,#ff7a5c,#ff5a3c)',
+  'linear-gradient(165deg,#fb923c,#ea580c)',
+  'linear-gradient(165deg,#5b9bff,#2563eb)',
+  'linear-gradient(165deg,#c084fc,#7c3aed)',
+  'linear-gradient(165deg,#2dd4bf,#0d9488)',
+]
+
+function initials(name) {
+  return (name || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+}
+
+function starsStr(rating) {
+  return '★'.repeat(rating) + '☆'.repeat(5 - rating)
+}
+
 export default function Landing({ user }) {
   const { theme, toggle } = useTheme()
   const nav = useNavigate()
+  const [reviews, setReviews] = useState([])
+
+  useEffect(() => {
+    fetch(REVIEWS_URL)
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data) && data.length) setReviews(data.slice(0, 5)) })
+      .catch(() => {})
+  }, [])
 
   const goAuth = () => nav(user ? '/cabinet' : '/schedule')
 
@@ -197,39 +224,51 @@ export default function Landing({ user }) {
           <h2>Що кажуть учні</h2>
         </section>
         <div className="reviews-scroll">
-          <div className="review-card">
-            <div className="review-stars">★★★★★</div>
-            <div className="review-text">"Олександр — найкращий інструктор! Здала з першого разу. Спокійно пояснює, не нервує."</div>
-            <div className="review-author">
-              <div className="review-avatar">АН</div>
-              <div>
-                <div className="review-name">Анна К.</div>
-                <div className="review-date">15 травня 2026</div>
+          {reviews.length > 0 ? reviews.map((r, i) => (
+            <div className="review-card" key={i}>
+              <div className="review-stars" style={{color: r.rating >= 4 ? '#f7c948' : '#ff5a3c'}}>
+                {starsStr(r.rating)}
+              </div>
+              <div className="review-text">"{r.text}"</div>
+              <div className="review-author">
+                {r.profile_photo_url
+                  ? <img src={r.profile_photo_url} className="review-avatar" style={{objectFit:'cover', background:'none'}} alt={r.author_name} />
+                  : <div className="review-avatar" style={{background: AVATAR_COLORS[i % AVATAR_COLORS.length]}}>{initials(r.author_name)}</div>
+                }
+                <div>
+                  <div className="review-name">{r.author_name}</div>
+                  <div className="review-date">{r.relative_time_description}</div>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="review-card">
-            <div className="review-stars">★★★★★</div>
-            <div className="review-text">"Зручний додаток для запису. Перенесла урок за 30 секунд, без дзвінків. Рекомендую!"</div>
-            <div className="review-author">
-              <div className="review-avatar" style={{background:'linear-gradient(165deg,#fb923c,#ea580c)'}}>МК</div>
-              <div>
-                <div className="review-name">Марія Г.</div>
-                <div className="review-date">2 травня 2026</div>
+          )) : (
+            <>
+              <div className="review-card">
+                <div className="review-stars">★★★★★</div>
+                <div className="review-text">"Олександр — найкращий інструктор! Здала з першого разу. Спокійно пояснює, не нервує."</div>
+                <div className="review-author">
+                  <div className="review-avatar">АН</div>
+                  <div><div className="review-name">Анна К.</div><div className="review-date">15 травня 2026</div></div>
+                </div>
               </div>
-            </div>
-          </div>
-          <div className="review-card">
-            <div className="review-stars">★★★★★</div>
-            <div className="review-text">"Брав приватні уроки після курсів. За 5 занять став впевнено водити в місті."</div>
-            <div className="review-author">
-              <div className="review-avatar" style={{background:'linear-gradient(165deg,#5b9bff,#2563eb)'}}>ДМ</div>
-              <div>
-                <div className="review-name">Дмитро П.</div>
-                <div className="review-date">20 квітня 2026</div>
+              <div className="review-card">
+                <div className="review-stars">★★★★★</div>
+                <div className="review-text">"Зручний додаток для запису. Перенесла урок за 30 секунд, без дзвінків. Рекомендую!"</div>
+                <div className="review-author">
+                  <div className="review-avatar" style={{background:'linear-gradient(165deg,#fb923c,#ea580c)'}}>МК</div>
+                  <div><div className="review-name">Марія Г.</div><div className="review-date">2 травня 2026</div></div>
+                </div>
               </div>
-            </div>
-          </div>
+              <div className="review-card">
+                <div className="review-stars">★★★★★</div>
+                <div className="review-text">"Брав приватні уроки після курсів. За 5 занять став впевнено водити в місті."</div>
+                <div className="review-author">
+                  <div className="review-avatar" style={{background:'linear-gradient(165deg,#5b9bff,#2563eb)'}}>ДМ</div>
+                  <div><div className="review-name">Дмитро П.</div><div className="review-date">20 квітня 2026</div></div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* CONTACTS */}

@@ -1,5 +1,6 @@
 const { onValueWritten, onValueCreated } = require("firebase-functions/v2/database");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { onRequest } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
 admin.initializeApp();
@@ -318,6 +319,42 @@ exports.onAdminSlotOpened = onValueWritten(
     if (!entries.length) return;
 
     await db.ref(`queue/${slotKey}/entries/${entries[0].uid}`).update({ status: "offered" });
+  }
+);
+
+// ─── 9. getGoogleReviews ──────────────────────────────────────────
+const GOOGLE_PLACES_KEY = "AIzaSyBb0RVbue5lKltEtF8-bSHRSlVR2rZGbZk";
+const PLACE_QUERY       = "ID4Drive автошкола Верховинна 44 Київ";
+const CACHE_TTL_MS      = 24 * 60 * 60 * 1000; // 24h
+
+exports.getGoogleReviews = onRequest(
+  { region: REGION, cors: true },
+  async (req, res) => {
+    const cacheSnap = await db.ref("cache/googleReviews").get();
+    const cache = cacheSnap.val();
+    if (cache && cache.updatedAt > Date.now() - CACHE_TTL_MS) {
+      res.json(cache.data);
+      return;
+    }
+
+    let placeId = cache?.placeId;
+    if (!placeId) {
+      const searchRes = await fetch(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(PLACE_QUERY)}&key=${GOOGLE_PLACES_KEY}`
+      );
+      const searchData = await searchRes.json();
+      placeId = searchData.results?.[0]?.place_id;
+      if (!placeId) { res.json([]); return; }
+    }
+
+    const detailsRes = await fetch(
+      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=reviews,rating,user_ratings_total&language=uk&key=${GOOGLE_PLACES_KEY}`
+    );
+    const detailsData = await detailsRes.json();
+    const reviews = detailsData.result?.reviews || [];
+
+    await db.ref("cache/googleReviews").set({ placeId, data: reviews, updatedAt: Date.now() });
+    res.json(reviews);
   }
 );
 

@@ -4,11 +4,13 @@
 }
 
 .booking-card {
-  background: linear-gradient(155deg, var(--surf-hi), var(--surface));
+  background: rgba(0,0,0,0.30);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 14px;
   padding: 12px;
   box-shadow: var(--shadow);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255,255,255,0.10);
   margin-bottom: 8px;
   display: flex;
   gap: 10px;
@@ -19,12 +21,12 @@
 .booking-date {
   width: 48px;
   flex-shrink: 0;
-  background: linear-gradient(135deg, var(--bg-deep), var(--surf-lo));
+  background: rgba(0,0,0,0.25);
   border-radius: 10px;
   padding: 7px 4px;
   text-align: center;
   box-shadow: var(--shadow-in);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
 .booking-day {
@@ -98,7 +100,7 @@
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: var(--surf-lo);
+  background: rgba(0,0,0,0.27);
   border: none;
   cursor: pointer;
   box-shadow: var(--shadow-in);
