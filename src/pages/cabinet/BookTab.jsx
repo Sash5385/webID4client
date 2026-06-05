@@ -11,7 +11,7 @@ const FALLBACK_SERVICES = [
   { id:'private-2h',name:'Приватний 2 год',  type:'private', duration:120, price:0, colorId:'purple' },
 ]
 
-export default function BookTab({ user, profile, bookingsData }) {
+export default function BookTab({ user, profile, bookingsData, notifParams }) {
   const isSchool = profile?.studentType === 'school'
   const canPrivate = bookingsData.canBookPrivate || profile?.studentType === 'private'
   const isVipStudent = profile?.isVip === true
@@ -19,11 +19,20 @@ export default function BookTab({ user, profile, bookingsData }) {
   const [servicesLoaded, setServicesLoaded] = useState(false)
   const [selectedService, setSelectedService] = useState(null)
   const [today] = useState(() => { const d = new Date(); d.setHours(0,0,0,0); return d })
-  const [viewMonth, setViewMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
-  const [selectedDate, setSelectedDate] = useState(null)
+  const [viewMonth, setViewMonth] = useState(() => {
+    if (notifParams?.date) {
+      const d = new Date(notifParams.date + 'T12:00:00')
+      return new Date(d.getFullYear(), d.getMonth(), 1)
+    }
+    return new Date(today.getFullYear(), today.getMonth(), 1)
+  })
+  const [selectedDate, setSelectedDate] = useState(() => {
+    if (notifParams?.date) return new Date(notifParams.date + 'T12:00:00')
+    return null
+  })
   const [slots, setSlots] = useState({})
   const [queueMap, setQueueMap] = useState({}) // time → count
-  const [selectedTime, setSelectedTime] = useState(null)
+  const [selectedTime, setSelectedTime] = useState(notifParams?.time || null)
   const [loading, setLoading] = useState(false)
   const [adminSettings, setAdminSettings] = useState({ lunchEnabled: true, lunchStart: 12, lunchEnd: 13 })
   const [monthAvail, setMonthAvail] = useState({})

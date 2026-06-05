@@ -30,13 +30,18 @@ messaging.onBackgroundMessage((payload) => {
 
 self.addEventListener('notificationclick', (e) => {
   e.notification.close()
-  const url = e.notification.data?.url || '/cabinet'
+  const data = e.notification.data || {}
+  const target = data.url || 'https://id4drive.pro/cabinet'
+  const fullUrl = target.startsWith('http') ? target : ('https://id4drive.pro' + target)
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
       for (const c of list) {
-        if (c.url.includes(url) && 'focus' in c) return c.focus()
+        if (c.url.startsWith('https://id4drive.pro') && 'focus' in c) {
+          c.focus()
+          return c.navigate(fullUrl)
+        }
       }
-      if (clients.openWindow) return clients.openWindow(url)
+      if (clients.openWindow) return clients.openWindow(fullUrl)
     })
   )
 })

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
 import { useBookings } from '../hooks/useBookings'
@@ -29,6 +29,14 @@ export default function Cabinet({ user, profile }) {
   // Визначаємо активну вкладку з URL
   const path = loc.pathname.replace('/cabinet', '').replace('/', '')
   const activeTab = path || 'book'
+
+  // Параметри з push-сповіщення: ?date=2026-06-06&time=12:00
+  const notifParams = useMemo(() => {
+    const p = new URLSearchParams(loc.search)
+    const date = p.get('date')
+    const time = p.get('time')
+    return date ? { date, time } : null
+  }, [loc.search])
 
   const [queueOffers, setQueueOffers] = useState({})
 
@@ -107,7 +115,7 @@ export default function Cabinet({ user, profile }) {
       {/* CONTENT */}
       <div className="cab-content">
         <Routes>
-          <Route path="/" element={<BookTab user={user} profile={profile} bookingsData={bookingsData} />} />
+          <Route path="/" element={<BookTab user={user} profile={profile} bookingsData={bookingsData} notifParams={notifParams} />} />
           <Route path="/bookings" element={<BookingsTab user={user} profile={profile} bookingsData={bookingsData} />} />
           <Route path="/progress" element={<ProgressTab user={user} profile={profile} bookingsData={bookingsData} />} />
           <Route path="/chat" element={<ChatTab user={user} profile={profile} />} />
