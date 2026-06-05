@@ -97,7 +97,7 @@ function RescheduleModal({ booking, user, onClose, onDone }) {
   }
 
   return (
-    <div className="dialog-backdrop show" onClick={e => e.target.classList.contains('dialog-backdrop') && onClose()}>
+    <div className="dialog-backdrop show" onClick={e => e.target.classList.contains('dialog-backdrop') && onClose()} ref={el => el && (el.scrollTop = 0)}>
       <div className="dialog">
         <div className="dialog-handle" />
         <div className="dialog-title" style={{ fontSize: 16, marginBottom: 4 }}>📅 Перенести урок</div>
