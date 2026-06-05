@@ -116,14 +116,20 @@
 
 .botnav-ico {
   display: flex; align-items: center; justify-content: center;
-  transition: transform .15s, opacity .15s;
-  opacity: 0.52;
+  transition: transform .15s, opacity .15s, color .15s;
+  opacity: 0.55;
+  color: #fff;
   position: relative;
 }
 
-.botnav-btn.active .botnav-ico { transform: scale(1.1); opacity: 1; }
+[data-theme="light"] .botnav-ico { color: var(--dim); }
 
-.botnav-lbl { font-size: 9px; font-weight: 700; color: var(--faint); white-space: nowrap; }
+.botnav-btn.active .botnav-ico { transform: scale(1.1); opacity: 1; color: var(--accent); }
+
+[data-theme="light"] .botnav-btn.active .botnav-ico { color: var(--accent); }
+
+.botnav-lbl { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.45); white-space: nowrap; }
+[data-theme="light"] .botnav-lbl { color: var(--faint); }
 .botnav-btn.active .botnav-lbl { color: var(--accent); }
 
 .botnav-badge {
