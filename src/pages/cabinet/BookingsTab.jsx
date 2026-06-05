@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { cancelBooking, createBooking, markSlotsUnavailable, subscribeSlotsForDate, getAdminSettings } from '../../firebase/db'
 import { parseYMD, getMonthShort, getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay } from '../../utils/date'
 import './BookingsTab.css'
@@ -96,7 +97,7 @@ function RescheduleModal({ booking, user, onClose, onDone }) {
     }
   }
 
-  return (
+  return createPortal(
     <div className="dialog-backdrop show" onClick={e => e.target.classList.contains('dialog-backdrop') && onClose()} ref={el => el && (el.scrollTop = 0)}>
       <div className="dialog">
         <div className="dialog-handle" />
@@ -179,7 +180,8 @@ function RescheduleModal({ booking, user, onClose, onDone }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
