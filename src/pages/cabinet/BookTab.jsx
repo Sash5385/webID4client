@@ -410,7 +410,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                   return (
                     <div key={slot.time} style={{position:'relative'}}>
                       <button
-                        className={`slot ${isMyReserved || isMyQueue ? 'my-queue' : isTaken ? 'taken' : ''} ${isSelected ? 'selected' : ''}`}
+                        className={`slot ${isMyReserved || isMyQueue ? 'my-queue' : isUnavailable ? 'taken' : ''} ${isSelected ? 'selected' : ''}`}
                         style={{width:'100%'}}
                         onClick={() => !isMyQueue && handleSlotClick(slot)}
                         disabled={isLunch || isOverlap}
