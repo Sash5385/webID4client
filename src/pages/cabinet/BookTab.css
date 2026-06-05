@@ -442,11 +442,11 @@
   backdrop-filter: blur(8px);
   z-index: 100;
   display: none;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 16px;
-  animation: fade-up .2s ease;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .dialog-backdrop.show { display: flex; }
@@ -459,6 +459,7 @@
   padding: 20px;
   box-shadow: 0 8px 40px rgba(0,0,0,0.5);
   animation: slide-up .3s ease;
+  margin: auto;
 }
 
 @keyframes slide-up {
