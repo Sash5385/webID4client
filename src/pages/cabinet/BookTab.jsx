@@ -219,6 +219,7 @@ export default function BookTab({ user, profile, bookingsData }) {
   const slotsList = useMemo(() => {
     const isVip = profile?.isVip === true
     return Object.values(slots)
+      .filter(slot => (slot.time || '').endsWith(':00'))
       .filter(slot => !slot.vipOnly || isVipStudent)
       .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
       .map(slot => {
