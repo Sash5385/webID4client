@@ -1,10 +1,8 @@
 .auth-page {
   max-width: 480px;
   margin: 0 auto;
-  padding: 0 20px 20px;
+  padding: 0 20px 40px;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
 }
 
 .auth-header {
@@ -519,4 +517,4 @@
   color: #7ed957;
 }
 
-.bottom-spacer { margin-top: auto; padding-top: 16px; }
+.bottom-spacer { margin-top: 20px; padding-top: 4px; }

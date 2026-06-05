@@ -277,7 +277,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
 
       {/* ── PHONE / EMAIL ── */}
       {step === 'phone' && (
-        <div className="fade-up" style={{display:'flex',flexDirection:'column',flex:1}}>
+        <div className="fade-up" style={{display:'flex',flexDirection:'column'}}>
           <div className="auth-logo-block">
             <div className="auth-logo-icon">🚗</div>
             <div className="auth-logo-name">ID4Drive</div>
@@ -382,7 +382,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
 
       {/* ── SMS ── */}
       {step === 'sms' && (
-        <div className="fade-up" style={{display:'flex',flexDirection:'column',flex:1}}>
+        <div className="fade-up" style={{display:'flex',flexDirection:'column'}}>
           <h1 className="auth-h1" style={{marginTop:16}}>Код з <span className="acc">SMS</span></h1>
           <p className="auth-sub">Надіслали на {formatPhone(phone)}</p>
           <div className="code-grid" onClick={()=>codeInputRef.current?.focus()}>
@@ -419,7 +419,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
 
       {/* ── SURVEY ── */}
       {step === 'survey' && (
-        <div className="fade-up" style={{display:'flex',flexDirection:'column',flex:1}}>
+        <div className="fade-up" style={{display:'flex',flexDirection:'column'}}>
           <h1 className="auth-h1" style={{marginTop:8}}>Розкажи <span className="acc">про себе</span></h1>
           <p className="auth-sub">Допоможе підібрати програму навчання</p>
 
