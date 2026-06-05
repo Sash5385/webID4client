@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { subscribeSlotsForDate, getAdminSettings } from '../firebase/db'
+import { subscribeSlotsForDate, getAdminSettings, subscribeMonthAvailability } from '../firebase/db'
 import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay } from '../utils/date'
 import { useTheme } from '../hooks/useTheme'
 import './cabinet/BookTab.css'
@@ -17,6 +17,7 @@ export default function PublicSchedule({ onBook }) {
   const [selectedTime, setSelectedTime] = useState(null)
   const [loading, setLoading] = useState(false)
   const [adminSettings, setAdminSettings] = useState({ lunchEnabled: false, lunchStart: 12, lunchEnd: 13 })
+  const [monthAvail, setMonthAvail] = useState({})
   const timeSectionRef = useRef(null)
 
   useEffect(() => {
@@ -29,6 +30,16 @@ export default function PublicSchedule({ onBook }) {
   useEffect(() => {
     getAdminSettings().then(s => setAdminSettings(s)).catch(() => {})
   }, [])
+
+  useEffect(() => {
+    setMonthAvail({})
+    const unsub = subscribeMonthAvailability(
+      viewMonth.getFullYear(),
+      viewMonth.getMonth(),
+      avail => setMonthAvail(avail)
+    )
+    return unsub
+  }, [viewMonth])
 
   function isBlockedByLunch(slotTime, durationHours) {
     if (!adminSettings.lunchEnabled) return false
@@ -143,10 +154,15 @@ export default function PublicSchedule({ onBook }) {
             const disabled = isPast(d)
             const isToday = isSameDay(d, today)
             const selected = selectedDate && isSameDay(d, selectedDate)
+            const dateStr = formatDateYMD(d)
+            const avail = monthAvail[dateStr]
+            const dayClass = disabled ? '' :
+              avail === undefined ? 'has-slots' :
+              avail ? `day-${avail}` : ''
             return (
               <button
                 key={i}
-                className={`cal-day ${disabled?'disabled':''} ${isToday?'today':''} ${selected?'selected':''} ${!disabled?'has-slots':''}`}
+                className={`cal-day ${disabled?'disabled':''} ${isToday?'today':''} ${selected?'selected':''} ${dayClass}`}
                 onClick={() => !disabled && setSelectedDate(d)}
                 disabled={disabled}
               >
