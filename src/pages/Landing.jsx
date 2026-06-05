@@ -29,7 +29,7 @@ export default function Landing({ user }) {
   useEffect(() => {
     fetch(REVIEWS_URL)
       .then(r => r.json())
-      .then(data => { if (Array.isArray(data) && data.length) setReviews(data.slice(0, 5)) })
+      .then(data => { if (Array.isArray(data) && data.length) setReviews(data.filter(r => r.author_name !== 'Ольга Войцещук').slice(0, 5)) })
       .catch(() => {})
   }, [])
 
