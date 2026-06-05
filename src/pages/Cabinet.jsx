@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
 import { useBookings } from '../hooks/useBookings'
-import { subscribeQueueOffers, clearQueueOffer } from '../firebase/db'
+import { subscribeQueueOffers, clearQueueOffer, claimQueueOffer, declineQueueOffer } from '../firebase/db'
 
 import BookTab from './cabinet/BookTab'
 import BookingsTab from './cabinet/BookingsTab'
@@ -39,6 +39,8 @@ export default function Cabinet({ user, profile }) {
   }, [loc.search])
 
   const [queueOffers, setQueueOffers] = useState({})
+  const [selectedOffer, setSelectedOffer] = useState(null) // { slotKey, offer }
+  const [offerSubmitting, setOfferSubmitting] = useState(false)
 
   useEffect(() => {
     if (!user?.uid) return
@@ -50,6 +52,32 @@ export default function Cabinet({ user, profile }) {
       setQueueOffers(valid)
     })
   }, [user?.uid])
+
+  const handleClaimOffer = async () => {
+    if (!selectedOffer || !user?.uid) return
+    setOfferSubmitting(true)
+    try {
+      await claimQueueOffer(user.uid, selectedOffer.slotKey, selectedOffer.offer, profile)
+      setSelectedOffer(null)
+    } catch (e) {
+      alert('Помилка: ' + e.message)
+    } finally {
+      setOfferSubmitting(false)
+    }
+  }
+
+  const handleDeclineOffer = async () => {
+    if (!selectedOffer || !user?.uid) return
+    setOfferSubmitting(true)
+    try {
+      await declineQueueOffer(user.uid, selectedOffer.slotKey, selectedOffer.offer.date, selectedOffer.offer.time)
+      setSelectedOffer(null)
+    } catch (e) {
+      alert('Помилка: ' + e.message)
+    } finally {
+      setOfferSubmitting(false)
+    }
+  }
 
   const switchTab = (tab) => {
     nav(`/cabinet/${tab === 'book' ? '' : tab}`)
@@ -93,7 +121,7 @@ export default function Cabinet({ user, profile }) {
       {Object.entries(queueOffers).map(([slotKey, offer]) => {
         const minsLeft = Math.max(0, Math.round((offer.until - Date.now()) / 60000))
         return (
-          <div key={slotKey} onClick={() => { switchTab('book'); clearQueueOffer(user.uid, slotKey) }}
+          <div key={slotKey} onClick={() => setSelectedOffer({ slotKey, offer })}
             style={{
               margin:'6px 12px 0', padding:'10px 14px', borderRadius:12, cursor:'pointer',
               background:'linear-gradient(135deg,rgba(99,211,120,0.2),rgba(99,211,120,0.08))',
@@ -107,7 +135,7 @@ export default function Cabinet({ user, profile }) {
                 {offer.date} о {offer.time} · ще {minsLeft} хв
               </div>
             </div>
-            <div style={{fontSize:11, fontWeight:700, color:'var(--green)'}}>Записатись →</div>
+            <div style={{fontSize:11, fontWeight:700, color:'var(--green)'}}>Підтвердити →</div>
           </div>
         )
       })}
@@ -180,6 +208,85 @@ export default function Cabinet({ user, profile }) {
         </button>
         </div>
       </nav>
+
+      {selectedOffer && (() => {
+        const { offer } = selectedOffer
+        const minsLeft = Math.max(0, Math.round((offer.until - Date.now()) / 60000))
+        const dateLabel = new Date(offer.date + 'T12:00:00').toLocaleDateString('uk-UA', { weekday:'short', day:'numeric', month:'long' })
+        return (
+          <div
+            onClick={e => e.target === e.currentTarget && setSelectedOffer(null)}
+            style={{
+              position:'fixed', inset:0, zIndex:300,
+              background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)',
+              display:'flex', alignItems:'flex-end', justifyContent:'center',
+            }}
+          >
+            <div style={{
+              width:'100%', maxWidth:480,
+              background:'linear-gradient(180deg,var(--surface),var(--bg))',
+              borderRadius:'24px 24px 0 0', padding:'20px 18px 40px',
+              boxShadow:'0 -8px 40px rgba(0,0,0,0.5)',
+            }}>
+              <div style={{width:36,height:4,borderRadius:2,background:'rgba(255,255,255,0.12)',margin:'0 auto 20px'}}/>
+              <div style={{
+                width:64, height:64, borderRadius:20, margin:'0 auto 16px',
+                background:'linear-gradient(165deg,#4ade80,#16a34a)',
+                display:'flex', alignItems:'center', justifyContent:'center',
+                fontSize:30, boxShadow:'0 6px 20px rgba(74,222,128,0.4)',
+              }}>🎉</div>
+              <div style={{fontSize:18, fontWeight:900, color:'var(--text)', textAlign:'center', marginBottom:6}}>
+                Слот зарезервовано!
+              </div>
+              <div style={{fontSize:13, color:'var(--dim)', textAlign:'center', marginBottom:20}}>
+                Підтвердіть запис або відмовтесь від слоту
+              </div>
+              <div style={{
+                background:'var(--surface-hi)', borderRadius:14, overflow:'hidden',
+                border:'1px solid var(--border)', marginBottom:20,
+              }}>
+                {[
+                  ['Дата', dateLabel],
+                  ['Час', offer.time],
+                  ['Залишилось', `${minsLeft} хв`],
+                ].map(([lbl, val], i) => (
+                  <div key={lbl} style={{
+                    display:'flex', justifyContent:'space-between', alignItems:'center',
+                    padding:'12px 16px',
+                    borderTop: i > 0 ? '1px solid var(--border)' : 'none',
+                  }}>
+                    <span style={{fontSize:13, color:'var(--dim)'}}>{lbl}</span>
+                    <span style={{fontSize:13, fontWeight:700, color: lbl === 'Залишилось' ? 'var(--gold)' : 'var(--text)'}}>{val}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
+                <button
+                  onClick={handleDeclineOffer}
+                  disabled={offerSubmitting}
+                  style={{
+                    padding:'14px', borderRadius:14, border:'none', cursor:'pointer',
+                    background:'rgba(239,68,68,0.15)', color:'#f87171',
+                    fontSize:14, fontWeight:700,
+                    opacity: offerSubmitting ? 0.5 : 1,
+                  }}
+                >Відмовитись</button>
+                <button
+                  onClick={handleClaimOffer}
+                  disabled={offerSubmitting}
+                  style={{
+                    padding:'14px', borderRadius:14, border:'none', cursor:'pointer',
+                    background:'linear-gradient(165deg,#4ade80,#16a34a)', color:'#fff',
+                    fontSize:14, fontWeight:700,
+                    boxShadow:'0 4px 14px rgba(74,222,128,0.4)',
+                    opacity: offerSubmitting ? 0.7 : 1,
+                  }}
+                >{offerSubmitting ? '...' : '✓ Записатись'}</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
     </div>
   )

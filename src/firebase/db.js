@@ -227,6 +227,34 @@ export async function clearQueueOffer(uid, slotKey) {
   await remove(ref(db, `users/${uid}/queueOffers/${slotKey}`))
 }
 
+export async function claimQueueOffer(uid, slotKey, offer, profile) {
+  const entrySnap = await get(ref(db, `queue/${slotKey}/entries/${uid}`))
+  const entry = entrySnap.val()
+  if (!entry) throw new Error('Queue entry not found')
+  const durationHours = entry.durationHours || 1
+  await createBooking(uid, {
+    date: offer.date,
+    time: offer.time,
+    serviceType: entry.studentType,
+    durationHours,
+    studentName: entry.name || profile?.name || '',
+    phone: entry.phone || profile?.phone || '',
+    tscCenter: profile?.tscCenter,
+  })
+  await markSlotsUnavailable(offer.date, offer.time, durationHours, 30)
+  await claimReservedSlot(offer.date, offer.time, uid)
+  await clearQueueOffer(uid, slotKey)
+}
+
+export async function declineQueueOffer(uid, slotKey, date, time) {
+  const slotId = `slot${time.replace(':', '')}`
+  await update(ref(db, '/'), {
+    [`queue/${slotKey}/entries/${uid}`]: null,
+    [`timeslots/${date}/${slotId}/offeredTo/${uid}`]: null,
+    [`users/${uid}/queueOffers/${slotKey}`]: null,
+  })
+}
+
 // ─── ADMIN SETTINGS ──────────────────────────────────────────────
 export async function getAdminSettings() {
   const snap = await get(ref(db, 'admin_settings'))
