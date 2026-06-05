@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getSlotsForDate, getAdminSettings } from '../firebase/db'
+import { subscribeSlotsForDate, getAdminSettings } from '../firebase/db'
 import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay } from '../utils/date'
 import { useTheme } from '../hooks/useTheme'
 import './cabinet/BookTab.css'
@@ -53,9 +53,11 @@ export default function PublicSchedule({ onBook }) {
   useEffect(() => {
     if (!selectedDate) { setSlots({}); setSelectedTime(null); return }
     setLoading(true)
-    getSlotsForDate(formatDateYMD(selectedDate))
-      .then(data => setSlots(data || {}))
-      .finally(() => setLoading(false))
+    const unsub = subscribeSlotsForDate(formatDateYMD(selectedDate), data => {
+      setSlots(data || {})
+      setLoading(false)
+    })
+    return unsub
   }, [selectedDate])
 
   const days = useMemo(() => getMonthGrid(viewMonth.getFullYear(), viewMonth.getMonth()), [viewMonth])
