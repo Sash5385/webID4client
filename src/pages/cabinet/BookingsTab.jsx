@@ -79,7 +79,7 @@ function RescheduleModal({ booking, user, onClose, onDone }) {
     try {
       const newDate = formatDateYMD(selectedDate)
       // 1. Скасовуємо старий запис (відновлює слоти)
-      await cancelBooking(user.uid, booking.id)
+      await cancelBooking(user.uid, booking.id, { isReschedule: true })
       // 2. Створюємо новий
       await createBooking(user.uid, {
         date: newDate,

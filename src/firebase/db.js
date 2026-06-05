@@ -92,7 +92,7 @@ export async function createBooking(uid, booking) {
   return r.key
 }
 
-export async function cancelBooking(uid, bookingId) {
+export async function cancelBooking(uid, bookingId, { isReschedule = false } = {}) {
   const snap = await get(ref(db, `bookings/${uid}/${bookingId}`))
   const booking = snap.val()
   if (!booking) return
@@ -100,7 +100,7 @@ export async function cancelBooking(uid, bookingId) {
   await update(ref(db, `bookings/${uid}/${bookingId}`), {
     status: 'cancelled',
     cancelledAt: Date.now(),
-    cancelledBy: 'student',
+    cancelledBy: isReschedule ? 'reschedule' : 'student',
   })
 
   // Відновити вільні слоти, видалити 30-хв фантоми

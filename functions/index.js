@@ -111,7 +111,9 @@ exports.onBookingStatusChanged = onValueWritten(
     if (newStatus === "confirmed") {
       await sendPush(uid, "✅ Запис підтверджено", `Ваш урок${slot} підтверджено інструктором`, "/cabinet/bookings");
     } else if (newStatus === "cancelled") {
-      await sendPush(uid, "❌ Запис скасовано", `Урок${slot} скасовано. Заплануйте новий.`, "/cabinet");
+      if (after.cancelledBy !== "reschedule") {
+        await sendPush(uid, "❌ Запис скасовано", `Урок${slot} скасовано. Заплануйте новий.`, "/cabinet");
+      }
       if (after.cancelledBy === "student") {
         const name = after.studentName || "Учень";
         await sendAdminPush("❌ Учень скасував запис", `${name}${slot}`);
