@@ -72,17 +72,6 @@ export default function ProfileTab({ user, profile }) {
         </div>
       </div>
 
-      <div className="profile-section">
-        <div className="section-title">Тема</div>
-        <div className="theme-toggle">
-          <button className={`theme-btn ${theme === "dark" ? "active" : ""}`} onClick={() => setTheme("dark")}>
-            🌙 Темна
-          </button>
-          <button className={`theme-btn ${theme === "light" ? "active" : ""}`} onClick={() => setTheme("light")}>
-            ☀️ Світла
-          </button>
-        </div>
-      </div>
 
       <div className="profile-section">
         <div className="section-title">Контакти інструктора</div>
