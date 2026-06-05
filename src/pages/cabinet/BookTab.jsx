@@ -125,9 +125,11 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     Object.values(slots).forEach(slot => {
       if (slot.available === false) {
         const unsub = subscribeQueueForSlot(dateKey, slot.time, entries => {
+          const sorted = [...entries].sort((a, b) => (a.addedAt || 0) - (b.addedAt || 0))
+          const myIdx = sorted.findIndex(e => e.uid === user?.uid && (e.status === 'waiting' || e.status === 'offered'))
           setQueueMap(prev => ({
             ...prev,
-            [slot.time]: { count: entries.length, mine: entries.some(e => e.uid === user?.uid && (e.status === 'waiting' || e.status === 'offered')) }
+            [slot.time]: { count: entries.length, mine: myIdx >= 0, position: myIdx + 1 }
           }))
         })
         unsubs.push(unsub)
@@ -443,7 +445,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                         ) : isMyQueue ? (
                           <div className="slot-queue">
                             <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
-                            <span className="slot-queue-num">ти {q.count}-й</span>
+                            <span className="slot-queue-num">ти {q.position}-й</span>
                           </div>
                         ) : q?.count > 0 ? (
                           <QueueIcons n={q.count} />

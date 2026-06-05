@@ -187,11 +187,18 @@ function RescheduleModal({ booking, user, onClose, onDone }) {
 export default function BookingsTab({ user, profile, bookingsData }) {
   const { upcoming, completed, loading } = bookingsData
   const [rescheduleBooking, setRescheduleBooking] = useState(null)
+  const [toast, setToast] = useState(null)
+
+  const showToast = (msg) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3000)
+  }
 
   const handleCancel = async (booking) => {
     if (!confirm(`Скасувати урок ${booking.date} о ${booking.time}?`)) return
     try {
       await cancelBooking(user.uid, booking.id)
+      showToast(`Урок ${booking.date} о ${booking.time} скасовано`)
     } catch (e) {
       alert('Помилка: ' + e.message)
     }
@@ -272,8 +279,21 @@ export default function BookingsTab({ user, profile, bookingsData }) {
           booking={rescheduleBooking}
           user={user}
           onClose={() => setRescheduleBooking(null)}
-          onDone={() => setRescheduleBooking(null)}
+          onDone={() => { setRescheduleBooking(null); showToast('Урок перенесено') }}
         />
+      )}
+
+      {toast && (
+        <div style={{
+          position:'fixed', bottom:90, left:'50%', transform:'translateX(-50%)',
+          background:'rgba(30,20,10,0.92)', color:'#f5e8d0',
+          padding:'10px 20px', borderRadius:12, fontSize:13, fontWeight:600,
+          boxShadow:'0 4px 20px rgba(0,0,0,0.4)', zIndex:9999,
+          border:'1px solid rgba(255,255,255,0.1)', whiteSpace:'nowrap',
+          animation:'fadeInUp .2s ease'
+        }}>
+          ✓ {toast}
+        </div>
       )}
     </div>
   )
