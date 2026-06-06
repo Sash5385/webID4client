@@ -3,7 +3,7 @@
 }
 
 .profile-banner {
-  background: rgba(0,0,0,0.30);
+  background: rgba(0,0,0,0.52);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 22px;
@@ -55,7 +55,7 @@
 }
 
 .profile-section {
-  background: rgba(0,0,0,0.30);
+  background: rgba(0,0,0,0.52);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 18px;
@@ -177,3 +177,53 @@
   font-size: 13px;
   font-weight: 700;
 }
+
+.contact-phone-block {
+  background: rgba(0,0,0,0.27);
+  border-radius: 12px;
+  padding: 14px 12px;
+  margin-top: 8px;
+  box-shadow: var(--shadow-in);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contact-phone-number {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-align: center;
+  color: var(--text);
+  font-family: ui-monospace, monospace;
+}
+
+.contact-btns {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.contact-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: #fff;
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.contact-btn:active { transform: scale(0.92); opacity: 0.85; }
+
+.contact-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+.contact-btn--call  { background: #34c759; box-shadow: 0 3px 10px rgba(52,199,89,0.4); }
+.contact-btn--tg    { background: #29a8eb; box-shadow: 0 3px 10px rgba(41,168,235,0.4); }
+.contact-btn--viber { background: #7360f2; box-shadow: 0 3px 10px rgba(115,96,242,0.4); }
+.contact-btn--wa    { background: #25d366; box-shadow: 0 3px 10px rgba(37,211,102,0.4); }
