@@ -50,7 +50,7 @@
 
 .cab-icon-btn {
   width: 28px; height: 28px; border-radius: 9px;
-  background: rgba(0,0,0,0.30);
+  background: rgba(0,0,0,0.52);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 3px 10px rgba(0,0,0,0.55),
@@ -96,7 +96,7 @@
 .botnav > * { pointer-events: auto; }
 
 .botnav-inner {
-  background: rgba(0,0,0,0.30);
+  background: rgba(0,0,0,0.52);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: 26px;

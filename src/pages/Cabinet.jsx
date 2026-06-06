@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
 import { useBookings } from '../hooks/useBookings'
-import { subscribeQueueOffers, clearQueueOffer, claimQueueOffer, declineQueueOffer } from '../firebase/db'
+import { subscribeQueueOffers, clearQueueOffer, claimQueueOffer, declineQueueOffer, subscribeDirectUnread, markDirectChatRead } from '../firebase/db'
 
 import BookTab from './cabinet/BookTab'
 import BookingsTab from './cabinet/BookingsTab'
@@ -39,8 +39,43 @@ export default function Cabinet({ user, profile }) {
   }, [loc.search])
 
   const [queueOffers, setQueueOffers] = useState({})
-  const [selectedOffer, setSelectedOffer] = useState(null) // { slotKey, offer }
+  const [selectedOffer, setSelectedOffer] = useState(null)
   const [offerSubmitting, setOfferSubmitting] = useState(false)
+  const [unreadChat, setUnreadChat] = useState(0)
+
+  const lsKey = user?.uid ? `lastSeenBookingsTs_${user.uid}` : null
+  const [lastSeenTs, setLastSeenTs] = useState(() =>
+    lsKey ? Number(localStorage.getItem(lsKey) || 0) : 0
+  )
+
+  const newBookings = useMemo(
+    () => bookingsData.upcoming.filter(b => (b.createdAt || 0) > lastSeenTs).length,
+    [bookingsData.upcoming, lastSeenTs]
+  )
+
+  const bellCount = unreadChat + newBookings
+
+  const markBookingsSeen = () => {
+    if (!lsKey) return
+    const now = Date.now()
+    localStorage.setItem(lsKey, now)
+    setLastSeenTs(now)
+  }
+
+  useEffect(() => {
+    if (!user?.uid) return
+    return subscribeDirectUnread(user.uid, setUnreadChat)
+  }, [user?.uid])
+
+  const handleBellClick = () => {
+    if (unreadChat > 0) {
+      if (user?.uid) markDirectChatRead(user.uid)
+      switchTab('chat')
+    } else {
+      markBookingsSeen()
+      switchTab('bookings')
+    }
+  }
 
   useEffect(() => {
     if (!user?.uid) return
@@ -80,6 +115,7 @@ export default function Cabinet({ user, profile }) {
   }
 
   const switchTab = (tab) => {
+    if (tab === 'bookings') markBookingsSeen()
     nav(`/cabinet/${tab === 'book' ? '' : tab}`)
     window.scrollTo(0, 0)
   }
@@ -106,12 +142,12 @@ export default function Cabinet({ user, profile }) {
               </svg>
             )}
           </button>
-          <button className="cab-icon-btn" onClick={() => switchTab('bookings')}>
+          <button className="cab-icon-btn" onClick={handleBellClick}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
-            {(Object.keys(queueOffers).length + bookingsData.upcoming.length) > 0 && (
-              <div className="badge">{Object.keys(queueOffers).length + bookingsData.upcoming.length}</div>
+            {bellCount > 0 && (
+              <div className="badge">{bellCount}</div>
             )}
           </button>
         </div>
@@ -174,8 +210,8 @@ export default function Cabinet({ user, profile }) {
             </svg>
           </div>
           <div className="botnav-lbl">Записи</div>
-          {bookingsData.upcoming.length > 0 && (
-            <div className="botnav-badge">{bookingsData.upcoming.length}</div>
+          {newBookings > 0 && (
+            <div className="botnav-badge">{newBookings}</div>
           )}
         </button>
         <button className={`botnav-btn ${activeTab === 'progress' ? 'active' : ''}`} onClick={() => switchTab('progress')}>

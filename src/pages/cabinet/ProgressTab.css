@@ -1,5 +1,5 @@
 .progress-hero {
-  background: rgba(0,0,0,0.30);
+  background: rgba(0,0,0,0.52);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 22px;
@@ -112,7 +112,7 @@
 }
 
 .stat-block {
-  background: rgba(0,0,0,0.30);
+  background: rgba(0,0,0,0.52);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 16px;

@@ -79,6 +79,19 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     return startMin < lunchEnd * 60 && endMin > lunchStart * 60
   }
 
+  function overlapsMyBooking(dateStr, slotTime, durHours) {
+    const [nh, nm] = slotTime.split(':').map(Number)
+    const newStart = nh * 60 + nm
+    const newEnd = newStart + durHours * 60
+    return bookingsData.upcoming.some(b => {
+      if (b.date !== dateStr || b.status === 'cancelled') return false
+      const [bh, bm] = (b.time || '0:0').split(':').map(Number)
+      const bStart = bh * 60 + bm
+      const bEnd = bStart + (b.durationHours || 1) * 60
+      return newStart < bEnd && newEnd > bStart
+    })
+  }
+
   function wouldOverlapTaken(slotTime, durHours) {
     const [h, m] = slotTime.split(':').map(Number)
     const startMin = h * 60 + m
@@ -178,6 +191,11 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
 
   const handleBook = async () => {
     if (!selectedDate || !selectedTime || !selectedService) return
+    const dateStr = formatDateYMD(selectedDate)
+    if (overlapsMyBooking(dateStr, selectedTime, durationHours)) {
+      alert('Ви вже записані на цей час')
+      return
+    }
     setSubmitting(true)
     try {
       const dateStr = formatDateYMD(selectedDate)
@@ -225,9 +243,15 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
 
   const handleJoinQueue = async () => {
     if (!dialogSlot || !selectedDate || !selectedService) return
+    const dateStr = formatDateYMD(selectedDate)
+    if (overlapsMyBooking(dateStr, dialogSlot.time, durationHours)) {
+      setDialogSlot(null)
+      alert('Ви вже записані на цей час')
+      return
+    }
     setSubmitting(true)
     try {
-      await joinQueue(user.uid, formatDateYMD(selectedDate), dialogSlot.time, selectedService.type, durationHours, profile?.name || '', profile?.phone || user?.phoneNumber || '')
+      await joinQueue(user.uid, dateStr, dialogSlot.time, selectedService.type, durationHours, profile?.name || '', profile?.phone || user?.phoneNumber || '')
       setDialogSlot(null)
       setSuccessData({ type: 'queue', date: formatDateYMD(selectedDate), time: dialogSlot.time, service: selectedService, durationHours })
     } catch (e) {
@@ -266,10 +290,12 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           const coveredKey = `slot${String(Math.floor(coveredMin/60)).padStart(2,'0')}${String(coveredMin%60).padStart(2,'0')}`
           totalSurcharge += slots[coveredKey]?.surcharge || 0
         }
+        const dateStr = selectedDate ? formatDateYMD(selectedDate) : ''
         return {
           ...slot,
           lunchBlocked:   isBlockedByLunch(slot.time, durationHours),
           overlapBlocked: slot.available !== false && wouldOverlapTaken(slot.time, durationHours),
+          isMyBooked:     overlapsMyBooking(dateStr, slot.time, durationHours),
           vipBlocked,
           totalSurcharge,
           totalPrice: (selectedService?.price || 0) + totalSurcharge,
@@ -277,7 +303,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       })
       .filter(slot => !slot.lunchBlocked)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slots, durationHours, adminSettings, profile?.isVip, selectedDate, selectedService])
+  }, [slots, durationHours, adminSettings, profile?.isVip, selectedDate, selectedService, bookingsData.upcoming])
 
   const QueueIcons = ({ n }) => {
     const max = Math.min(n, 3)
@@ -420,19 +446,22 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                   const isOverlap = slot.overlapBlocked
                   const isMyReserved = !!(slot.offeredTo?.[user?.uid])
                   const isVipLocked = slot.vipBlocked
+                  const isMyBooked = slot.isMyBooked
                   const isTaken = !isAvailable && !isMyReserved
-                  const isUnavailable = isLunch || isOverlap || isVipLocked || isTaken
+                  const isUnavailable = isLunch || isOverlap || isVipLocked || isTaken || isMyBooked
                   return (
                     <div key={slot.time} style={{position:'relative'}}>
                       <button
-                        className={`slot ${isMyReserved || isMyQueue ? 'my-queue' : isUnavailable ? 'taken' : ''} ${isSelected ? 'selected' : ''}`}
+                        className={`slot ${isMyReserved || isMyQueue ? 'my-queue' : isMyBooked ? 'my-booked' : isUnavailable ? 'taken' : ''} ${isSelected ? 'selected' : ''}`}
                         style={{width:'100%'}}
-                        onClick={() => !isMyQueue && handleSlotClick(slot)}
-                        disabled={isLunch || isOverlap}
-                        title={isLunch ? 'Обідня перерва' : isOverlap ? 'Перетин з іншим уроком' : isVipLocked ? 'VIP слот' : isMyReserved ? 'Зарезервовано для вас!' : isTaken ? 'Зайнято — стати в чергу?' : undefined}
+                        onClick={() => !isMyQueue && !isMyBooked && handleSlotClick(slot)}
+                        disabled={isLunch || isOverlap || isMyBooked}
+                        title={isMyBooked ? 'Ви вже записані на цей час' : isLunch ? 'Обідня перерва' : isOverlap ? 'Перетин з іншим уроком' : isVipLocked ? 'VIP слот' : isMyReserved ? 'Зарезервовано для вас!' : isTaken ? 'Зайнято — стати в чергу?' : undefined}
                       >
                         <div className="slot-time">{slot.time}</div>
-                        {isMyReserved ? (
+                        {isMyBooked ? (
+                          <div style={{fontSize:8, color:'#4ade80', fontWeight:700}}>ваш</div>
+                        ) : isMyReserved ? (
                           <div style={{fontSize:8, color:'white', fontWeight:700}}>ваш!</div>
                         ) : isLunch ? (
                           <div style={{fontSize:8, opacity:0.5}}>обід</div>

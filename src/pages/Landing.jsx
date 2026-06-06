@@ -5,6 +5,15 @@ import './Landing.css'
 
 const REVIEWS_URL = 'https://europe-west1-id4drive-booking-44182.cloudfunctions.net/getGoogleReviews'
 
+const STATIC_REVIEWS = [
+  { name: 'Пшик Вероніка', initials: 'ПВ', color: 'linear-gradient(165deg,#c084fc,#7c3aed)', date: '21 січня 2026', text: 'Дякую дуже Олександру за професіоналізм, холодний розум, спокій та супер класне навчання! Навчалась з нуля, здала практику з другого разу. Завдячую вам! ☺️' },
+  { name: 'Ірина', initials: 'ІР', color: 'linear-gradient(165deg,#ff7a5c,#ff5a3c)', date: '9 квітня 2026', text: 'Олександр, дуже Вам дякую за кожен урок! За кожне пояснення! За спокійну атмосферу! Доходило не зразу, але завдяки вашим зусиллям — я здала!' },
+  { name: 'Ірина Леснік', initials: 'ІЛ', color: 'linear-gradient(165deg,#2dd4bf,#0d9488)', date: '6 лютого 2026', text: 'Олександре, щиро дякую вам за урок водіння! Дуже приємно навчатися з таким спокійним, уважним і підтримуючим інструктором. Завдяки вам з\'являється впевненість за кермом і бажання рухатися далі. Дякую за терпіння, пояснення й позитивну атмосферу — це дуже цінно' },
+  { name: 'Ірина', initials: 'ІР', color: 'linear-gradient(165deg,#ff7a5c,#ff5a3c)', date: '9 квітня 2026', text: 'Комфортно. Спокійно. Ви справжній професіонал' },
+  { name: 'Марчук Вікторія', initials: 'МВ', color: 'linear-gradient(165deg,#fb923c,#ea580c)', date: '3 лютого 2026', text: 'Чудовий інструктор. Все чітко та зрозуміло пояснює. Дуже ввічливий' },
+  { name: 'Лящинська Світлана', initials: 'ЛС', color: 'linear-gradient(165deg,#5b9bff,#2563eb)', date: '10 лютого 2026', text: 'Благодаря Вам, сегодня у меня на 0,001% лучше получилось, и я стала чуть меньше бояться' },
+]
+
 const AVATAR_COLORS = [
   'linear-gradient(165deg,#ff7a5c,#ff5a3c)',
   'linear-gradient(165deg,#fb923c,#ea580c)',
@@ -25,6 +34,7 @@ export default function Landing({ user }) {
   const { theme, toggle } = useTheme()
   const nav = useNavigate()
   const [reviews, setReviews] = useState([])
+  const [termsOpen, setTermsOpen] = useState(false)
 
   useEffect(() => {
     fetch(REVIEWS_URL)
@@ -197,6 +207,16 @@ export default function Landing({ user }) {
               <div className="feature-title">Лист очікування</div>
               <div className="feature-desc">Автозапис на вільне місце</div>
             </div>
+            <div className="feature-card">
+              <div className="feature-icon fi-5">🚗</div>
+              <div className="feature-title">Якісна підготовка</div>
+              <div className="feature-desc">Рух дорогами Києва, паркування, розвороти, складні перехрестя</div>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon fi-6">📋</div>
+              <div className="feature-title">Підготовка до іспиту</div>
+              <div className="feature-desc">Проїзд маршрутів сервісних центрів, нюанси складання іспиту</div>
+            </div>
           </div>
         </section>
 
@@ -224,8 +244,18 @@ export default function Landing({ user }) {
           <h2>Що кажуть учні</h2>
         </section>
         <div className="reviews-scroll">
-          {reviews.length > 0 ? reviews.map((r, i) => (
-            <div className="review-card" key={i}>
+          {STATIC_REVIEWS.map((r, i) => (
+            <div className="review-card" key={`s${i}`}>
+              <div className="review-stars">★★★★★</div>
+              <div className="review-text">"{r.text}"</div>
+              <div className="review-author">
+                <div className="review-avatar" style={{background: r.color}}>{r.initials}</div>
+                <div><div className="review-name">{r.name}</div><div className="review-date">{r.date}</div></div>
+              </div>
+            </div>
+          ))}
+          {reviews.map((r, i) => (
+            <div className="review-card" key={`g${i}`}>
               <div className="review-stars" style={{color: r.rating >= 4 ? '#f7c948' : '#ff5a3c'}}>
                 {starsStr(r.rating)}
               </div>
@@ -241,34 +271,7 @@ export default function Landing({ user }) {
                 </div>
               </div>
             </div>
-          )) : (
-            <>
-              <div className="review-card">
-                <div className="review-stars">★★★★★</div>
-                <div className="review-text">"Олександр — найкращий інструктор! Здала з першого разу. Спокійно пояснює, не нервує."</div>
-                <div className="review-author">
-                  <div className="review-avatar">АН</div>
-                  <div><div className="review-name">Анна К.</div><div className="review-date">15 травня 2026</div></div>
-                </div>
-              </div>
-              <div className="review-card">
-                <div className="review-stars">★★★★★</div>
-                <div className="review-text">"Зручний додаток для запису. Перенесла урок за 30 секунд, без дзвінків. Рекомендую!"</div>
-                <div className="review-author">
-                  <div className="review-avatar" style={{background:'linear-gradient(165deg,#fb923c,#ea580c)'}}>МК</div>
-                  <div><div className="review-name">Марія Г.</div><div className="review-date">2 травня 2026</div></div>
-                </div>
-              </div>
-              <div className="review-card">
-                <div className="review-stars">★★★★★</div>
-                <div className="review-text">"Брав приватні уроки після курсів. За 5 занять став впевнено водити в місті."</div>
-                <div className="review-author">
-                  <div className="review-avatar" style={{background:'linear-gradient(165deg,#5b9bff,#2563eb)'}}>ДМ</div>
-                  <div><div className="review-name">Дмитро П.</div><div className="review-date">20 квітня 2026</div></div>
-                </div>
-              </div>
-            </>
-          )}
+          ))}
         </div>
 
         {/* CONTACTS */}
@@ -332,14 +335,64 @@ export default function Landing({ user }) {
 
         {/* TERMS */}
         <section className="lsection">
-          <button className="terms-btn">
+          <button className="terms-btn" onClick={() => setTermsOpen(o => !o)}>
             <div className="terms-ico">📄</div>
-            <div style={{flex:1, textAlign:'left'}}>
-              <div className="contact-label">Документи</div>
-              <div className="contact-val">Умови надання послуг</div>
-            </div>
-            <div style={{color:'var(--faint)'}}>→</div>
+            <div className="terms-btn-label">Умови відвідування уроків</div>
+            <div className={`terms-chevron${termsOpen ? ' open' : ''}`}>›</div>
           </button>
+          {termsOpen && (
+            <div className="terms-content">
+              <div className="terms-item">
+                <div className="terms-num">1</div>
+                <div>
+                  <div className="terms-heading">Скасування та перенесення</div>
+                  <div className="terms-text">Скасування або перенесення заняття можливі не пізніше ніж за 24 години до початку. У разі неявки учня без попередження — заняття підлягає компенсації в повному обсязі. Оплата здійснюється по завершенню заняття готівкою або переказом на картку.</div>
+                </div>
+              </div>
+              <div className="terms-item">
+                <div className="terms-num">2</div>
+                <div>
+                  <div className="terms-heading">Запізнення</div>
+                  <div className="terms-text">У разі запізнення учня час заняття не продовжується.</div>
+                </div>
+              </div>
+              <div className="terms-item">
+                <div className="terms-num">3</div>
+                <div>
+                  <div className="terms-heading">Стан учня</div>
+                  <div className="terms-text">До заняття не допускаються учні в стані алкогольного або наркотичного сп'яніння.</div>
+                </div>
+              </div>
+              <div className="terms-item">
+                <div className="terms-num">4</div>
+                <div>
+                  <div className="terms-heading">Документи</div>
+                  <div className="terms-text">Учень зобов'язаний мати при собі документ, що посвідчує особу, а також водійське посвідчення (за наявності).</div>
+                </div>
+              </div>
+              <div className="terms-item">
+                <div className="terms-num">5</div>
+                <div>
+                  <div className="terms-heading">Відповідальність та безпека</div>
+                  <div className="terms-text">Учень зобов'язаний дотримуватися вказівок інструктора, не перевищувати дозволену швидкість та правила дорожнього руху. Інструктор має право припинити заняття у разі створення загрози безпеці.</div>
+                </div>
+              </div>
+              <div className="terms-item">
+                <div className="terms-num">6</div>
+                <div>
+                  <div className="terms-heading">Погодні та дорожні умови</div>
+                  <div className="terms-text">У разі несприятливих погодних умов або форс-мажорних обставин заняття може бути перенесене за домовленістю сторін.</div>
+                </div>
+              </div>
+              <div className="terms-item">
+                <div className="terms-num">7</div>
+                <div>
+                  <div className="terms-heading">Згода з умовами</div>
+                  <div className="terms-text">Запис на заняття означає повну згоду з даними умовами.</div>
+                </div>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* FOOTER */}

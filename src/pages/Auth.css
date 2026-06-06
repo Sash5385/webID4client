@@ -16,7 +16,7 @@
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: rgba(0,0,0,0.30);
+  background: rgba(0,0,0,0.52);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: var(--shadow);
@@ -125,7 +125,7 @@
 }
 
 .phone-card {
-  background: rgba(0,0,0,0.30);
+  background: rgba(0,0,0,0.52);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 18px;
@@ -186,7 +186,7 @@
 
 .code-cell {
   aspect-ratio: 1;
-  background: rgba(0,0,0,0.30);
+  background: rgba(0,0,0,0.52);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 14px;
@@ -262,7 +262,7 @@
 }
 
 .tile-pick {
-  background: rgba(0,0,0,0.30);
+  background: rgba(0,0,0,0.52);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 18px;
@@ -338,7 +338,7 @@
 
 .text-input {
   width: 100%;
-  background: rgba(0,0,0,0.30);
+  background: rgba(0,0,0,0.52);
   border: 2px solid transparent;
   border-radius: 14px;
   padding: 14px 16px;
@@ -363,7 +363,7 @@
 }
 
 .select-item {
-  background: rgba(0,0,0,0.30);
+  background: rgba(0,0,0,0.52);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 14px;
@@ -413,7 +413,7 @@
 .select-sub { font-size: 11px; color: var(--dim); margin-top: 2px; }
 
 .toggle-row {
-  background: rgba(0,0,0,0.30);
+  background: rgba(0,0,0,0.52);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 14px;
@@ -475,7 +475,7 @@
 
 .terms-survey-btn {
   width: 100%;
-  background: rgba(0,0,0,0.30);
+  background: rgba(0,0,0,0.52);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 2px solid #ef4444;

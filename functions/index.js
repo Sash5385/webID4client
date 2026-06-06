@@ -324,36 +324,26 @@ exports.onAdminSlotOpened = onValueWritten(
 
 // ─── 9. getGoogleReviews ──────────────────────────────────────────
 const GOOGLE_PLACES_KEY = "AIzaSyBb0RVbue5lKltEtF8-bSHRSlVR2rZGbZk";
-const PLACE_QUERY       = "ID4Drive автошкола Верховинна 44 Київ";
+const PLACE_ID          = "ChIJp-GuDoPN1EAR3LSwfhmIeqQ"; // Уроки водіння Київ (автомат)
 const CACHE_TTL_MS      = 24 * 60 * 60 * 1000; // 24h
 
 exports.getGoogleReviews = onRequest(
   { region: REGION, cors: true },
   async (req, res) => {
-    const cacheSnap = await db.ref("cache/googleReviews").get();
+    const cacheSnap = await db.ref("cache/googleReviews2").get();
     const cache = cacheSnap.val();
     if (cache && cache.updatedAt > Date.now() - CACHE_TTL_MS) {
       res.json(cache.data);
       return;
     }
 
-    let placeId = cache?.placeId;
-    if (!placeId) {
-      const searchRes = await fetch(
-        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(PLACE_QUERY)}&key=${GOOGLE_PLACES_KEY}`
-      );
-      const searchData = await searchRes.json();
-      placeId = searchData.results?.[0]?.place_id;
-      if (!placeId) { res.json([]); return; }
-    }
-
     const detailsRes = await fetch(
-      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=reviews,rating,user_ratings_total&language=uk&key=${GOOGLE_PLACES_KEY}`
+      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${PLACE_ID}&fields=reviews,rating,user_ratings_total&language=uk&key=${GOOGLE_PLACES_KEY}`
     );
     const detailsData = await detailsRes.json();
     const reviews = detailsData.result?.reviews || [];
 
-    await db.ref("cache/googleReviews").set({ placeId, data: reviews, updatedAt: Date.now() });
+    await db.ref("cache/googleReviews2").set({ placeId: PLACE_ID, data: reviews, updatedAt: Date.now() });
     res.json(reviews);
   }
 );

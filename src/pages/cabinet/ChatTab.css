@@ -55,7 +55,7 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background: rgba(0,0,0,0.30);
+  background: rgba(0,0,0,0.52);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 16px;
@@ -211,7 +211,7 @@
 }
 
 .bubble-in {
-  background: rgba(0,0,0,0.30);
+  background: rgba(0,0,0,0.52);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-radius: 16px 16px 16px 3px;
@@ -263,7 +263,7 @@
   display: flex;
   align-items: flex-end;
   gap: 10px;
-  background: rgba(0,0,0,0.30);
+  background: rgba(0,0,0,0.52);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 22px;
