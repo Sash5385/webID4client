@@ -76,7 +76,6 @@ export default function ProfileTab({ user, profile }) {
       <div className="profile-section">
         <div className="section-title">Контакти інструктора</div>
         <div className="contact-phone-block">
-          <div className="contact-phone-number">+380 98 922 54 42</div>
           <div className="contact-btns">
             <a href="tel:+380989225442" className="contact-btn contact-btn--call" aria-label="Зателефонувати">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.24 1.01l-2.21 2.21z"/></svg>
