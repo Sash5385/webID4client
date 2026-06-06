@@ -678,6 +678,34 @@
 .contact-label { font-size: 10px; color: var(--faint); letter-spacing: 1px; text-transform: uppercase; }
 .contact-val { font-size: 13px; font-weight: 700; }
 
+.contact-icon-row {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  padding: 8px 0;
+}
+
+.contact-icon-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-decoration: none;
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.contact-icon-btn:active { transform: scale(0.91); opacity: 0.8; }
+
+.contact-icon-btn svg { width: 26px; height: 26px; }
+
+.contact-icon-btn--call  { background: #34c759; box-shadow: 0 4px 14px rgba(52,199,89,0.45); }
+.contact-icon-btn--tg    { background: #29a8eb; box-shadow: 0 4px 14px rgba(41,168,235,0.45); }
+.contact-icon-btn--viber { background: #7360f2; box-shadow: 0 4px 14px rgba(115,96,242,0.45); }
+.contact-icon-btn--wa    { background: #25d366; box-shadow: 0 4px 14px rgba(37,211,102,0.45); }
+
 /* MAP */
 .map-card {
   background: rgba(0,0,0,0.52);
