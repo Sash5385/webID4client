@@ -302,19 +302,21 @@ export default function Auth({ user, profile, onProfileSaved }) {
           </div>
 
           {/* Вкладки */}
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginBottom:20,background:'var(--surf-lo)',borderRadius:14,padding:4,boxShadow:'var(--shadow-in)'}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:20,background:'var(--surf-lo)',borderRadius:14,padding:4,boxShadow:'var(--shadow-in)'}}>
             {[
               {id:'sms', label:'📱 SMS'},
-              {id:'email-login', label:'✉️ Вхід'},
-              {id:'email-register', label:'📝 Реєстр.'},
-            ].map(tab => (
-              <button key={tab.id} onClick={()=>{setAuthMode(tab.id);setPhoneError('')}} style={{
-                padding:'9px 0',borderRadius:11,border:'none',cursor:'pointer',fontWeight:700,fontSize:12,
-                background:authMode===tab.id?'var(--surface)':'transparent',
-                color:authMode===tab.id?'var(--text)':'var(--dim)',
-                boxShadow:authMode===tab.id?'var(--shadow)':'none',transition:'all .15s'
-              }}>{tab.label}</button>
-            ))}
+              {id:'email-login', label:'✉️ Email'},
+            ].map(tab => {
+              const isActive = tab.id === 'sms' ? authMode === 'sms' : (authMode === 'email-login' || authMode === 'email-register')
+              return (
+                <button key={tab.id} onClick={()=>{setAuthMode(tab.id);setPhoneError('')}} style={{
+                  padding:'9px 0',borderRadius:11,border:'none',cursor:'pointer',fontWeight:700,fontSize:12,
+                  background:isActive?'var(--surface)':'transparent',
+                  color:isActive?'var(--text)':'var(--dim)',
+                  boxShadow:isActive?'var(--shadow)':'none',transition:'all .15s'
+                }}>{tab.label}</button>
+              )
+            })}
           </div>
 
           {authMode === 'sms' ? (<>
@@ -391,17 +393,21 @@ export default function Auth({ user, profile, onProfileSaved }) {
                   onKeyDown={e=>e.key==='Enter'&&handleEmailLogin()}/>
               </div>
               {phoneError && <div className="auth-error">{phoneError}</div>}
-              <div style={{marginTop:16}}>
+              <div style={{marginTop:16,display:'flex',flexDirection:'column',gap:10}}>
                 <button className="btn-primary" onClick={handleEmailLogin} disabled={sending||!email||!password}>
                   {sending?'Входимо...':'Увійти →'}
                 </button>
-              </div>
-              <p style={{textAlign:'center',fontSize:13,color:'var(--dim)',marginTop:16}}>
-                Немає акаунту?{' '}
+                <div style={{display:'flex',alignItems:'center',gap:12,margin:'4px 0'}}>
+                  <div style={{flex:1,height:1,background:'var(--border)'}}/>
+                  <span style={{fontSize:12,color:'var(--dim)'}}>немає акаунту?</span>
+                  <div style={{flex:1,height:1,background:'var(--border)'}}/>
+                </div>
                 <button onClick={()=>{setAuthMode('email-register');setPhoneError('')}} style={{
-                  background:'none',border:'none',color:'var(--accent)',fontWeight:700,cursor:'pointer',fontSize:13,padding:0
-                }}>Зареєструватись</button>
-              </p>
+                  background:'var(--surf-lo)',border:'2px solid var(--accent)',borderRadius:14,
+                  color:'var(--accent)',fontWeight:700,cursor:'pointer',fontSize:16,padding:'12px 0',
+                  boxShadow:'var(--shadow)',transition:'all .15s'
+                }}>Зареєструватись →</button>
+              </div>
             </>)
           ) : (<>
             <h1 className="auth-h1">Реєстрація через <span className="acc">Email</span></h1>

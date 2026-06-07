@@ -63,7 +63,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     })
   }, [])
 
-  const durationHours = selectedService ? Math.round(selectedService.duration / 60) : 1
+  const durationHours = selectedService ? selectedService.duration / 60 : 1
 
   function getLunchForDate(date) {
     if (!date) return { lunchEnabled: adminSettings.lunchEnabled, lunchStart: adminSettings.lunchStart || 12, lunchEnd: adminSettings.lunchEnd || 13 }
@@ -113,15 +113,13 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     return Object.values(slots).some(s => {
       const [sh, sm] = (s.time || '').split(':').map(Number)
       const sMin = sh * 60 + sm
-      if (sMin <= startMin || sMin >= endMin) return false // тільки слоти ВСЕРЕДИНІ діапазону
-      if (s.available === false) return true // зайнятий слот
-      // VIP слот всередині діапазону — блокуємо для звичайних учнів
-      if (s.vipOnly && !isVipStudent && selectedDate) {
-        const slotDt = new Date(selectedDate)
-        slotDt.setHours(Math.floor(sMin / 60), sMin % 60, 0, 0)
-        return Date.now() + 48 * 60 * 60 * 1000 < slotDt.getTime()
-      }
-      return false
+      if (sMin <= startMin || sMin >= endMin) return false
+      const offsetMin = sMin - startMin
+      // Слоти на рівній годинній межі — обов'язкові для багатогодинного уроку,
+      // блокують тільки якщо вони вже зайняті.
+      if (offsetMin % 60 === 0) return s.available === false
+      // Будь-який слот на нестандартному зміщенні (напр. +30хв) — конфлікт.
+      return true
     })
   }
 
@@ -315,7 +313,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           totalPrice: (selectedService?.price || 0) + totalSurcharge,
         }
       })
-      .filter(slot => !slot.lunchBlocked)
+      .filter(slot => !slot.lunchBlocked && !slot.overlapBlocked)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slots, durationHours, adminSettings, profile?.isVip, selectedDate, selectedService, bookingsData.upcoming])
 

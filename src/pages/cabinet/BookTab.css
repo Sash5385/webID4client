@@ -317,14 +317,14 @@
 
 .slots-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 4px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
 }
 
 .slot {
   background: rgba(34, 197, 94, 0.15);
   border-radius: 10px;
-  padding: 5px 2px;
+  padding: 6px 4px;
   border: 1px solid rgba(34, 197, 94, 0.35);
   text-align: center;
   font-size: 13px;
@@ -333,7 +333,7 @@
   color: var(--text);
   position: relative;
   overflow: hidden;
-  min-height: 28px;
+  min-height: 36px;
   display: flex;
   flex-direction: column;
   align-items: center;
