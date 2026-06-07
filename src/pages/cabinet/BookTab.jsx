@@ -102,12 +102,13 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     const [h, m] = slotTime.split(':').map(Number)
     const startMin = h * 60 + m
     const endMin = startMin + durHours * 60
-    // Перевіряємо що всі потрібні годинні слоти існують.
-    // Якщо наступна година виходить за кінець дня — слота немає → блокуємо.
-    for (let i = 1; i < durHours; i++) {
-      const nextMin = startMin + i * 60
+    // Перевіряємо що всі годинні кроки всередині бронювання мають вільні слоти.
+    // Якщо потрібний слот відсутній (кінець дня) — блокуємо.
+    for (let i = 60; i < durHours * 60; i += 60) {
+      const nextMin = startMin + i
       const nextKey = `slot${String(Math.floor(nextMin/60)).padStart(2,'0')}${String(nextMin%60).padStart(2,'0')}`
       if (!slots[nextKey]) return true
+      if (slots[nextKey].available === false) return true
     }
     return Object.values(slots).some(s => {
       const [sh, sm] = (s.time || '').split(':').map(Number)
@@ -280,7 +281,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   const slotsList = useMemo(() => {
     const isVip = profile?.isVip === true
     return Object.values(slots)
-      .filter(slot => (slot.time || '').endsWith(':00'))
+      .filter(slot => !!(slot.time))
       .filter(slot => !slot.vipOnly || isVipStudent)
       .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
       .map(slot => {
