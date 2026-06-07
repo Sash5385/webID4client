@@ -13,7 +13,11 @@ const FALLBACK_SERVICES = [
 
 export default function BookTab({ user, profile, bookingsData, notifParams }) {
   const isSchool = profile?.studentType === 'school'
-  const canPrivate = bookingsData.canBookPrivate || profile?.studentType === 'private'
+  const isPrivateStudent = profile?.studentType === 'private'
+  const schoolLimitReached = bookingsData.canBookPrivate // schoolHours >= 40
+  // private student: only private; school student: school until 40h, then only private
+  const canPrivate = isPrivateStudent || schoolLimitReached
+  const canSchool = !isPrivateStudent && !schoolLimitReached
   const isVipStudent = profile?.isVip === true
   const [services, setServices] = useState([])
   const [servicesLoaded, setServicesLoaded] = useState(false)
@@ -48,11 +52,13 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     getAdminServices().then(list => {
       const final = list.length > 0 ? list : FALLBACK_SERVICES
       setServices(final)
-      setSelectedService(final[0])
+      const defaultSvc = final.find(s => canPrivate ? s.type === 'private' : s.type === 'school') || final[0]
+      setSelectedService(defaultSvc)
       setServicesLoaded(true)
     }).catch(() => {
       setServices(FALLBACK_SERVICES)
-      setSelectedService(FALLBACK_SERVICES[0])
+      const defaultSvc = FALLBACK_SERVICES.find(s => canPrivate ? s.type === 'private' : s.type === 'school') || FALLBACK_SERVICES[0]
+      setSelectedService(defaultSvc)
       setServicesLoaded(true)
     })
   }, [])
@@ -96,6 +102,13 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     const [h, m] = slotTime.split(':').map(Number)
     const startMin = h * 60 + m
     const endMin = startMin + durHours * 60
+    // Перевіряємо що всі потрібні годинні слоти існують.
+    // Якщо наступна година виходить за кінець дня — слота немає → блокуємо.
+    for (let i = 1; i < durHours; i++) {
+      const nextMin = startMin + i * 60
+      const nextKey = `slot${String(Math.floor(nextMin/60)).padStart(2,'0')}${String(nextMin%60).padStart(2,'0')}`
+      if (!slots[nextKey]) return true
+    }
     return Object.values(slots).some(s => {
       const [sh, sm] = (s.time || '').split(':').map(Number)
       const sMin = sh * 60 + sm
@@ -253,7 +266,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     try {
       await joinQueue(user.uid, dateStr, dialogSlot.time, selectedService.type, durationHours, profile?.name || '', profile?.phone || user?.phoneNumber || '')
       setDialogSlot(null)
-      setSuccessData({ type: 'queue', date: formatDateYMD(selectedDate), time: dialogSlot.time, service: selectedService, durationHours })
+      setSuccessData({ type: 'queue', date: formatDateYMD(selectedDate), time: dialogSlot.time, service: selectedService, durationHours, surcharge: dialogSlot.surcharge || 0 })
     } catch (e) {
       alert('Помилка: ' + e.message)
     } finally {
@@ -342,7 +355,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       ) : (
         <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8}}>
           {[...services].sort((a,b) => a.duration - b.duration || (a.type === 'school' ? -1 : 1)).map(svc => {
-            const isLocked = svc.type === 'private' && !canPrivate
+            const isLocked = (svc.type === 'private' && !canPrivate) || (svc.type === 'school' && !canSchool)
             const isSelected = selectedService?.id === svc.id
             const svcColor = svc.colorId === 'green' ? '#7ed957' : svc.colorId === 'yellow' ? '#f7c948' : svc.colorId === 'blue' ? '#5b9bff' : svc.colorId === 'purple' ? '#c084fc' : svc.colorId === 'red' ? '#ff5a3c' : svc.colorId === 'teal' ? '#2dd4bf' : svc.colorId === 'pink' ? '#f472b6' : svc.colorId === 'orange' ? '#fb923c' : svc.colorId === 'indigo' ? '#818cf8' : svc.colorId === 'lime' ? '#a3e635' : '#7ed957'
             return (
@@ -374,7 +387,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                 <div>
                   <div style={{fontSize:10, fontWeight:800, lineHeight:1.3}}>{svc.name}</div>
                   <div style={{fontSize:9, color:'var(--dim)', marginTop:1}}>
-                    {isLocked ? 'після 40 уроків' : `${svc.price} ₴`}
+                    {isLocked ? (svc.type === 'school' ? 'недоступно' : 'після 40 уроків') : `${svc.price} ₴`}
                   </div>
                 </div>
               </div>
@@ -623,10 +636,12 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         <div className="dialog-backdrop show" onClick={(e) => e.target.classList.contains('dialog-backdrop') && setDialogSlot(null)}>
           <div className="dialog">
             <div className="dialog-handle"></div>
-            <div className="dialog-icon">⏰</div>
-            <div className="dialog-title">Стати в чергу?</div>
+            <div className="dialog-icon">{dialogSlot.vipOnly ? '👑' : '⏰'}</div>
+            <div className="dialog-title">{dialogSlot.vipOnly ? 'VIP черга' : 'Стати в чергу?'}</div>
             <div className="dialog-sub">
-              Якщо учень скасує — отримаєте push-сповіщення, урок стане вашим
+              {dialogSlot.vipOnly
+                ? 'Коли адмін відкриє цей VIP слот — ти отримаєш сповіщення'
+                : 'Якщо учень скасує — отримаєте push-сповіщення, урок стане вашим'}
             </div>
             <div className="dialog-info-card">
               <div className="dialog-info-row">
@@ -637,6 +652,22 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                 <span className="lbl">Час</span>
                 <span className="val">{dialogSlot.time}</span>
               </div>
+              {dialogSlot.surcharge > 0 && (
+                <>
+                  <div className="dialog-info-row">
+                    <span className="lbl">Базова ціна</span>
+                    <span className="val">{selectedService?.price || 0}₴</span>
+                  </div>
+                  <div className="dialog-info-row">
+                    <span className="lbl" style={{color:'var(--gold)'}}>⚡ Надбавка</span>
+                    <span className="val" style={{color:'var(--gold)'}}>+{dialogSlot.surcharge}₴</span>
+                  </div>
+                  <div className="dialog-info-row" style={{borderTop:'1px solid rgba(255,255,255,0.07)', marginTop:4, paddingTop:4}}>
+                    <span className="lbl" style={{fontWeight:700}}>Разом</span>
+                    <span className="val" style={{fontWeight:800}}>{(selectedService?.price || 0) + dialogSlot.surcharge}₴</span>
+                  </div>
+                </>
+              )}
               <div className="dialog-info-row">
                 <span className="lbl">У черзі вже</span>
                 <span className="val">
