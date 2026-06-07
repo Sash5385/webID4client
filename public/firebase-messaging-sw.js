@@ -1,8 +1,11 @@
 // firebase-messaging-sw.js
 // Кладеться в /public/ — Firebase повинен мати доступ за URL /firebase-messaging-sw.js
 
-importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js')
-importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js')
+importScripts('https://www.gstatic.com/firebasejs/12.13.0/firebase-app-compat.js')
+importScripts('https://www.gstatic.com/firebasejs/12.13.0/firebase-messaging-compat.js')
+
+self.addEventListener('install', () => self.skipWaiting())
+self.addEventListener('activate', () => self.clients.claim())
 
 firebase.initializeApp({
   apiKey: "AIzaSyDO6-LTuBoNHi6uS5KcOpmBuyvgJSouYpk",
@@ -18,12 +21,15 @@ const messaging = firebase.messaging()
 
 messaging.onBackgroundMessage((payload) => {
   const title = payload.notification?.title || 'ID4Drive'
+  const url = payload.data?.url || 'https://id4drive.pro/cabinet'
   const options = {
     body: payload.notification?.body || '',
     icon: '/favicon.svg',
     badge: '/favicon.svg',
-    tag: payload.data?.tag || 'general',
-    data: payload.data || {}
+    tag: 'id4drive-' + (payload.data?.tag || Date.now()),
+    requireInteraction: true,
+    vibrate: [200, 100, 200],
+    data: { url, ...(payload.data || {}) },
   }
   self.registration.showNotification(title, options)
 })

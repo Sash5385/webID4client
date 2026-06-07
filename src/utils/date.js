@@ -30,6 +30,11 @@ export function getDayName(dayIndex) {
   return DAYS_UA[dayIndex]
 }
 
+export function formatDateLabel(date) {
+  const d = new Date(date)
+  return `${DAYS_UA[d.getDay()]}, ${d.getDate()} ${MONTHS_UA[d.getMonth()]}`
+}
+
 export function getMonthGrid(year, month) {
   // Повертає масив днів для відображення в календарі.
   // Сітка завжди починається з понеділка.

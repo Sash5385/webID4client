@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { subscribeSlotsForDate, getAdminSettings, subscribeMonthAvailability } from '../firebase/db'
-import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay } from '../utils/date'
+import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay, formatDateLabel } from '../utils/date'
 import { useTheme } from '../hooks/useTheme'
 import './cabinet/BookTab.css'
 
@@ -177,7 +177,7 @@ export default function PublicSchedule({ onBook }) {
       {selectedDate && (
         <>
           <div ref={timeSectionRef} className="section-title">
-            4. Час ({selectedDate.toLocaleDateString('uk-UA', { weekday:'short', day:'numeric', month:'long' })})
+            4. Час ({formatDateLabel(selectedDate)})
           </div>
           {loading ? (
             <div style={{ textAlign:'center', padding:'24px' }}>

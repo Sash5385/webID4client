@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { sendSmsCode, verifySmsCode, resetRecaptcha } from '../firebase/auth'
+import { sendSmsCode, verifySmsCode, resetRecaptcha, getSmsErrorMessage } from '../firebase/auth'
 import { signInWithEmail, signUpWithEmail, sendPasswordReset } from '../firebase/auth-email'
 import { saveUserProfile, getUserProfile } from '../firebase/db'
 import { useTheme } from '../hooks/useTheme'
@@ -67,7 +67,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
   const [resendTimer, setResendTimer] = useState(45)
   const codeInputRef = useRef(null)
 
-  // auth mode toggle
+  // auth mode toggle: 'sms' | 'email-login' | 'email-register'
   const [authMode, setAuthMode] = useState('sms')
 
   // forgot password
@@ -119,7 +119,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
       setResendTimer(45)
     } catch (e) {
       console.error(e)
-      setPhoneError(e.message || 'Не вдалось надіслати SMS')
+      setPhoneError(getSmsErrorMessage(e.code))
       await resetRecaptcha()
     } finally {
       setSending(false)
@@ -160,7 +160,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
       setResendTimer(45)
       setCode('')
     } catch (e) {
-      setCodeError(e.message || 'Не вдалось повторно надіслати')
+      setCodeError(getSmsErrorMessage(e.code))
     } finally {
       setSending(false)
     }
@@ -200,25 +200,26 @@ export default function Auth({ user, profile, onProfileSaved }) {
     }
   }
 
-  // ─── EMAIL AUTH ──────────────────────────────────────
-  const handleEmailAuth = async () => {
+  const getEmailErrorMessage = (code) => {
+    switch (code) {
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential': return 'Невірний email або пароль'
+      case 'auth/user-not-found': return 'Акаунт з таким email не знайдено'
+      case 'auth/email-already-in-use': return 'Email вже використовується. Спробуй увійти'
+      case 'auth/invalid-email': return 'Невірний формат email'
+      case 'auth/too-many-requests': return 'Забагато спроб. Спробуй пізніше'
+      case 'auth/weak-password': return 'Пароль занадто простий (мінімум 6 символів)'
+      default: return 'Помилка. Перевір дані і спробуй ще раз'
+    }
+  }
+
+  // ─── EMAIL LOGIN ──────────────────────────────────────
+  const handleEmailLogin = async () => {
     setPhoneError('')
-    if (!email || !password) { 
-      setPhoneError('Заповни обидва поля')
-      return 
-    }
-    if (password.length < 6) {
-      setPhoneError('Пароль мінімум 6 символів')
-      return
-    }
+    if (!email || !password) { setPhoneError('Заповни обидва поля'); return }
     setSending(true)
     try {
-      let u
-      try {
-        u = await signInWithEmail(email, password)
-      } catch {
-        u = await signUpWithEmail(email, password)
-      }
+      const u = await signInWithEmail(email, password)
       const existing = await getUserProfile(u.uid)
       if (existing) {
         if (onProfileSaved) await onProfileSaved()
@@ -228,7 +229,24 @@ export default function Auth({ user, profile, onProfileSaved }) {
       }
     } catch (e) {
       console.error(e)
-      setPhoneError(e.message || 'Помилка входу')
+      setPhoneError(getEmailErrorMessage(e.code))
+    } finally {
+      setSending(false)
+    }
+  }
+
+  // ─── EMAIL REGISTER ──────────────────────────────────────
+  const handleEmailRegister = async () => {
+    setPhoneError('')
+    if (!email || !password) { setPhoneError('Заповни обидва поля'); return }
+    if (password.length < 6) { setPhoneError('Пароль мінімум 6 символів'); return }
+    setSending(true)
+    try {
+      const u = await signUpWithEmail(email, password)
+      setStep('survey')
+    } catch (e) {
+      console.error(e)
+      setPhoneError(getEmailErrorMessage(e.code))
     } finally {
       setSending(false)
     }
@@ -284,19 +302,19 @@ export default function Auth({ user, profile, onProfileSaved }) {
           </div>
 
           {/* Вкладки */}
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:20,background:'var(--surf-lo)',borderRadius:14,padding:4,boxShadow:'var(--shadow-in)'}}>
-            <button onClick={()=>setAuthMode('sms')} style={{
-              padding:'9px 0',borderRadius:11,border:'none',cursor:'pointer',fontWeight:700,fontSize:13,
-              background:authMode==='sms'?'var(--surface)':'transparent',
-              color:authMode==='sms'?'var(--text)':'var(--dim)',
-              boxShadow:authMode==='sms'?'var(--shadow)':'none',transition:'all .15s'
-            }}>📱 SMS</button>
-            <button onClick={()=>setAuthMode('email')} style={{
-              padding:'9px 0',borderRadius:11,border:'none',cursor:'pointer',fontWeight:700,fontSize:13,
-              background:authMode==='email'?'var(--surface)':'transparent',
-              color:authMode==='email'?'var(--text)':'var(--dim)',
-              boxShadow:authMode==='email'?'var(--shadow)':'none',transition:'all .15s'
-            }}>✉️ Email</button>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginBottom:20,background:'var(--surf-lo)',borderRadius:14,padding:4,boxShadow:'var(--shadow-in)'}}>
+            {[
+              {id:'sms', label:'📱 SMS'},
+              {id:'email-login', label:'✉️ Вхід'},
+              {id:'email-register', label:'📝 Реєстр.'},
+            ].map(tab => (
+              <button key={tab.id} onClick={()=>{setAuthMode(tab.id);setPhoneError('')}} style={{
+                padding:'9px 0',borderRadius:11,border:'none',cursor:'pointer',fontWeight:700,fontSize:12,
+                background:authMode===tab.id?'var(--surface)':'transparent',
+                color:authMode===tab.id?'var(--text)':'var(--dim)',
+                boxShadow:authMode===tab.id?'var(--shadow)':'none',transition:'all .15s'
+              }}>{tab.label}</button>
+            ))}
           </div>
 
           {authMode === 'sms' ? (<>
@@ -323,59 +341,94 @@ export default function Auth({ user, profile, onProfileSaved }) {
                 {sending?'Надсилаємо...':'Надіслати код →'}
               </button>
             </div>
-          </>) : resetMode ? (<>
-            <h1 className="auth-h1">{resetDone ? <>Лист <span className="acc">надіслано</span></> : <>Відновлення <span className="acc">паролю</span></>}</h1>
-            {resetDone ? (<>
-              <div style={{textAlign:'center',marginTop:24}}>
-                <div style={{fontSize:56,marginBottom:16}}>📬</div>
-                <p className="auth-sub">Перевір <b>{resetEmail}</b><br/>і перейди за посиланням у листі.</p>
-              </div>
-              <div style={{marginTop:'auto'}}>
-                <button className="btn-primary" onClick={()=>{setResetMode(false);setResetDone(false);setResetEmail('')}}>
-                  Повернутись →
-                </button>
-              </div>
+          </>) : authMode === 'email-login' ? (
+            resetMode ? (<>
+              <h1 className="auth-h1">{resetDone ? <>Лист <span className="acc">надіслано</span></> : <>Відновлення <span className="acc">паролю</span></>}</h1>
+              {resetDone ? (<>
+                <div style={{textAlign:'center',marginTop:24}}>
+                  <div style={{fontSize:56,marginBottom:16}}>📬</div>
+                  <p className="auth-sub">Перевір <b>{resetEmail}</b><br/>і перейди за посиланням у листі.</p>
+                </div>
+                <div style={{marginTop:'auto'}}>
+                  <button className="btn-primary" onClick={()=>{setResetMode(false);setResetDone(false);setResetEmail('')}}>
+                    Повернутись →
+                  </button>
+                </div>
+              </>) : (<>
+                <p className="auth-sub">Вкажи email — надішлемо посилання для зміни паролю.</p>
+                <div className="field">
+                  <div className="field-label">Email</div>
+                  <input className="text-input" type="email" placeholder="you@example.com"
+                    value={resetEmail} onChange={e=>setResetEmail(e.target.value)} autoFocus inputMode="email"/>
+                </div>
+                {resetError && <div className="auth-error">{resetError}</div>}
+                <div style={{marginTop:16,display:'flex',flexDirection:'column',gap:10}}>
+                  <button className="btn-primary" onClick={handleSendReset} disabled={resetSending||!resetEmail}>
+                    {resetSending ? 'Надсилаємо...' : 'Надіслати посилання →'}
+                  </button>
+                  <button onClick={()=>{setResetMode(false);setResetError('')}} style={{
+                    background:'none',border:'none',color:'var(--dim)',fontSize:13,cursor:'pointer',padding:'6px 0'
+                  }}>← Назад</button>
+                </div>
+              </>)}
             </>) : (<>
-              <p className="auth-sub">Вкажи email — надішлемо посилання для зміни паролю.</p>
+              <h1 className="auth-h1">Вхід через <span className="acc">Email</span></h1>
+              <p className="auth-sub">Введи пошту та пароль від свого акаунту.</p>
               <div className="field">
                 <div className="field-label">Email</div>
                 <input className="text-input" type="email" placeholder="you@example.com"
-                  value={resetEmail} onChange={e=>setResetEmail(e.target.value)} autoFocus inputMode="email"/>
+                  value={email} onChange={e=>setEmail(e.target.value)} autoFocus inputMode="email"/>
               </div>
-              {resetError && <div className="auth-error">{resetError}</div>}
-              <div style={{marginTop:16,display:'flex',flexDirection:'column',gap:10}}>
-                <button className="btn-primary" onClick={handleSendReset} disabled={resetSending||!resetEmail}>
-                  {resetSending ? 'Надсилаємо...' : 'Надіслати посилання →'}
+              <div className="field">
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                  <div className="field-label" style={{margin:0}}>Пароль</div>
+                  <button onClick={()=>{setResetMode(true);setResetEmail(email);setResetError('');setResetDone(false)}} style={{
+                    background:'none',border:'none',color:'var(--accent)',fontSize:12,cursor:'pointer',fontWeight:700,padding:0
+                  }}>Забули пароль?</button>
+                </div>
+                <input className="text-input" type="password" placeholder="Ваш пароль"
+                  value={password} onChange={e=>setPassword(e.target.value)}
+                  onKeyDown={e=>e.key==='Enter'&&handleEmailLogin()}/>
+              </div>
+              {phoneError && <div className="auth-error">{phoneError}</div>}
+              <div style={{marginTop:16}}>
+                <button className="btn-primary" onClick={handleEmailLogin} disabled={sending||!email||!password}>
+                  {sending?'Входимо...':'Увійти →'}
                 </button>
-                <button onClick={()=>{setResetMode(false);setResetError('')}} style={{
-                  background:'none',border:'none',color:'var(--dim)',fontSize:13,cursor:'pointer',padding:'6px 0'
-                }}>← Назад</button>
               </div>
-            </>)}
-          </>) : (<>
-            <h1 className="auth-h1">Увійти через <span className="acc">Email</span></h1>
-            <p className="auth-sub">Введи пошту та пароль — зайдеш або зареєструєшся.</p>
+              <p style={{textAlign:'center',fontSize:13,color:'var(--dim)',marginTop:16}}>
+                Немає акаунту?{' '}
+                <button onClick={()=>{setAuthMode('email-register');setPhoneError('')}} style={{
+                  background:'none',border:'none',color:'var(--accent)',fontWeight:700,cursor:'pointer',fontSize:13,padding:0
+                }}>Зареєструватись</button>
+              </p>
+            </>)
+          ) : (<>
+            <h1 className="auth-h1">Реєстрація через <span className="acc">Email</span></h1>
+            <p className="auth-sub">Введи пошту та придумай пароль.</p>
             <div className="field">
               <div className="field-label">Email</div>
               <input className="text-input" type="email" placeholder="you@example.com"
                 value={email} onChange={e=>setEmail(e.target.value)} autoFocus inputMode="email"/>
             </div>
             <div className="field">
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-                <div className="field-label" style={{margin:0}}>Пароль</div>
-                <button onClick={()=>{setResetMode(true);setResetEmail(email);setResetError('');setResetDone(false)}} style={{
-                  background:'none',border:'none',color:'var(--accent)',fontSize:12,cursor:'pointer',fontWeight:700,padding:0
-                }}>Забули пароль?</button>
-              </div>
+              <div className="field-label">Пароль</div>
               <input className="text-input" type="password" placeholder="Мінімум 6 символів"
-                value={password} onChange={e=>setPassword(e.target.value)}/>
+                value={password} onChange={e=>setPassword(e.target.value)}
+                onKeyDown={e=>e.key==='Enter'&&handleEmailRegister()}/>
             </div>
             {phoneError && <div className="auth-error">{phoneError}</div>}
             <div style={{marginTop:16}}>
-              <button className="btn-primary" onClick={handleEmailAuth} disabled={sending||!email||!password}>
-                {sending?'Входимо...':'Увійти / Зареєструватись →'}
+              <button className="btn-primary" onClick={handleEmailRegister} disabled={sending||!email||!password}>
+                {sending?'Реєструємось...':'Зареєструватись →'}
               </button>
             </div>
+            <p style={{textAlign:'center',fontSize:13,color:'var(--dim)',marginTop:16}}>
+              Вже є акаунт?{' '}
+              <button onClick={()=>{setAuthMode('email-login');setPhoneError('')}} style={{
+                background:'none',border:'none',color:'var(--accent)',fontWeight:700,cursor:'pointer',fontSize:13,padding:0
+              }}>Увійти</button>
+            </p>
           </>)}
         </div>
       )}

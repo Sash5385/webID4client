@@ -14,21 +14,28 @@ const INSTANCE  = "id4drive-booking-44182-default-rtdb";
 async function sendPush(uid, title, body, urlPath) {
   const snap = await db.ref(`users/${uid}/fcmTokens/web/token`).get();
   const token = snap.val();
-  if (!token) return;
+  if (!token) {
+    console.warn(`sendPush: no token for uid=${uid}`);
+    return;
+  }
+  const link = (urlPath || "/").startsWith("http") ? (urlPath || "/") : `https://id4drive.pro${urlPath || "/"}`;
   try {
     await messaging.send({
       token,
       notification: { title, body },
-      data: { url: urlPath || "/" },
+      data: { url: link },
       webpush: {
-        notification: { icon: "/favicon.svg", badge: "/favicon.svg" },
-        fcmOptions: { link: urlPath || "/" },
+        notification: { icon: "/favicon.svg", badge: "/favicon.svg", requireInteraction: true },
+        fcmOptions: { link },
       },
     });
+    console.log(`sendPush OK uid=${uid} title="${title}"`);
   } catch (err) {
+    console.error(`sendPush ERROR uid=${uid} code=${err.code} msg=${err.message}`);
     if (
       err.code === "messaging/registration-token-not-registered" ||
-      err.code === "messaging/invalid-registration-token"
+      err.code === "messaging/invalid-registration-token" ||
+      err.code === "messaging/invalid-argument"
     ) {
       await db.ref(`users/${uid}/fcmTokens/web`).remove();
     }
@@ -127,7 +134,8 @@ exports.onBookingStatusChanged = onValueWritten(
 );
 
 // ─── 2. onSlotFreed ───────────────────────────────────────────────
-// When a booking is cancelled → notify the first student in the queue for that slot
+// When a booking is cancelled → auto-invite the first student in queue (FIFO)
+// onQueueInvite will fire next and send the actual offer push to the student
 exports.onSlotFreed = onValueWritten(
   {
     ref: "bookings/{uid}/{bookingId}",
@@ -142,18 +150,7 @@ exports.onSlotFreed = onValueWritten(
     if (!before || before.status === "cancelled") return;
 
     const slotKey = `${after.date}_${after.time}`;
-    const qSnap   = await db.ref(`queue/${slotKey}/entries`).orderByChild("addedAt").limitToFirst(5).get();
-    if (!qSnap.exists()) return;
-
-    const entries = Object.values(qSnap.val()).sort((a, b) => a.addedAt - b.addedAt);
-    for (const entry of entries) {
-      await sendPush(
-        entry.uid,
-        "🎉 З'явилось місце!",
-        `Відкрився запис на ${after.date} о ${after.time}. Встигни записатись!`,
-        "/cabinet"
-      );
-    }
+    await inviteNextInQueue(slotKey);
   }
 );
 
@@ -304,9 +301,14 @@ exports.onAdminSlotOpened = onValueWritten(
     if (before.adminBlocked !== true) return;
     if (after.adminBlocked !== false || after.available !== true) return;
 
-    const { date } = event.params;
-    const time = after.time;
-    if (!time) return;
+    const { date, slotId } = event.params;
+    // Дерайвимо time з поля або з ключа (slot1000 → '10:00')
+    let time = after.time;
+    if (!time) {
+      const m = slotId.match(/^slot(\d{2})(\d{2})$/);
+      if (!m) return;
+      time = `${m[1]}:${m[2]}`;
+    }
 
     const slotKey = `${date}_${time}`;
     const qSnap = await db.ref(`queue/${slotKey}/entries`).get();

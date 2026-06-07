@@ -10,6 +10,7 @@ import ProgressTab from './cabinet/ProgressTab'
 import ProfileTab from './cabinet/ProfileTab'
 import ChatTab from './cabinet/ChatTab'
 
+import { formatDateLabel } from '../utils/date'
 import './Cabinet.css'
 
 const TITLES = {
@@ -248,7 +249,7 @@ export default function Cabinet({ user, profile }) {
       {selectedOffer && (() => {
         const { offer } = selectedOffer
         const minsLeft = Math.max(0, Math.round((offer.until - Date.now()) / 60000))
-        const dateLabel = new Date(offer.date + 'T12:00:00').toLocaleDateString('uk-UA', { weekday:'short', day:'numeric', month:'long' })
+        const dateLabel = formatDateLabel(new Date(offer.date + 'T12:00:00'))
         return (
           <div
             onClick={e => e.target === e.currentTarget && setSelectedOffer(null)}

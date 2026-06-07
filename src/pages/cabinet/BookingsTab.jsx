@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { cancelBooking, createBooking, markSlotsUnavailable, subscribeSlotsForDate, getAdminSettings, subscribeMonthAvailability } from '../../firebase/db'
-import { parseYMD, getMonthShort, getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay } from '../../utils/date'
+import { parseYMD, getMonthShort, getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay, formatDateLabel } from '../../utils/date'
 import './BookingsTab.css'
 import './BookTab.css'
 
@@ -151,7 +151,7 @@ function RescheduleModal({ booking, user, onClose, onDone }) {
         {selectedDate && (
           <>
             <div className="section-title" style={{ marginTop: 0 }}>
-              Час · {selectedDate.toLocaleDateString('uk-UA', { weekday:'short', day:'numeric', month:'long' })}
+              Час · {formatDateLabel(selectedDate)}
             </div>
             {loading ? (
               <div style={{ textAlign:'center', padding:16 }}><div className="spinner" style={{ margin:'0 auto' }} /></div>

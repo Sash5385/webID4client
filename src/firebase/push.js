@@ -9,6 +9,16 @@ const VAPID_KEY = 'BFT1t7hXhEcSsHdotLlG5xoIFNrdS11vU_jsHiD1UUMsskVINBW2het8ogOKi
 
 let messaging = null
 
+async function getFirebaseSwReg() {
+  if (!('serviceWorker' in navigator)) return undefined
+  const regs = await navigator.serviceWorker.getRegistrations()
+  // Use a unique scope to avoid conflict with VitePWA's sw.js (both default to scope /)
+  // Without a unique scope, Firebase SW stays in "waiting" and push events go to VitePWA SW
+  const existing = regs.find(r => r.scope?.includes('firebase-push'))
+  if (existing) return existing
+  return navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/firebase-push/' })
+}
+
 export function initMessaging() {
   if (!('Notification' in window)) {
     console.warn('Браузер не підтримує сповіщення')
@@ -28,7 +38,8 @@ export async function requestNotificationPermission(uid) {
   if (permission !== 'granted') return null
 
   try {
-    const token = await getToken(msg, { vapidKey: VAPID_KEY })
+    const swReg = await getFirebaseSwReg()
+    const token = await getToken(msg, { vapidKey: VAPID_KEY, ...(swReg ? { serviceWorkerRegistration: swReg } : {}) })
     if (token && uid) {
       await set(ref(db, `users/${uid}/fcmTokens/web/token`), token)
     }

@@ -37,7 +37,24 @@ export default function App() {
     return onForegroundMessage((payload) => {
       const title = payload.notification?.title || 'ID4Drive'
       const body = payload.notification?.body || ''
-      if (Notification.permission === 'granted') {
+      const url = payload.data?.url || '/'
+      if (Notification.permission !== 'granted') return
+      // Використовуємо Service Worker для показу — працює і в foreground і на мобільних
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(reg => {
+          reg.showNotification(title, {
+            body,
+            icon: '/favicon.svg',
+            badge: '/favicon.svg',
+            tag: 'id4drive-' + Date.now(),
+            requireInteraction: true,
+            data: { url },
+          })
+        }).catch(() => {
+          // fallback для старих браузерів
+          new Notification(title, { body, icon: '/favicon.svg' })
+        })
+      } else if (Notification.permission === 'granted') {
         new Notification(title, { body, icon: '/favicon.svg' })
       }
     })
