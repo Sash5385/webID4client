@@ -10,9 +10,6 @@ html, body {
   color: var(--text);
   font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   transition: background .3s, color .3s;
-}
-
-body {
   overflow-x: hidden;
 }
 
