@@ -36,6 +36,11 @@ export function getSmsErrorMessage(code) {
   }
 }
 
+export async function renderRecaptcha(containerId = 'recaptcha-container') {
+  const verifier = initRecaptcha(containerId)
+  try { await verifier.render() } catch {}
+}
+
 export async function sendSmsCode(phoneNumber) {
   const verifier = initRecaptcha()
   confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, verifier)

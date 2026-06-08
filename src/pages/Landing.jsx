@@ -52,7 +52,7 @@ export default function Landing({ user }) {
       <header className="landing-topbar">
         <div className="container landing-topbar-row">
           <div className="logo">
-            <div className="logo-icon">🚗</div>
+            <div className="logo-icon"><img src="/icon-192.png" alt="ID4Drive"/></div>
             ID4Drive
           </div>
           <div className="topbar-actions">

@@ -24,8 +24,8 @@ messaging.onBackgroundMessage((payload) => {
   const url = payload.data?.url || 'https://id4drive.pro/cabinet'
   const options = {
     body: payload.notification?.body || '',
-    icon: '/favicon.svg',
-    badge: '/favicon.svg',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
     tag: 'id4drive-' + (payload.data?.tag || Date.now()),
     requireInteraction: true,
     vibrate: [200, 100, 200],

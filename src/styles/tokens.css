@@ -26,8 +26,8 @@
   --surf-lo: #e8eaf0;
   --border: rgba(0,0,0,0.06);
   --text: #1c1d21;
-  --dim: #6b6d75;
-  --faint: #a0a3ab;
+  --dim: #3c3e45;
+  --faint: #6b6d75;
   --shadow: 8px 8px 20px rgba(174,178,189,0.45), -4px -4px 12px rgba(255,255,255,0.9);
   --shadow-in: inset 3px 3px 8px rgba(174,178,189,0.4), inset -2px -2px 6px rgba(255,255,255,0.7);
 }

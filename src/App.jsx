@@ -44,18 +44,18 @@ export default function App() {
         navigator.serviceWorker.ready.then(reg => {
           reg.showNotification(title, {
             body,
-            icon: '/favicon.svg',
-            badge: '/favicon.svg',
+            icon: '/icon-192.png',
+            badge: '/icon-192.png',
             tag: 'id4drive-' + Date.now(),
             requireInteraction: true,
             data: { url },
           })
         }).catch(() => {
           // fallback для старих браузерів
-          new Notification(title, { body, icon: '/favicon.svg' })
+          new Notification(title, { body, icon: '/icon-192.png' })
         })
       } else if (Notification.permission === 'granted') {
-        new Notification(title, { body, icon: '/favicon.svg' })
+        new Notification(title, { body, icon: '/icon-192.png' })
       }
     })
   }, [user])

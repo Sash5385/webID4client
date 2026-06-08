@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { sendSmsCode, verifySmsCode, resetRecaptcha, getSmsErrorMessage } from '../firebase/auth'
+import { sendSmsCode, verifySmsCode, resetRecaptcha, getSmsErrorMessage, renderRecaptcha } from '../firebase/auth'
 import { signInWithEmail, signUpWithEmail, sendPasswordReset } from '../firebase/auth-email'
 import { saveUserProfile, getUserProfile } from '../firebase/db'
 import { useTheme } from '../hooks/useTheme'
@@ -91,6 +91,12 @@ export default function Auth({ user, profile, onProfileSaved }) {
   useEffect(() => {
     if (user && !profile) setStep('survey')
   }, [user, profile])
+
+  useEffect(() => {
+    if (step === 'phone' && authMode === 'sms') {
+      renderRecaptcha('recaptcha-container').catch(() => {})
+    }
+  }, [step, authMode])
 
   useEffect(() => {
     if (step === 'sms' && resendTimer > 0) {
@@ -297,7 +303,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
       {step === 'phone' && (
         <div className="fade-up" style={{display:'flex',flexDirection:'column'}}>
           <div className="auth-logo-block">
-            <div className="auth-logo-icon">🚗</div>
+            <div className="auth-logo-icon"><img src="/icon-192.png" alt="ID4Drive"/></div>
             <div className="auth-logo-name">ID4Drive</div>
           </div>
 

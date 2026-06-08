@@ -1,26 +1,25 @@
 .cabinet-page {
-  min-height: 100vh;
-  padding-bottom: 100px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.cab-content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+  padding: 0 16px;
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
 }
 
 @media (min-width: 600px) {
   .cabinet-page {
     max-width: 430px;
     margin: 0 auto;
-    height: 100vh;
-    min-height: unset;
-    padding-bottom: 0;
-    display: flex;
-    flex-direction: column;
     position: relative;
-    overflow: hidden;
     box-shadow: 0 0 80px rgba(0,0,0,0.6);
-  }
-
-  .cab-content {
-    flex: 1;
-    overflow-y: auto;
-    min-height: 0;
   }
 
   .botnav {
@@ -77,11 +76,6 @@
   border-radius: 10px; padding: 1px 6px;
   font-size: 9px; font-weight: 800;
   box-shadow: 0 0 8px rgba(255,90,60,0.6);
-}
-
-.cab-content {
-  padding: 0 16px 80px;
-  padding-bottom: calc(80px + env(safe-area-inset-bottom));
 }
 
 /* BOTTOM NAV */
