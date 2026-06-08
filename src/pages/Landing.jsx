@@ -44,6 +44,7 @@ export default function Landing({ user }) {
   }, [])
 
   const goAuth = () => nav(user ? '/cabinet' : '/schedule')
+  const goRegister = () => nav(user ? '/cabinet' : '/auth')
 
   return (
     <div className="landing-page">
@@ -103,7 +104,7 @@ export default function Landing({ user }) {
           <div className="lsection-title">Послуги</div>
           <h2>Обери свій формат</h2>
           <div className="services">
-            <div className="service-card" onClick={goAuth}>
+            <div className="service-card" onClick={goRegister}>
               <div className="service-icon ico-school">🎓</div>
               <div className="service-info">
                 <div className="service-title">Автошкола</div>
@@ -111,7 +112,7 @@ export default function Landing({ user }) {
               </div>
               <div className="service-arrow">→</div>
             </div>
-            <div className="service-card" onClick={goAuth}>
+            <div className="service-card" onClick={goRegister}>
               <div className="service-icon ico-private">🚙</div>
               <div className="service-info">
                 <div className="service-title">Приватні уроки</div>

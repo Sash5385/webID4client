@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { sendSmsCode, verifySmsCode, resetRecaptcha, getSmsErrorMessage, renderRecaptcha } from '../firebase/auth'
+import { sendSmsCode, verifySmsCode, resetRecaptcha, getSmsErrorMessage, renderRecaptcha, isIOSDevice } from '../firebase/auth'
 import { signInWithEmail, signUpWithEmail, sendPasswordReset } from '../firebase/auth-email'
 import { saveUserProfile, getUserProfile } from '../firebase/db'
 import { useTheme } from '../hooks/useTheme'
 import { normalizePhone, formatPhone } from '../utils/format'
 import './Auth.css'
+
+const iosDevice = isIOSDevice()
 
 const TSCS = [
   { id: '8041', name: 'ТСЦ 8041', area: 'вул. Перемоги 20' },
@@ -67,6 +69,10 @@ export default function Auth({ user, profile, onProfileSaved }) {
   const [resendTimer, setResendTimer] = useState(45)
   const codeInputRef = useRef(null)
 
+  // iOS reCAPTCHA state
+  const [captchaSolved, setCaptchaSolved] = useState(false)
+  const [resendCaptchaNeeded, setResendCaptchaNeeded] = useState(false)
+
   // auth mode toggle: 'sms' | 'email-login' | 'email-register'
   const [authMode, setAuthMode] = useState('sms')
 
@@ -94,7 +100,9 @@ export default function Auth({ user, profile, onProfileSaved }) {
 
   useEffect(() => {
     if (step === 'phone' && authMode === 'sms') {
-      renderRecaptcha('recaptcha-container').catch(() => {})
+      setCaptchaSolved(false)
+      const onSolved = iosDevice ? () => setCaptchaSolved(true) : null
+      renderRecaptcha('recaptcha-container', onSolved).catch(() => {})
     }
   }, [step, authMode])
 
@@ -159,10 +167,32 @@ export default function Auth({ user, profile, onProfileSaved }) {
 
   const handleResend = async () => {
     setCodeError('')
+    await resetRecaptcha()
+
+    if (iosDevice) {
+      setResendCaptchaNeeded(true)
+      // wait for div to mount, then render captcha with auto-send callback
+      setTimeout(() => {
+        renderRecaptcha('recaptcha-resend-container', async () => {
+          setSending(true)
+          try {
+            await sendSmsCode(phone, 'recaptcha-resend-container')
+            setResendTimer(45)
+            setCode('')
+          } catch (e) {
+            setCodeError(getSmsErrorMessage(e.code))
+          } finally {
+            setResendCaptchaNeeded(false)
+            setSending(false)
+          }
+        }).catch(() => {})
+      }, 150)
+      return
+    }
+
     setSending(true)
     try {
-      await resetRecaptcha()
-      await sendSmsCode(phone)
+      await sendSmsCode(phone, 'recaptcha-resend-container')
       setResendTimer(45)
       setCode('')
     } catch (e) {
@@ -342,11 +372,17 @@ export default function Auth({ user, profile, onProfileSaved }) {
                 autoFocus
               />
             </div>
-            <div id="recaptcha-container"/>
+            <div id="recaptcha-container" style={{marginTop:8}}/>
+            {iosDevice && phoneInput.length >= 9 && !captchaSolved && (
+              <p style={{fontSize:11,color:'var(--dim)',textAlign:'center',marginTop:4}}>
+                Відмітьте reCAPTCHA вище щоб продовжити
+              </p>
+            )}
             {phoneError && <div className="auth-error">{phoneError}</div>}
             <div style={{marginTop:16}}>
-              <button className="btn-primary" onClick={handleSendCode} disabled={sending||phoneInput.length<9}>
-                {sending?'Надсилаємо...':'Надіслати код →'}
+              <button className="btn-primary" onClick={handleSendCode}
+                disabled={sending || phoneInput.length < 9 || (iosDevice && !captchaSolved)}>
+                {sending ? 'Надсилаємо...' : 'Надіслати код →'}
               </button>
             </div>
           </>) : authMode === 'email-login' ? (
@@ -470,9 +506,16 @@ export default function Auth({ user, profile, onProfileSaved }) {
           <div className="timer-row">
             {resendTimer>0
               ? <>Повторно надіслати через <span className="accent">{resendTimer} сек</span></>
-              : <button className="resend-link" onClick={handleResend} disabled={sending}>{sending?'Надсилаємо...':'Надіслати ще раз'}</button>
+              : <button className="resend-link" onClick={handleResend} disabled={sending||resendCaptchaNeeded}>{sending?'Надсилаємо...':'Надіслати ще раз'}</button>
             }
           </div>
+          {resendCaptchaNeeded && (
+            <div style={{marginTop:12,textAlign:'center'}}>
+              <p style={{fontSize:12,color:'var(--dim)',marginBottom:8}}>Підтвердіть для повторного відправлення</p>
+              <div id="recaptcha-resend-container" style={{display:'inline-block'}}/>
+            </div>
+          )}
+          {!iosDevice && <div id="recaptcha-resend-container" style={{height:0,overflow:'hidden'}}/>}
           {codeError && <div className="auth-error">{codeError}</div>}
           <div className="bottom-spacer">
             <button className="btn-primary" onClick={handleVerifyCode} disabled={verifying||code.length<6}>

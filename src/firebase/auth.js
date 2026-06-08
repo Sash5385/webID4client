@@ -8,18 +8,18 @@ import { auth } from './config'
 let recaptchaVerifier = null
 let confirmationResult = null
 
-export function initRecaptcha(containerId = 'recaptcha-container', force = false) {
+export const isIOSDevice = () => /iPad|iPhone|iPod/.test(navigator.userAgent)
+
+export function initRecaptcha(containerId = 'recaptcha-container', force = false, onSolved = null) {
   if (recaptchaVerifier && !force) return recaptchaVerifier
   if (recaptchaVerifier) {
     try { recaptchaVerifier.clear() } catch {}
     recaptchaVerifier = null
   }
-  // iOS Safari / WebView doesn't support invisible reCAPTCHA well — use normal
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
   recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
-    size: isIOS ? 'normal' : 'invisible',
-    callback: () => {},
-    'expired-callback': () => { recaptchaVerifier = null }
+    size: isIOSDevice() ? 'normal' : 'invisible',
+    callback: onSolved ?? (() => {}),
+    'expired-callback': () => { recaptchaVerifier = null },
   })
   return recaptchaVerifier
 }
@@ -36,13 +36,14 @@ export function getSmsErrorMessage(code) {
   }
 }
 
-export async function renderRecaptcha(containerId = 'recaptcha-container') {
-  const verifier = initRecaptcha(containerId)
+export async function renderRecaptcha(containerId = 'recaptcha-container', onSolved = null) {
+  const verifier = initRecaptcha(containerId, false, onSolved)
   try { await verifier.render() } catch {}
 }
 
-export async function sendSmsCode(phoneNumber) {
-  const verifier = initRecaptcha()
+// containerId used for resend (different container on SMS step)
+export async function sendSmsCode(phoneNumber, containerId = 'recaptcha-container') {
+  const verifier = initRecaptcha(containerId)
   confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, verifier)
   return confirmationResult
 }
