@@ -278,6 +278,25 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
 
   const slotsList = useMemo(() => {
     const isVip = profile?.isVip === true
+    const dateStr = selectedDate ? formatDateYMD(selectedDate) : ''
+
+    // Sticky slots: show only free slots adjacent to existing bookings on this day
+    const stickyEnabled = adminSettings.stickyTimeEnabled !== false
+    const stickyMode = adminSettings.stickyTime || 'both'
+    const bookingsOnDate = bookingsData.upcoming.filter(b =>
+      b.date === dateStr && b.status !== 'cancelled'
+    )
+    const allowedStartMins = new Set()
+    if (stickyEnabled && bookingsOnDate.length > 0) {
+      bookingsOnDate.forEach(b => {
+        const [bh, bm] = (b.time || '0:0').split(':').map(Number)
+        const bStart = bh * 60 + bm
+        const bEnd = bStart + (b.durationHours || 1) * 60
+        if (stickyMode !== 'after')  allowedStartMins.add(bStart - durationHours * 60)
+        if (stickyMode !== 'before') allowedStartMins.add(bEnd)
+      })
+    }
+
     return Object.values(slots)
       .filter(slot => !!(slot.time))
       .filter(slot => !slot.vipOnly || isVipStudent)
@@ -302,7 +321,6 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           const coveredKey = `slot${String(Math.floor(coveredMin/60)).padStart(2,'0')}${String(coveredMin%60).padStart(2,'0')}`
           totalSurcharge += slots[coveredKey]?.surcharge || 0
         }
-        const dateStr = selectedDate ? formatDateYMD(selectedDate) : ''
         return {
           ...slot,
           lunchBlocked:   isBlockedByLunch(slot.time, durationHours),
@@ -314,6 +332,12 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         }
       })
       .filter(slot => !slot.lunchBlocked && !slot.overlapBlocked)
+      .filter(slot => {
+        if (!stickyEnabled || bookingsOnDate.length === 0) return true
+        if (slot.available === false) return true // зайняті — показуємо для черги
+        const [h, m] = (slot.time || '0:0').split(':').map(Number)
+        return allowedStartMins.has(h * 60 + m)
+      })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slots, durationHours, adminSettings, profile?.isVip, selectedDate, selectedService, bookingsData.upcoming])
 
