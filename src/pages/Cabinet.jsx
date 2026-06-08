@@ -2,13 +2,14 @@ import { useState, useEffect, useMemo } from 'react'
 import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
 import { useBookings } from '../hooks/useBookings'
-import { subscribeQueueOffers, clearQueueOffer, claimQueueOffer, declineQueueOffer, subscribeDirectUnread, markDirectChatRead } from '../firebase/db'
+import { subscribeQueueOffers, clearQueueOffer, claimQueueOffer, declineQueueOffer, subscribeDirectUnread, markDirectChatRead, subscribeNotifications } from '../firebase/db'
 
 import BookTab from './cabinet/BookTab'
 import BookingsTab from './cabinet/BookingsTab'
 import ProgressTab from './cabinet/ProgressTab'
 import ProfileTab from './cabinet/ProfileTab'
 import ChatTab from './cabinet/ChatTab'
+import NotifTab from './cabinet/NotifTab'
 
 import { formatDateLabel } from '../utils/date'
 import './Cabinet.css'
@@ -18,6 +19,7 @@ const TITLES = {
   bookings: 'Мої записи',
   progress: 'Прогрес',
   chat: 'Чат',
+  notifications: 'Повідомлення',
   profile: 'Профіль'
 }
 
@@ -49,12 +51,23 @@ export default function Cabinet({ user, profile }) {
     lsKey ? Number(localStorage.getItem(lsKey) || 0) : 0
   )
 
+  const notifLsKey = user?.uid ? `lastSeenNotifTs_${user.uid}` : null
+  const [lastSeenNotifTs, setLastSeenNotifTs] = useState(() =>
+    notifLsKey ? Number(localStorage.getItem(notifLsKey) || 0) : 0
+  )
+  const [allNotifs, setAllNotifs] = useState([])
+
   const newBookings = useMemo(
     () => bookingsData.upcoming.filter(b => (b.createdAt || 0) > lastSeenTs).length,
     [bookingsData.upcoming, lastSeenTs]
   )
 
-  const bellCount = unreadChat + newBookings
+  const unreadNotifs = useMemo(
+    () => allNotifs.filter(n => (n.ts || 0) > lastSeenNotifTs).length,
+    [allNotifs, lastSeenNotifTs]
+  )
+
+  const bellCount = unreadChat + newBookings + unreadNotifs
 
   const markBookingsSeen = () => {
     if (!lsKey) return
@@ -63,13 +76,28 @@ export default function Cabinet({ user, profile }) {
     setLastSeenTs(now)
   }
 
+  const markNotifsSeen = () => {
+    if (!notifLsKey) return
+    const now = Date.now()
+    localStorage.setItem(notifLsKey, now)
+    setLastSeenNotifTs(now)
+  }
+
   useEffect(() => {
     if (!user?.uid) return
     return subscribeDirectUnread(user.uid, setUnreadChat)
   }, [user?.uid])
 
+  useEffect(() => {
+    if (!user?.uid) return
+    return subscribeNotifications(user.uid, setAllNotifs)
+  }, [user?.uid])
+
   const handleBellClick = () => {
-    if (unreadChat > 0) {
+    if (unreadNotifs > 0) {
+      markNotifsSeen()
+      switchTab('notifications')
+    } else if (unreadChat > 0) {
       if (user?.uid) markDirectChatRead(user.uid)
       switchTab('chat')
     } else {
@@ -184,6 +212,7 @@ export default function Cabinet({ user, profile }) {
           <Route path="/bookings" element={<BookingsTab user={user} profile={profile} bookingsData={bookingsData} />} />
           <Route path="/progress" element={<ProgressTab user={user} profile={profile} bookingsData={bookingsData} />} />
           <Route path="/chat" element={<ChatTab user={user} profile={profile} />} />
+          <Route path="/notifications" element={<NotifTab user={user} onSeen={markNotifsSeen} />} />
           <Route path="/profile" element={<ProfileTab user={user} profile={profile} bookingsData={bookingsData} />} />
           <Route path="*" element={<Navigate to="/cabinet" />} />
         </Routes>
@@ -233,6 +262,20 @@ export default function Cabinet({ user, profile }) {
             </svg>
           </div>
           <div className="botnav-lbl">Чат</div>
+          {unreadChat > 0 && (
+            <div className="botnav-badge">{unreadChat}</div>
+          )}
+        </button>
+        <button className={`botnav-btn ${activeTab === 'notifications' ? 'active' : ''}`} onClick={() => { markNotifsSeen(); switchTab('notifications') }}>
+          <div className="botnav-ico">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </div>
+          <div className="botnav-lbl">Сповіщення</div>
+          {unreadNotifs > 0 && (
+            <div className="botnav-badge">{unreadNotifs}</div>
+          )}
         </button>
         <button className={`botnav-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => switchTab('profile')}>
           <div className="botnav-ico">

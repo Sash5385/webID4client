@@ -331,3 +331,16 @@ export async function sendGeneralMessage(uid, name, text) {
     ts: Date.now(),
   })
 }
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────────
+export function subscribeNotifications(uid, callback) {
+  const r = ref(db, `notifications/${uid}`)
+  const handler = onValue(r, snap => {
+    const data = snap.val() || {}
+    const items = Object.entries(data)
+      .map(([id, n]) => ({ ...n, id }))
+      .sort((a, b) => (b.ts || 0) - (a.ts || 0))
+    callback(items)
+  })
+  return () => off(r, 'value', handler)
+}

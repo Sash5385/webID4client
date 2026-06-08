@@ -114,7 +114,7 @@
   flex: 1 1 0; min-width: 0;
   background: transparent; border: none; cursor: pointer;
   display: flex; flex-direction: column; align-items: center;
-  gap: 5px; padding: 13px 4px 11px;
+  gap: 3px; padding: 10px 2px 9px;
   position: relative;
 }
 
@@ -132,7 +132,7 @@
 
 [data-theme="light"] .botnav-btn.active .botnav-ico { color: var(--accent); }
 
-.botnav-lbl { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.45); white-space: nowrap; }
+.botnav-lbl { font-size: 8px; font-weight: 700; color: rgba(255,255,255,0.45); white-space: nowrap; }
 [data-theme="light"] .botnav-lbl { color: var(--faint); }
 .botnav-btn.active .botnav-lbl { color: var(--accent); }
 

@@ -250,10 +250,8 @@ export default function ChatTab({ user, profile }) {
         </button>
       </div>
 
-      {tab === 'direct'
-        ? <DirectChat user={user} profile={profile} />
-        : <GeneralChat user={user} profile={profile} />
-      }
+      {tab === 'direct' && <DirectChat user={user} profile={profile} />}
+      {tab === 'general' && <GeneralChat user={user} profile={profile} />}
     </div>
   )
 }

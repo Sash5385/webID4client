@@ -1,0 +1,133 @@
+.notif-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 16px;
+}
+
+/* ─── EMPTY ────────────────────────────────────────────────────── */
+.notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+}
+.notif-empty-icon  { font-size: 40px; margin-bottom: 12px; opacity: 0.35; }
+.notif-empty-title { font-size: 16px; font-weight: 700; color: var(--dim); margin-bottom: 6px; }
+.notif-empty-sub   { font-size: 13px; color: var(--faint, var(--dim)); text-align: center; opacity: 0.7; }
+
+/* ─── LIST ─────────────────────────────────────────────────────── */
+.notif-list { display: flex; flex-direction: column; gap: 8px; }
+
+/* ─── CARD ─────────────────────────────────────────────────────── */
+.notif-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px 12px 12px;
+  background: rgba(0,0,0,0.52);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow: var(--shadow);
+  border-left-width: 3px;
+}
+
+/* accent left border */
+.notif-accent-green { border-left-color: #7ed957; }
+.notif-accent-red   { border-left-color: #ef4444; }
+.notif-accent-gold  { border-left-color: var(--gold); }
+.notif-accent-blue  { border-left-color: #5b9bff; }
+.notif-accent-dim   { border-left-color: rgba(255,255,255,0.15); }
+
+/* ─── ICON ─────────────────────────────────────────────────────── */
+.notif-left { flex-shrink: 0; }
+
+.notif-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: rgba(0,0,0,0.3);
+  box-shadow: var(--shadow-in);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notif-accent-green .notif-icon-wrap { background: rgba(126,217,87,0.12); }
+.notif-accent-red   .notif-icon-wrap { background: rgba(239,68,68,0.12); }
+.notif-accent-gold  .notif-icon-wrap { background: rgba(247,201,72,0.12); }
+.notif-accent-blue  .notif-icon-wrap { background: rgba(91,155,255,0.12); }
+
+.notif-icon { font-size: 18px; line-height: 1; }
+
+/* ─── BODY ─────────────────────────────────────────────────────── */
+.notif-body { flex: 1; min-width: 0; }
+
+.notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.notif-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── BADGE ────────────────────────────────────────────────────── */
+.notif-badge {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  border-radius: 7px;
+}
+
+.notif-badge-green { background: rgba(126,217,87,0.15); color: #7ed957; }
+.notif-badge-red   { background: rgba(239,68,68,0.15);  color: #ef4444; }
+.notif-badge-gold  { background: rgba(247,201,72,0.15); color: var(--gold); }
+.notif-badge-blue  { background: rgba(91,155,255,0.15); color: #5b9bff; }
+.notif-badge-dim   { background: rgba(255,255,255,0.07); color: var(--dim); }
+
+/* ─── TEXT / TIME ──────────────────────────────────────────────── */
+.notif-text {
+  font-size: 12px;
+  color: var(--dim);
+  line-height: 1.45;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.notif-time {
+  font-size: 10px;
+  color: var(--dim);
+  opacity: 0.6;
+}
+
+/* ─── LIGHT THEME ──────────────────────────────────────────────── */
+[data-theme="light"] .notif-card {
+  background: var(--surface);
+  border-color: rgba(0,0,0,0.06);
+}
+[data-theme="light"] .notif-accent-green { border-left-color: #5ab83a; }
+[data-theme="light"] .notif-accent-red   { border-left-color: #dc2626; }
+[data-theme="light"] .notif-accent-gold  { border-left-color: #d4a010; }
+[data-theme="light"] .notif-accent-blue  { border-left-color: #2563eb; }
+
+[data-theme="light"] .notif-icon-wrap { background: rgba(0,0,0,0.05); box-shadow: var(--shadow-in); }
+
+[data-theme="light"] .notif-badge-green { background: rgba(90,184,58,0.12);  color: #3a8a20; }
+[data-theme="light"] .notif-badge-red   { background: rgba(220,38,38,0.10);  color: #b91c1c; }
+[data-theme="light"] .notif-badge-gold  { background: rgba(212,160,16,0.12); color: #92610a; }
+[data-theme="light"] .notif-badge-blue  { background: rgba(37,99,235,0.10);  color: #1d4ed8; }
