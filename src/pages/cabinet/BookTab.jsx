@@ -376,7 +376,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       </div>
 
       {/* 1. ПОСЛУГА */}
-      <div className="section-title">1. Послуга</div>
+      <div className="section-title" style={{color:'#ffffff', fontSize:13, textAlign:'center'}}>1. Послуга</div>
       {!servicesLoaded ? (
         <div style={{textAlign:'center', padding:'16px', color:'var(--dim)', fontSize:'13px'}}>Завантаження...</div>
       ) : (
@@ -424,7 +424,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       )}
 
       {/* 2. ДАТА */}
-      <div className="section-title">2. Дата</div>
+      <div className="section-title" style={{color:'#ffffff', fontSize:13, textAlign:'center'}}>2. Дата</div>
       <div className="cal-card">
         <div className="cal-head">
           <button className="cal-nav-btn" onClick={prevMonth}>‹</button>
@@ -465,7 +465,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       {/* 3. ЧАС */}
       {selectedDate && (
         <>
-          <div ref={timeSectionRef} className="section-title">
+          <div ref={timeSectionRef} className="section-title" style={{color:'#ffffff', fontSize:13, textAlign:'center'}}>
             3. Час ({selectedDate.toLocaleDateString('uk-UA', { weekday: 'short', day: 'numeric', month: 'long' })})
           </div>
           {loading ? (
