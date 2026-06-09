@@ -19,6 +19,8 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   const canPrivate = isPrivateStudent || schoolLimitReached
   const canSchool = !isPrivateStudent && !schoolLimitReached
   const isVipStudent = profile?.isVip === true
+  const discountPct = profile?.discount || 0
+  const applyDiscount = (price) => discountPct > 0 ? Math.round(price * (1 - discountPct / 100)) : price
   const [services, setServices] = useState([])
   const [servicesLoaded, setServicesLoaded] = useState(false)
   const [selectedService, setSelectedService] = useState(null)
@@ -225,7 +227,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           return
         }
       }
-      const totalPrice = (selectedService?.price || 0) + surcharge
+      const totalPrice = applyDiscount((selectedService?.price || 0) + surcharge)
       const currentSlot = slots[`slot${selectedTime.replace(':', '')}`]
       await createBooking(user.uid, {
         date: dateStr,
@@ -235,6 +237,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         serviceName: selectedService.name,
         price: totalPrice || undefined,
         surcharge: surcharge || undefined,
+        discountPct: discountPct || undefined,
         durationHours,
         studentName: profile.name,
         phone: profile.phone || user.phoneNumber,
@@ -335,6 +338,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       .filter(slot => {
         if (!stickyEnabled || bookingsOnDate.length === 0) return true
         if (slot.available === false) return true // зайняті — показуємо для черги
+        if (slot.isMyBooked) return true // власний запис студента завжди видимий
         const [h, m] = (slot.time || '0:0').split(':').map(Number)
         return allowedStartMins.has(h * 60 + m)
       })
@@ -410,7 +414,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                 <div>
                   <div style={{fontSize:10, fontWeight:800, lineHeight:1.3}}>{svc.name}</div>
                   <div style={{fontSize:9, color:'var(--dim)', marginTop:1}}>
-                    {isLocked ? (svc.type === 'school' ? 'недоступно' : 'після 40 уроків') : `${svc.price} ₴`}
+                    {isLocked ? (svc.type === 'school' ? 'недоступно' : 'після 40 уроків') : discountPct > 0 ? `${applyDiscount(svc.price)} ₴ (−${discountPct}%)` : `${svc.price} ₴`}
                   </div>
                 </div>
               </div>
@@ -558,7 +562,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           surcharge += slots[key]?.surcharge || 0
         }
         const baseP = selectedService.price || 0
-        const totalPrice = baseP + surcharge
+        const totalPrice = applyDiscount(baseP + surcharge)
         const dateLabel = formatDateYMD(selectedDate).slice(-5).replace('-', '.')
         return (
           <>
@@ -572,7 +576,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                   ⚠️ Ціна за цей час: <strong>{totalPrice}₴</strong>
                 </div>
                 <div style={{fontSize:11, color:'rgba(247,201,72,0.7)'}}>
-                  Стандартна {baseP}₴ + надбавка +{surcharge}₴
+                  Стандартна {baseP}₴ + надбавка +{surcharge}₴{discountPct > 0 ? ` − знижка ${discountPct}%` : ''}
                 </div>
               </div>
             ) : totalPrice > 0 ? (
@@ -582,6 +586,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                 fontSize:12, color:'var(--dim)', textAlign:'center',
               }}>
                 Вартість уроку: <strong style={{color:'var(--text)'}}>{totalPrice}₴</strong>
+                {discountPct > 0 && <span style={{marginLeft:6, color:'#4ade80', fontSize:11}}>−{discountPct}%</span>}
               </div>
             ) : null}
             <button className="btn-primary" style={{marginTop:10}} onClick={handleBook} disabled={submitting}>
@@ -641,8 +646,9 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                 <div className="dialog-info-row">
                   <span className="lbl">Ціна</span>
                   <span className="val" style={{color:'var(--gold)'}}>
-                    {successData.service.price + (successData.surcharge || 0)} ₴
+                    {applyDiscount(successData.service.price + (successData.surcharge || 0))} ₴
                     {successData.surcharge > 0 && <span style={{fontSize:10, color:'var(--gold)', opacity:0.7}}> (+{successData.surcharge}₴)</span>}
+                    {discountPct > 0 && <span style={{fontSize:10, color:'#4ade80', marginLeft:4}}>−{discountPct}%</span>}
                   </span>
                 </div>
               )}
@@ -685,9 +691,15 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                     <span className="lbl" style={{color:'var(--gold)'}}>⚡ Надбавка</span>
                     <span className="val" style={{color:'var(--gold)'}}>+{dialogSlot.surcharge}₴</span>
                   </div>
+                  {discountPct > 0 && (
+                    <div className="dialog-info-row">
+                      <span className="lbl" style={{color:'#4ade80'}}>Знижка</span>
+                      <span className="val" style={{color:'#4ade80'}}>−{discountPct}%</span>
+                    </div>
+                  )}
                   <div className="dialog-info-row" style={{borderTop:'1px solid rgba(255,255,255,0.07)', marginTop:4, paddingTop:4}}>
                     <span className="lbl" style={{fontWeight:700}}>Разом</span>
-                    <span className="val" style={{fontWeight:800}}>{(selectedService?.price || 0) + dialogSlot.surcharge}₴</span>
+                    <span className="val" style={{fontWeight:800}}>{applyDiscount((selectedService?.price || 0) + dialogSlot.surcharge)}₴</span>
                   </div>
                 </>
               )}
