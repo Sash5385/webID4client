@@ -9,8 +9,14 @@ let recaptchaVerifier = null
 let confirmationResult = null
 
 export const isIOSDevice = () => /iPad|iPhone|iPod/.test(navigator.userAgent)
+// In-app browsers (Viber, Telegram, Instagram) block Firebase storage
+export const isInAppBrowser = () => {
+  const ua = navigator.userAgent
+  return /Viber|FBAN|FBAV|Instagram|TelegramBot|Line\//.test(ua) ||
+    (isIOSDevice() && !/Safari\//.test(ua) && !/CriOS/.test(ua) && !/FxiOS/.test(ua))
+}
 
-export function initRecaptcha(containerId = 'recaptcha-container', force = false, onSolved = null) {
+export function initRecaptcha(containerId = 'recaptcha-container', force = false, onSolved = null, onExpired = null) {
   if (recaptchaVerifier && !force) return recaptchaVerifier
   if (recaptchaVerifier) {
     try { recaptchaVerifier.clear() } catch {}
@@ -19,7 +25,10 @@ export function initRecaptcha(containerId = 'recaptcha-container', force = false
   recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
     size: isIOSDevice() ? 'normal' : 'invisible',
     callback: onSolved ?? (() => {}),
-    'expired-callback': () => { recaptchaVerifier = null },
+    'expired-callback': () => {
+      recaptchaVerifier = null
+      if (onExpired) onExpired()
+    },
   })
   return recaptchaVerifier
 }
@@ -29,15 +38,21 @@ export function getSmsErrorMessage(code) {
     case 'auth/invalid-phone-number': return 'Невірний формат номера телефону'
     case 'auth/too-many-requests': return 'Забагато спроб. Спробуй пізніше або використай Email'
     case 'auth/quota-exceeded': return 'SMS-ліміт вичерпано. Увійди через Email'
-    case 'auth/captcha-check-failed': return 'Перевірка не пройдена. Оновіть сторінку'
+    case 'auth/captcha-check-failed':
+    case 'auth/invalid-app-credential': return 'Перевірка не пройдена. Оновіть сторінку'
     case 'auth/missing-phone-number': return 'Введи номер телефону'
     case 'auth/user-disabled': return 'Акаунт заблоковано'
-    default: return 'Не вдалось надіслати SMS. Спробуй Email'
+    case 'auth/web-storage-unsupported': return 'Браузер блокує сховище. Відкрий у Safari або Chrome'
+    case 'auth/unauthorized-domain': return 'Домен не авторизований. Зверніться до адміністратора'
+    case 'auth/network-request-failed': return 'Помилка мережі. Перевір зʼєднання і спробуй ще раз'
+    case 'auth/internal-error': return 'Внутрішня помилка Firebase. Спробуй Email'
+    case 'auth/operation-not-allowed': return 'SMS-вхід вимкнено. Використай Email'
+    default: return `Не вдалось надіслати SMS. Спробуй Email (${code ?? 'unknown'})`
   }
 }
 
-export async function renderRecaptcha(containerId = 'recaptcha-container', onSolved = null) {
-  const verifier = initRecaptcha(containerId, false, onSolved)
+export async function renderRecaptcha(containerId = 'recaptcha-container', onSolved = null, onExpired = null) {
+  const verifier = initRecaptcha(containerId, false, onSolved, onExpired)
   try { await verifier.render() } catch {}
 }
 

@@ -103,7 +103,11 @@ export default function Auth({ user, profile, onProfileSaved }) {
     if (step === 'phone' && authMode === 'sms') {
       setCaptchaSolved(false)
       const onSolved = iosDevice ? () => setCaptchaSolved(true) : null
-      renderRecaptcha('recaptcha-container', onSolved).catch(() => {})
+      const onExpired = iosDevice ? () => {
+        setCaptchaSolved(false)
+        setTimeout(() => renderRecaptcha('recaptcha-container', onSolved, onExpired).catch(() => {}), 100)
+      } : null
+      renderRecaptcha('recaptcha-container', onSolved, onExpired).catch(() => {})
     }
   }, [step, authMode])
 
@@ -434,7 +438,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
               <p className="auth-sub">Введи пошту та пароль від свого акаунту.</p>
               <div className="field">
                 <div className="field-label">Email</div>
-                <input className="text-input" type="email" placeholder="you@example.com"
+                <input className="text-input" type="email" placeholder="you@example.com" autoComplete="email"
                   value={email} onChange={e=>setEmail(e.target.value)} autoFocus inputMode="email"/>
               </div>
               <div className="field">
