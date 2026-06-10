@@ -87,15 +87,38 @@ export default function PublicSchedule({ onBook }) {
   const nextMonth = () => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))
 
   return (
-    <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px 80px' }}>
+    <div style={{ maxWidth: 480, margin: '0 auto', paddingTop: 'env(safe-area-inset-top, 0px)', paddingLeft: 16, paddingRight: 16, paddingBottom: 80 }}>
 
       {/* HEADER */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 0 8px' }}>
-        <div>
-          <div style={{ fontWeight:900, fontSize:22, color:'var(--text)', lineHeight:1.1 }}>ID4Drive</div>
-          <div style={{ fontSize:11, color:'var(--dim)', marginTop:2 }}>Школа водіння · Онлайн-запис</div>
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <button
+            onClick={() => navigate('/')}
+            aria-label="Назад"
+            style={{ width:36, height:36, borderRadius:10, background:'var(--surface)', border:'none',
+              cursor:'pointer', color:'var(--text)', display:'flex', alignItems:'center', justifyContent:'center',
+              boxShadow:'var(--shadow)', flexShrink:0 }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div>
+            <div style={{ fontWeight:900, fontSize:22, color:'var(--text)', lineHeight:1.1 }}>ID4Drive</div>
+            <div style={{ fontSize:11, color:'var(--dim)', marginTop:2 }}>Школа водіння · Онлайн-запис</div>
+          </div>
         </div>
         <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+          <button
+            onClick={() => window.location.reload()}
+            aria-label="Оновити"
+            style={{ width:36, height:36, borderRadius:10, background:'var(--surface)', border:'none',
+              cursor:'pointer', color:'var(--text)', display:'flex', alignItems:'center', justifyContent:'center',
+              boxShadow:'var(--shadow)' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 4 23 10 17 10"/>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+          </button>
           <button
             onClick={toggle}
             style={{ width:36, height:36, borderRadius:10, background:'var(--surface)', border:'none',
