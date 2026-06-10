@@ -61,7 +61,7 @@ export default function App() {
           </button>
         </header>
 
-        <main className="flex-1 overflow-y-auto pb-24">
+        <main className="flex-1 overflow-y-auto pb-32">
           <Routes>
             <Route path="/" element={<Navigate to="/booking" replace />} />
             <Route path="/booking" element={<BookingPage />} />
@@ -71,12 +71,12 @@ export default function App() {
 
         <nav className="glare fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 flex">
           <NavLink to="/booking" className={({ isActive }) =>
-            `flex-1 py-5 text-center text-base font-semibold transition-all ${isActive ? 'text-blue-400' : 'text-gray-400 hover:text-gray-300'}`
+            `flex-1 py-8 text-center text-xl font-semibold transition-all ${isActive ? 'text-blue-400' : 'text-gray-400 hover:text-gray-300'}`
           }>
             + Записатись
           </NavLink>
           <NavLink to="/my-bookings" className={({ isActive }) =>
-            `flex-1 py-5 text-center text-base font-semibold transition-all ${isActive ? 'text-blue-400' : 'text-gray-400 hover:text-gray-300'}`
+            `flex-1 py-8 text-center text-xl font-semibold transition-all ${isActive ? 'text-blue-400' : 'text-gray-400 hover:text-gray-300'}`
           }>
             Мої записи
           </NavLink>
