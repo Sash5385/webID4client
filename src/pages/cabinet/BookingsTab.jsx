@@ -218,7 +218,11 @@ export default function BookingsTab({ user, profile, bookingsData }) {
   const renderCard = (b, isPast = false) => {
     const d = parseYMD(b.date)
     const endTime = b.time && b.durationHours
-      ? `${String(parseInt(b.time) + b.durationHours).padStart(2,'0')}:00`
+      ? (() => {
+          const [h, m] = b.time.split(':').map(Number)
+          const total = h * 60 + (m || 0) + b.durationHours * 60
+          return `${String(Math.floor(total / 60)).padStart(2,'0')}:${String(total % 60).padStart(2,'0')}`
+        })()
       : null
     const statusClass = b.status === 'confirmed' ? 'status-confirmed'
       : b.status === 'cancelled' ? 'status-cancelled' : 'status-pending'
