@@ -133,3 +133,14 @@
   text-transform: uppercase;
   margin-top: 4px;
 }
+
+/* ─── LIGHT THEME ──────────────────────────────────────────────── */
+[data-theme="light"] .progress-hero {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme="light"] .stat-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}

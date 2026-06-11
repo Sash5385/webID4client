@@ -108,6 +108,22 @@
   font-size: 14px;
 }
 
+/* ─── LIGHT THEME ──────────────────────────────────────────────── */
+[data-theme="light"] .booking-card {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: var(--shadow);
+}
+
+[data-theme="light"] .booking-date {
+  background: var(--surf-lo);
+  border-color: var(--border);
+}
+
+[data-theme="light"] .action-btn {
+  background: var(--surf-lo);
+}
+
 .empty-state {
   text-align: center;
   padding: 60px 20px;
