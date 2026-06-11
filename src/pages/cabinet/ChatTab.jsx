@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import {
-  subscribeStudentChat, sendStudentMessage, markDirectChatRead,
+  subscribeStudentChat, sendStudentMessage, markDirectChatRead, clearStudentChat,
   subscribeGeneralChat, sendGeneralMessage,
 } from '../../firebase/db'
 import './ChatTab.css'
@@ -43,6 +43,11 @@ function DirectChat({ user, profile }) {
 
   const initials = (profile?.name || 'У').split(' ').map(w => w[0]).slice(0, 2).join('')
 
+  const handleClear = async () => {
+    if (!window.confirm('Очистити всю переписку?')) return
+    await clearStudentChat(user.uid)
+  }
+
   return (
     <div className="chat-inner fade-up">
       <div className="chat-header">
@@ -51,6 +56,16 @@ function DirectChat({ user, profile }) {
           <div className="chat-instructor-name">Олександр — інструктор</div>
           <div className="chat-instructor-status">Відповідає протягом дня</div>
         </div>
+        {messages.length > 0 && (
+          <button className="chat-clear-btn" onClick={handleClear} aria-label="Очистити чат">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+          </button>
+        )}
       </div>
 
       <div className="chat-messages">

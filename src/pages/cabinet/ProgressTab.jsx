@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import "./ProgressTab.css";
 
 export default function ProgressTab({ user, profile, bookingsData }) {
-  const { bookings, schoolHours, canBookPrivate } = bookingsData || { bookings: [], schoolHours: 0, canBookPrivate: false };
+  const { bookings, schoolHours, manualHours, canBookPrivate } = bookingsData || { bookings: [], schoolHours: 0, manualHours: 0, canBookPrivate: false };
 
   const studentType = profile?.studentType || "school";
   const isSchool = studentType === "school";
@@ -57,6 +57,11 @@ export default function ProgressTab({ user, profile, bookingsData }) {
               ? `Залишилось ${target - current} годин до завершення курсу`
               : "Курс завершено! Можеш записуватись на приватні уроки"}
           </div>
+          {manualHours > 0 && (
+            <div className="progress-subtitle" style={{ marginTop: 4, fontSize: 11, opacity: 0.7 }}>
+              Включаючи {manualHours} год, зарахованих інструктором
+            </div>
+          )}
 
           {canBookPrivate && (
             <div className="unlock-card">

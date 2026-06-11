@@ -154,9 +154,10 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         const unsub = subscribeQueueForSlot(dateKey, slot.time, entries => {
           const sorted = [...entries].sort((a, b) => (a.addedAt || 0) - (b.addedAt || 0))
           const myIdx = sorted.findIndex(e => e.uid === user?.uid && (e.status === 'waiting' || e.status === 'offered'))
+          const waitingCount = entries.filter(e => e.status === 'waiting').length
           setQueueMap(prev => ({
             ...prev,
-            [slot.time]: { count: entries.length, mine: myIdx >= 0, position: myIdx + 1 }
+            [slot.time]: { count: waitingCount, mine: myIdx >= 0, position: myIdx + 1 }
           }))
         })
         unsubs.push(unsub)
@@ -283,6 +284,17 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     const isVip = profile?.isVip === true
     const dateStr = selectedDate ? formatDateYMD(selectedDate) : ''
 
+    // Check if this date is closed per admin settings
+    if (selectedDate) {
+      const ov = (adminSettings.dateOverrides || []).find(o => o.date === dateStr)
+      if (ov?.type === 'closed') return []
+      if (!ov) {
+        const dow = (selectedDate.getDay() + 6) % 7  // Mon=0..Sun=6
+        const ws = (adminSettings.weekSchedule || [])[dow]
+        if (ws && ws.enabled === false) return []
+      }
+    }
+
     // Sticky slots: show only free slots adjacent to existing bookings on this day
     const stickyEnabled = adminSettings.stickyTimeEnabled !== false
     const stickyMode = adminSettings.stickyTime || 'both'
@@ -324,11 +336,27 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           const coveredKey = `slot${String(Math.floor(coveredMin/60)).padStart(2,'0')}${String(coveredMin%60).padStart(2,'0')}`
           totalSurcharge += slots[coveredKey]?.surcharge || 0
         }
+        const [th2, tm2] = (slot.time || '0:0').split(':').map(Number)
+        const slotMin = th2 * 60 + tm2
+        const isExactlyMine = bookingsData.upcoming.some(b => {
+          if (b.date !== dateStr || b.status === 'cancelled') return false
+          const [bh, bm] = (b.time || '0:0').split(':').map(Number)
+          return slotMin === bh * 60 + bm
+        })
+        const isPartOfMyBooking = bookingsData.upcoming.some(b => {
+          if (b.date !== dateStr || b.status === 'cancelled') return false
+          const [bh, bm] = (b.time || '0:0').split(':').map(Number)
+          const bStart = bh * 60 + bm
+          const bEnd = bStart + (b.durationHours || 1) * 60
+          return slotMin >= bStart && slotMin < bEnd
+        })
         return {
           ...slot,
           lunchBlocked:   isBlockedByLunch(slot.time, durationHours),
           overlapBlocked: slot.available !== false && wouldOverlapTaken(slot.time, durationHours),
           isMyBooked:     overlapsMyBooking(dateStr, slot.time, durationHours),
+          isExactlyMine,
+          isPartOfMyBooking,
           vipBlocked,
           totalSurcharge,
           totalPrice: (selectedService?.price || 0) + totalSurcharge,
@@ -341,6 +369,20 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         if (slot.isMyBooked) return true // власний запис студента завжди видимий
         const [h, m] = (slot.time || '0:0').split(':').map(Number)
         return allowedStartMins.has(h * 60 + m)
+      })
+      .filter(slot => {
+        // Для заблокованих слотів: показуємо тільки кожен годинний блок від старту бронювання.
+        // Наприклад, бронювання 17:30 (2г) → показуємо 17:30 і 18:30, ховаємо 18:00 і 19:00.
+        if (slot.available !== false) return true
+        const [h, m] = (slot.time || '0:0').split(':').map(Number)
+        let curMin = h * 60 + m
+        while (curMin >= 30) {
+          const prevMin = curMin - 30
+          const prevKey = `slot${String(Math.floor(prevMin / 60)).padStart(2, '0')}${String(prevMin % 60).padStart(2, '0')}`
+          if (!slots[prevKey] || slots[prevKey].available !== false) break
+          curMin = prevMin
+        }
+        return (h * 60 + m - curMin) % 60 === 0
       })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slots, durationHours, adminSettings, profile?.isVip, selectedDate, selectedService, bookingsData.upcoming])
@@ -487,28 +529,32 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                   const isMyReserved = !!(slot.offeredTo?.[user?.uid])
                   const isVipLocked = slot.vipBlocked
                   const isMyBooked = slot.isMyBooked
+                  const isExactlyMine = slot.isExactlyMine
+                  const isPartOfMyBooking = slot.isPartOfMyBooking
                   const isTaken = !isAvailable && !isMyReserved
+                  const isTakenByOthers = isTaken && !isPartOfMyBooking
                   const isUnavailable = isLunch || isOverlap || isVipLocked || isTaken || isMyBooked
                   return (
                     <div key={slot.time} style={{position:'relative'}}>
                       <button
-                        className={`slot ${isMyReserved || isMyQueue ? 'my-queue' : isMyBooked ? 'my-booked' : isUnavailable ? 'taken' : ''} ${isSelected ? 'selected' : ''}`}
+                        className={`slot ${isMyReserved || isMyQueue ? 'my-queue' : isPartOfMyBooking ? 'my-booked' : isUnavailable ? 'taken' : ''} ${isSelected ? 'selected' : ''}`}
                         style={{width:'100%'}}
                         onClick={() => !isMyQueue && !isMyBooked && handleSlotClick(slot)}
                         disabled={isLunch || isOverlap || isMyBooked}
-                        title={isMyBooked ? 'Ви вже записані на цей час' : isLunch ? 'Обідня перерва' : isOverlap ? 'Перетин з іншим уроком' : isVipLocked ? 'VIP слот' : isMyReserved ? 'Зарезервовано для вас!' : isTaken ? 'Зайнято — стати в чергу?' : undefined}
+                        title={isExactlyMine ? 'Ваш урок' : isPartOfMyBooking ? 'Ваш урок (продовження)' : isMyBooked ? 'Перетин з вашим уроком' : isLunch ? 'Обідня перерва' : isOverlap ? 'Перетин з іншим уроком' : isVipLocked ? 'VIP слот' : isMyReserved ? 'Зарезервовано для вас!' : isTaken ? 'Зайнято — стати в чергу?' : undefined}
                       >
                         <div className="slot-time">{slot.time}</div>
-                        {isMyBooked ? (
+                        {isExactlyMine ? (
                           <div style={{fontSize:8, color:'#4ade80', fontWeight:700}}>ваш</div>
-                        ) : isMyReserved ? (
+                        ) : isPartOfMyBooking ? null
+                        : isMyReserved ? (
                           <div style={{fontSize:8, color:'white', fontWeight:700}}>ваш!</div>
                         ) : isLunch ? (
                           <div style={{fontSize:8, opacity:0.5}}>обід</div>
                         ) : isVipLocked ? (
                           <div style={{fontSize:8, opacity:0.5}}>👑</div>
-                        ) : isOverlap ? (
-                          <div style={{fontSize:8, opacity:0.5}}>зайнято</div>
+                        ) : isTakenByOthers || isOverlap ? (
+                          <div style={{fontSize:8, opacity:0.7}}>зайнято</div>
                         ) : slot.totalSurcharge ? (
                           <div style={{fontSize:8, color:'#f7c948', fontWeight:700}}>{slot.totalPrice}₴</div>
                         ) : isMyQueue ? (

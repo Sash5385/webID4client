@@ -8,7 +8,7 @@ export async function getUserProfile(uid) {
   const snap = await get(ref(db, `users/${uid}`))
   if (!snap.exists()) return null
   const data = snap.val()
-  return { ...(data.profile || {}), isVip: data.isVip || false }
+  return { ...(data.profile || {}), isVip: data.isVip || false, discount: data.discount || 0, hoursOffset: data.hoursOffset || 0 }
 }
 
 export async function saveUserProfile(uid, profile) {
@@ -177,7 +177,7 @@ export function subscribeQueueForSlot(date, time, callback) {
 // в”Ђв”Ђв”Ђ HELPERS в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 export function getConfirmedSchoolHours(bookings) {
   return bookings
-    .filter(b => b.serviceType === 'school' && b.status !== 'cancelled' && new Date(b.date) < new Date())
+    .filter(b => b.serviceType === 'school' && (b.status === 'confirmed' || b.status === 'completed') && new Date(b.date) < new Date())
     .reduce((sum, b) => sum + (b.durationHours || 1), 0)
 }
 
@@ -246,6 +246,28 @@ export async function claimQueueOffer(uid, slotKey, offer, profile) {
   await clearQueueOffer(uid, slotKey)
 }
 
+export function subscribeUserQueue(uid, callback) {
+  const r = ref(db, 'queue')
+  const handler = onValue(r, snap => {
+    const data = snap.val() || {}
+    const slots = []
+    Object.entries(data).forEach(([slotKey, slotData]) => {
+      const entry = slotData?.entries?.[uid]
+      if (!entry) return
+      const parts = slotKey.split('_')
+      const date = parts[0]
+      const time = parts.slice(1).join('_')
+      slots.push({ slotKey, date, time, ...entry })
+    })
+    slots.sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date)
+      return a.time.localeCompare(b.time)
+    })
+    callback(slots)
+  })
+  return () => off(r, 'value', handler)
+}
+
 export async function declineQueueOffer(uid, slotKey, date, time) {
   const slotId = `slot${time.replace(':', '')}`
   await update(ref(db, '/'), {
@@ -301,6 +323,12 @@ export async function markDirectChatRead(uid) {
   await set(ref(db, `chatMeta/${uid}/unreadForStudent`), 0)
 }
 
+export async function clearStudentChat(uid) {
+  await remove(ref(db, `chats/${uid}`))
+  await set(ref(db, `chatMeta/${uid}/unreadForStudent`), 0)
+  await set(ref(db, `chatMeta/${uid}/unreadForAdmin`), 0)
+}
+
 export function subscribeDirectUnread(uid, callback) {
   const r = ref(db, `chatMeta/${uid}/unreadForStudent`)
   const handler = onValue(r, snap => callback(snap.val() || 0))
@@ -343,4 +371,12 @@ export function subscribeNotifications(uid, callback) {
     callback(items)
   })
   return () => off(r, 'value', handler)
+}
+
+export function clearNotification(uid, notifId) {
+  return remove(ref(db, `notifications/${uid}/${notifId}`))
+}
+
+export function clearAllNotifications(uid) {
+  return remove(ref(db, `notifications/${uid}`))
 }

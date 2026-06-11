@@ -93,13 +93,22 @@ export default function PublicSchedule({ onBook }) {
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 0 8px' }}>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate(-1)}
             aria-label="Назад"
             style={{ width:36, height:36, borderRadius:10, background:'var(--surface)', border:'none',
               cursor:'pointer', color:'var(--text)', display:'flex', alignItems:'center', justifyContent:'center',
               boxShadow:'var(--shadow)', flexShrink:0 }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button
+            onClick={() => navigate(1)}
+            aria-label="Вперед"
+            style={{ width:36, height:36, borderRadius:10, background:'var(--surface)', border:'none',
+              cursor:'pointer', color:'var(--text)', display:'flex', alignItems:'center', justifyContent:'center',
+              boxShadow:'var(--shadow)', flexShrink:0 }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
           <div>
             <div style={{ fontWeight:900, fontSize:22, color:'var(--text)', lineHeight:1.1 }}>ID4Drive</div>

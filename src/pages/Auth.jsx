@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { sendSmsCode, verifySmsCode, resetRecaptcha, getSmsErrorMessage, renderRecaptcha, isIOSDevice, isInAppBrowser } from '../firebase/auth'
 import { signInWithEmail, signUpWithEmail, sendPasswordReset } from '../firebase/auth-email'
 import { saveUserProfile, getUserProfile } from '../firebase/db'
@@ -316,14 +316,19 @@ export default function Auth({ user, profile, onProfileSaved }) {
 
       {/* TOP BAR */}
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 0'}}>
-        {step === 'sms'
-          ? <button className="back-btn" onClick={()=>{setStep('phone');resetRecaptcha()}}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
-          : <Link to="/schedule" className="back-btn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-            </Link>
-        }
+        <div style={{display:'flex',gap:6}}>
+          {step === 'sms'
+            ? <button className="back-btn" onClick={()=>{setStep('phone');resetRecaptcha()}}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+            : <button className="back-btn" onClick={() => nav(-1)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+          }
+          <button className="back-btn" onClick={() => nav(1)}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
         <div className="step-indicator">
           {[0,1,2].map(i => (
             <div key={i} className={`step-dot ${i===stepNum?'active':i<stepNum?'done':''}`}/>

@@ -115,6 +115,45 @@
   opacity: 0.6;
 }
 
+/* ─── TOOLBAR ──────────────────────────────────────────────────── */
+.notif-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 2px 4px;
+}
+
+.notif-clear-all {
+  background: none;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dim);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+.notif-clear-all:hover { opacity: 1; }
+
+/* ─── DISMISS BUTTON ────────────────────────────────────────────── */
+.notif-dismiss {
+  flex-shrink: 0;
+  align-self: flex-start;
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: var(--dim);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 6px;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+  line-height: 1;
+  margin-top: 2px;
+}
+.notif-dismiss:hover { opacity: 0.9; }
+
 /* ─── LIGHT THEME ──────────────────────────────────────────────── */
 [data-theme="light"] .notif-card {
   background: var(--surface);

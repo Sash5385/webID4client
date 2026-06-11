@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
 import { useBookings } from '../hooks/useBookings'
-import { subscribeQueueOffers, clearQueueOffer, claimQueueOffer, declineQueueOffer, subscribeDirectUnread, markDirectChatRead, subscribeNotifications } from '../firebase/db'
+import { subscribeQueueOffers, clearQueueOffer, claimQueueOffer, declineQueueOffer, subscribeDirectUnread, markDirectChatRead, subscribeNotifications, subscribeUserQueue } from '../firebase/db'
 
 import BookTab from './cabinet/BookTab'
 import BookingsTab from './cabinet/BookingsTab'
@@ -10,6 +10,7 @@ import ProgressTab from './cabinet/ProgressTab'
 import ProfileTab from './cabinet/ProfileTab'
 import ChatTab from './cabinet/ChatTab'
 import NotifTab from './cabinet/NotifTab'
+import QueueTab from './cabinet/QueueTab'
 
 import { formatDateLabel } from '../utils/date'
 import './Cabinet.css'
@@ -18,6 +19,7 @@ const TITLES = {
   book: 'Записатись',
   bookings: 'Мої записи',
   progress: 'Прогрес',
+  queue: 'Черга',
   chat: 'Чат',
   notifications: 'Повідомлення',
   profile: 'Профіль'
@@ -27,7 +29,7 @@ export default function Cabinet({ user, profile }) {
   const { theme, toggle } = useTheme()
   const loc = useLocation()
   const nav = useNavigate()
-  const bookingsData = useBookings(user?.uid)
+  const bookingsData = useBookings(user?.uid, profile)
 
   // Визначаємо активну вкладку з URL
   const path = loc.pathname.replace('/cabinet', '').replace('/', '')
@@ -41,6 +43,7 @@ export default function Cabinet({ user, profile }) {
     return date ? { date, time } : null
   }, [loc.search])
 
+  const [userQueue, setUserQueue] = useState([])
   const [queueOffers, setQueueOffers] = useState({})
   const [selectedOffer, setSelectedOffer] = useState(null)
   const [offerSubmitting, setOfferSubmitting] = useState(false)
@@ -108,6 +111,13 @@ export default function Cabinet({ user, profile }) {
 
   useEffect(() => {
     if (!user?.uid) return
+    return subscribeUserQueue(user.uid, slots => {
+      setUserQueue(slots.filter(s => s.status !== 'booked' && s.status !== 'declined'))
+    })
+  }, [user?.uid])
+
+  useEffect(() => {
+    if (!user?.uid) return
     return subscribeQueueOffers(user.uid, offers => {
       const now = Date.now()
       const valid = Object.fromEntries(
@@ -154,8 +164,22 @@ export default function Cabinet({ user, profile }) {
 
       {/* TOP BAR */}
       <header className="cab-topbar">
+        <div style={{display:'flex',gap:4}}>
+          <button className="cab-icon-btn" onClick={() => nav(-1)} aria-label="Назад">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button className="cab-icon-btn" onClick={() => nav(1)} aria-label="Вперед">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
         <div className="cab-title">{TITLES[activeTab] || 'Кабінет'}</div>
         <div className="cab-actions">
+          <button className="cab-icon-btn" onClick={() => window.location.reload()} aria-label="Оновити">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 4 23 10 17 10"/>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+          </button>
           <button className="cab-icon-btn" onClick={toggle} aria-label="Тема">
             {theme === 'dark' ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -206,11 +230,12 @@ export default function Cabinet({ user, profile }) {
       })}
 
       {/* CONTENT */}
-      <div className="cab-content">
+      <div className={`cab-content${activeTab === 'chat' ? ' cab-content--chat' : ''}`}>
         <Routes>
           <Route path="/" element={<BookTab user={user} profile={profile} bookingsData={bookingsData} notifParams={notifParams} />} />
           <Route path="/bookings" element={<BookingsTab user={user} profile={profile} bookingsData={bookingsData} />} />
           <Route path="/progress" element={<ProgressTab user={user} profile={profile} bookingsData={bookingsData} />} />
+          <Route path="/queue" element={<QueueTab user={user} />} />
           <Route path="/chat" element={<ChatTab user={user} profile={profile} />} />
           <Route path="/notifications" element={<NotifTab user={user} onSeen={markNotifsSeen} />} />
           <Route path="/profile" element={<ProfileTab user={user} profile={profile} bookingsData={bookingsData} />} />
@@ -242,6 +267,18 @@ export default function Cabinet({ user, profile }) {
           <div className="botnav-lbl">Записи</div>
           {newBookings > 0 && (
             <div className="botnav-badge">{newBookings}</div>
+          )}
+        </button>
+        <button className={`botnav-btn ${activeTab === 'queue' ? 'active' : ''}`} onClick={() => switchTab('queue')}>
+          <div className="botnav-ico">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="9"/>
+              <polyline points="12 7 12 12 15 14"/>
+            </svg>
+          </div>
+          <div className="botnav-lbl">Черга</div>
+          {userQueue.length > 0 && (
+            <div className="botnav-badge">{userQueue.length}</div>
           )}
         </button>
         <button className={`botnav-btn ${activeTab === 'progress' ? 'active' : ''}`} onClick={() => switchTab('progress')}>
@@ -298,8 +335,9 @@ export default function Cabinet({ user, profile }) {
             onClick={e => e.target === e.currentTarget && setSelectedOffer(null)}
             style={{
               position:'fixed', inset:0, zIndex:300,
-              background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)',
+              background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)',
               display:'flex', alignItems:'flex-end', justifyContent:'center',
+              cursor:'pointer',
             }}
           >
             <div style={{

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { subscribeMyBookings, getConfirmedSchoolHours, getCompletedHours } from '../firebase/db'
 
-export function useBookings(uid) {
+export function useBookings(uid, profile) {
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -25,7 +25,8 @@ export function useBookings(uid) {
     return unsub
   }, [uid])
 
-  const schoolHours = getConfirmedSchoolHours(bookings)
+  const manualHours = profile?.hoursOffset || 0
+  const schoolHours = getConfirmedSchoolHours(bookings) + manualHours
   const completedHours = getCompletedHours(bookings)
   const upcoming = bookings.filter(b => b.status !== 'cancelled' && new Date(b.date) >= new Date(new Date().toDateString()))
   const completed = bookings.filter(b => b.status === 'confirmed' && new Date(b.date) < new Date())
@@ -36,6 +37,7 @@ export function useBookings(uid) {
     completed,
     schoolHours,
     completedHours,
+    manualHours,
     loading,
     canBookPrivate: schoolHours >= 40
   }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { subscribeNotifications } from '../../firebase/db'
+import { subscribeNotifications, clearNotification, clearAllNotifications } from '../../firebase/db'
 import './NotifTab.css'
 
 const TYPE_META = {
@@ -7,6 +7,7 @@ const TYPE_META = {
   booking_cancelled:   { icon: '❌', label: 'Скасовано',    accent: 'red'   },
   booking_rescheduled: { icon: '🔄', label: 'Перенесено',   accent: 'gold'  },
   queue_offer:         { icon: '🎉', label: 'Черга',        accent: 'blue'  },
+  slot_freed:          { icon: '🚗', label: 'Слот вільний', accent: 'blue'  },
   system:              { icon: '🔔', label: 'Системне',     accent: 'dim'   },
 }
 
@@ -33,6 +34,13 @@ export default function NotifTab({ user, onSeen }) {
           <div className="notif-empty-sub">Тут з'являться сповіщення про уроки</div>
         </div>
       )}
+      {notifications.length > 0 && (
+        <div className="notif-toolbar">
+          <button className="notif-clear-all" onClick={() => clearAllNotifications(user.uid)}>
+            Очистити всі
+          </button>
+        </div>
+      )}
       <div className="notif-list">
         {notifications.map(n => {
           const meta = TYPE_META[n.type] || TYPE_META.system
@@ -51,6 +59,7 @@ export default function NotifTab({ user, onSeen }) {
                 {n.body && <div className="notif-text">{n.body}</div>}
                 <div className="notif-time">{n.date} · {n.time}</div>
               </div>
+              <button className="notif-dismiss" onClick={() => clearNotification(user.uid, n.id)} aria-label="Видалити">✕</button>
             </div>
           )
         })}

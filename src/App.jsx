@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from './firebase/config'
 import { getUserProfile, createBooking, markSlotsUnavailable } from './firebase/db'
-import { requestNotificationPermission, onForegroundMessage } from './firebase/push'
+import { requestNotificationPermission, onForegroundMessage, getFirebaseSwReg } from './firebase/push'
 
 import Auth from './pages/Auth'
 import Cabinet from './pages/Cabinet'
@@ -39,9 +39,9 @@ export default function App() {
       const body = payload.notification?.body || ''
       const url = payload.data?.url || '/'
       if (Notification.permission !== 'granted') return
-      // Використовуємо Service Worker для показу — працює і в foreground і на мобільних
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then(reg => {
+        getFirebaseSwReg().then(reg => {
+          if (!reg) return
           reg.showNotification(title, {
             body,
             icon: '/icon-192.png',
@@ -51,10 +51,9 @@ export default function App() {
             data: { url },
           })
         }).catch(() => {
-          // fallback для старих браузерів
           new Notification(title, { body, icon: '/icon-192.png' })
         })
-      } else if (Notification.permission === 'granted') {
+      } else {
         new Notification(title, { body, icon: '/icon-192.png' })
       }
     })
@@ -103,8 +102,12 @@ export default function App() {
 
   return (
     <Routes>
-      {/* Лендінг — завжди перший */}
-      <Route path="/" element={<Landing user={user} />} />
+      {/* Лендінг — тільки для не авторизованих */}
+      <Route path="/" element={
+        user && profile
+          ? <Navigate to="/cabinet" replace />
+          : <Landing user={user} />
+      } />
 
       {/* Публічний розклад — перед авторизацією */}
       <Route path="/schedule" element={
