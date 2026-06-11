@@ -96,6 +96,37 @@
   flex-shrink: 0;
 }
 
+.booking-cal-row {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.cal-add-btn {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 7px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: var(--dim);
+  cursor: pointer;
+  text-decoration: none;
+  line-height: 1.4;
+  letter-spacing: 0.3px;
+}
+
+.cal-add-btn:hover {
+  background: rgba(255,255,255,0.12);
+  color: var(--text);
+}
+
+[data-theme="light"] .cal-add-btn {
+  border-color: var(--border);
+  background: var(--surf-lo);
+  color: var(--dim);
+}
+
 .action-btn {
   width: 32px;
   height: 32px;
