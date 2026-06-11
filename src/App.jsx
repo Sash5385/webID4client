@@ -46,7 +46,7 @@ export default function App() {
             body,
             icon: '/icon-192.png',
             badge: '/icon-192.png',
-            tag: 'id4drive-' + Date.now(),
+            tag: 'id4drive-notif',
             requireInteraction: true,
             data: { url },
           })
