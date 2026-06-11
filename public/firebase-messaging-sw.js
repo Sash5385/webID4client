@@ -19,14 +19,18 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging()
 
-messaging.onBackgroundMessage((payload) => {
+messaging.onBackgroundMessage(async (payload) => {
+  // Skip if any app window is visible — the foreground handler will show the notification
+  const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+  if (clientList.some(c => c.visibilityState === 'visible')) return
+
   const title = payload.notification?.title || 'ID4Drive'
   const url = payload.data?.url || 'https://id4drive.pro/cabinet'
   const options = {
     body: payload.notification?.body || '',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
-    tag: 'id4drive-' + (payload.data?.tag || Date.now()),
+    tag: 'id4drive-notif',
     requireInteraction: true,
     vibrate: [200, 100, 200],
     data: { url, ...(payload.data || {}) },
