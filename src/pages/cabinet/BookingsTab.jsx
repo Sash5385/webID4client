@@ -253,10 +253,10 @@ export default function BookingsTab({ user, profile, bookingsData }) {
           {!isPast && b.status !== 'cancelled' && (
             <div className="booking-cal-row">
               <a href={googleCalendarLink(b)} target="_blank" rel="noopener noreferrer" className="cal-add-btn">
-                Google
+                Google Calendar
               </a>
               <button className="cal-add-btn" onClick={() => downloadICS(b)}>
-                Apple
+                Apple Calendar
               </button>
             </div>
           )}
