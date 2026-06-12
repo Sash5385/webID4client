@@ -215,7 +215,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
   const handleSubmitSurvey = async () => {
     if (!name.trim()) { alert('Введи імʼя'); return }
     if (!surname.trim()) { alert('Введи прізвище'); return }
-    if (!user?.phoneNumber && !surveyPhone.trim()) { alert('Введи номер телефону'); return }
+    if (!user?.phoneNumber && surveyPhone.trim().length !== 9) { alert('Введи коректний номер телефону'); return }
     if (!termsAgreed) { alert('Прийми умови користування'); return }
 
     setSavingProfile(true)
@@ -225,7 +225,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
 
       const data = {
         name: `${name.trim()} ${surname.trim()}`,
-        phone: user.phoneNumber || (surveyPhone.trim() ? `+380${surveyPhone.trim()}` : null) || phone || email,
+        phone: user.phoneNumber || `+380${surveyPhone.trim()}`,
         studentType,
         tscCenter: studentType === 'school' ? tscId : null,
         experience,
