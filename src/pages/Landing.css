@@ -1,7 +1,4 @@
 .landing-page {
-  height: 100%;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   padding-bottom: 40px;
   position: relative;
 }

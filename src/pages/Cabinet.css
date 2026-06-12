@@ -8,7 +8,7 @@
 
 .cab-content {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
   -webkit-overflow-scrolling: touch;
   min-height: 0;
   display: flex;

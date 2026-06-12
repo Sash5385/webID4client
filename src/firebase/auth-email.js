@@ -2,9 +2,18 @@
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut as fbSignOut,
-  sendPasswordResetEmail as fbSendReset
+  sendPasswordResetEmail as fbSendReset,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth'
 import { auth } from './config'
+
+const googleProvider = new GoogleAuthProvider()
+
+export async function signInWithGoogle() {
+  const result = await signInWithPopup(auth, googleProvider)
+  return result.user
+}
 
 export async function signUpWithEmail(email, password) {
   const result = await createUserWithEmailAndPassword(auth, email, password)
