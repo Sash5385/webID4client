@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { sendSmsCode, verifySmsCode, resetRecaptcha, getSmsErrorMessage, renderRecaptcha, isIOSDevice, isInAppBrowser } from '../firebase/auth'
-import { signInWithEmail, signUpWithEmail, sendPasswordReset } from '../firebase/auth-email'
+import { signInWithEmail, signUpWithEmail, sendPasswordReset, signInWithGoogle } from '../firebase/auth-email'
 import { saveUserProfile, getUserProfile } from '../firebase/db'
 import { useTheme } from '../hooks/useTheme'
 import { normalizePhone, formatPhone } from '../utils/format'
@@ -76,6 +76,10 @@ export default function Auth({ user, profile, onProfileSaved }) {
 
   // auth mode toggle: 'sms' | 'email-login' | 'email-register'
   const [authMode, setAuthMode] = useState('sms')
+
+  // google
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [googleError, setGoogleError] = useState('')
 
   // forgot password
   const [resetMode, setResetMode] = useState(false)
@@ -211,7 +215,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
   const handleSubmitSurvey = async () => {
     if (!name.trim()) { alert('Введи імʼя'); return }
     if (!surname.trim()) { alert('Введи прізвище'); return }
-    if (!user?.phoneNumber && !surveyPhone.trim()) { alert('Введи номер телефону'); return }
+    if (!user?.phoneNumber && surveyPhone.trim().length !== 9) { alert('Введи коректний номер телефону'); return }
     if (!termsAgreed) { alert('Прийми умови користування'); return }
 
     setSavingProfile(true)
@@ -221,7 +225,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
 
       const data = {
         name: `${name.trim()} ${surname.trim()}`,
-        phone: user.phoneNumber || (surveyPhone.trim() ? `+380${surveyPhone.trim()}` : null) || phone || email,
+        phone: user.phoneNumber || `+380${surveyPhone.trim()}`,
         studentType,
         tscCenter: studentType === 'school' ? tscId : null,
         experience,
@@ -238,6 +242,32 @@ export default function Auth({ user, profile, onProfileSaved }) {
       alert('Не вдалось зберегти профіль')
     } finally {
       setSavingProfile(false)
+    }
+  }
+
+  // ─── GOOGLE ──────────────────────────────────────────
+  const handleGoogleSignIn = async () => {
+    setGoogleError('')
+    setGoogleLoading(true)
+    try {
+      const u = await signInWithGoogle()
+      const existing = await getUserProfile(u.uid)
+      if (existing) {
+        if (onProfileSaved) await onProfileSaved()
+        nav('/cabinet')
+      } else {
+        setStep('survey')
+      }
+    } catch (e) {
+      console.error(e)
+      if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return
+      if (e.code === 'auth/popup-blocked') {
+        setGoogleError('Браузер заблокував вікно. Дозволь popup або використай SMS/Email')
+      } else {
+        setGoogleError('Не вдалось увійти через Google. Спробуй SMS або Email')
+      }
+    } finally {
+      setGoogleLoading(false)
     }
   }
 
@@ -372,6 +402,40 @@ export default function Auth({ user, profile, onProfileSaved }) {
               )
             })}
           </div>
+
+          {/* Google */}
+          {!inAppBrowser && (
+            <div style={{marginBottom:8}}>
+              <button
+                onClick={handleGoogleSignIn}
+                disabled={googleLoading}
+                style={{
+                  display:'flex',alignItems:'center',justifyContent:'center',gap:10,
+                  width:'100%',padding:'12px 0',borderRadius:14,border:'1.5px solid var(--border)',
+                  background:'var(--surface)',cursor:'pointer',fontSize:15,fontWeight:600,
+                  color:'var(--text)',boxShadow:'var(--shadow)',transition:'all .15s'
+                }}
+              >
+                {googleLoading ? (
+                  <span style={{fontSize:14,color:'var(--dim)'}}>Завантаження...</span>
+                ) : (<>
+                  <svg width="20" height="20" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.5 30.2 0 24 0 14.7 0 6.7 5.5 2.8 13.5l7.8 6.1C12.5 13.2 17.8 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8C43.7 37.3 46.5 31.3 46.5 24.5z"/>
+                    <path fill="#FBBC05" d="M10.6 28.4A14.9 14.9 0 0 1 9.5 24c0-1.5.3-3 .7-4.4l-7.8-6.1A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.8-6.1-.1-.3z"/>
+                    <path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.6 2.2-7.7 2.2-6.2 0-11.5-3.7-13.4-9.1l-7.8 6.1C6.7 42.5 14.7 48 24 48z"/>
+                  </svg>
+                  Увійти через Google
+                </>)}
+              </button>
+              {googleError && <div className="auth-error" style={{marginTop:8}}>{googleError}</div>}
+              <div style={{display:'flex',alignItems:'center',gap:10,margin:'14px 0 4px'}}>
+                <div style={{flex:1,height:1,background:'var(--border)'}}/>
+                <span style={{fontSize:12,color:'var(--dim)'}}>або</span>
+                <div style={{flex:1,height:1,background:'var(--border)'}}/>
+              </div>
+            </div>
+          )}
 
           {authMode === 'sms' ? (<>
             <h1 className="auth-h1">Введи свій <span className="acc">телефон</span></h1>
@@ -535,7 +599,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
           {resendCaptchaNeeded && (
             <div style={{marginTop:12,textAlign:'center'}}>
               <p style={{fontSize:12,color:'var(--dim)',marginBottom:8}}>Підтвердіть для повторного відправлення</p>
-              <div id="recaptcha-resend-container" style={{display:'inline-block'}}/>
+              <div id="recaptcha-resend-container" style={{display:'block'}}/>
             </div>
           )}
           {!iosDevice && <div id="recaptcha-resend-container" style={{height:0,overflow:'hidden'}}/>}

@@ -8,7 +8,7 @@
 
 .cab-content {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
   -webkit-overflow-scrolling: touch;
   min-height: 0;
   display: flex;
@@ -52,6 +52,10 @@
   border-bottom: 1px solid var(--border);
 }
 
+[data-theme="light"] .cab-topbar {
+  background: linear-gradient(180deg, var(--bg) 60%, rgba(240,241,245,0.92));
+}
+
 .cab-title { font-size: 13px; font-weight: 800; letter-spacing: -0.3px; }
 
 .cab-actions { display: flex; gap: 6px; align-items: center; }
@@ -69,6 +73,14 @@
   display: flex; align-items: center; justify-content: center;
   color: var(--dim); position: relative; overflow: hidden;
   transition: color .15s;
+}
+
+[data-theme="light"] .cab-icon-btn {
+  background: rgba(255,255,255,0.72);
+  box-shadow: 0 2px 8px rgba(174,178,189,0.4),
+              inset 1px 1px 0 rgba(255,255,255,0.9),
+              inset -1px -1px 0 rgba(174,178,189,0.15);
+  border-color: rgba(0,0,0,0.07);
 }
 .cab-icon-btn::before {
   content: ''; position: absolute;
@@ -107,6 +119,12 @@
   box-shadow: 0 12px 40px rgba(0,0,0,0.65), 0 4px 16px rgba(0,0,0,0.4), 0 -1px 0 rgba(255,255,255,0.05);
   display: flex; overflow: hidden;
   pointer-events: auto;
+}
+
+[data-theme="light"] .botnav-inner {
+  background: rgba(255,255,255,0.82);
+  border-color: rgba(0,0,0,0.07);
+  box-shadow: 0 8px 32px rgba(174,178,189,0.5), 0 2px 8px rgba(174,178,189,0.3);
 }
 
 [data-theme="light"] .botnav {

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { cancelBooking, createBooking, markSlotsUnavailable, subscribeSlotsForDate, getAdminSettings, subscribeMonthAvailability } from '../../firebase/db'
 import { parseYMD, getMonthShort, getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay, formatDateLabel } from '../../utils/date'
+import { googleCalendarLink, downloadICS } from '../../utils/calendar'
 import './BookingsTab.css'
 import './BookTab.css'
 
@@ -249,6 +250,16 @@ export default function BookingsTab({ user, profile, bookingsData }) {
           </div>
           <div className="booking-meta">📍 Верховинна, 44</div>
           <div className={`booking-status ${statusClass}`}>{statusText}</div>
+          {!isPast && b.status !== 'cancelled' && (
+            <div className="booking-cal-row">
+              <a href={googleCalendarLink(b)} target="_blank" rel="noopener noreferrer" className="cal-add-btn">
+                Google Calendar
+              </a>
+              <button className="cal-add-btn" onClick={() => downloadICS(b)}>
+                Apple Calendar
+              </button>
+            </div>
+          )}
         </div>
         {!isPast && b.status !== 'cancelled' && (
           <div className="booking-actions">

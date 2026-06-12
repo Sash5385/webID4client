@@ -389,3 +389,32 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 .fade-up { animation: fade-up 0.18s ease both; }
+
+/* ─── LIGHT THEME ──────────────────────────────────────────────── */
+[data-theme="light"] .chat-tabs {
+  background: var(--surf-lo);
+}
+
+[data-theme="light"] .chat-header {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+[data-theme="light"] .bubble-in {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+[data-theme="light"] .chat-input-box {
+  background: var(--surface);
+  box-shadow: var(--shadow-in);
+}
+
+[data-theme="light"] .chat-send-btn {
+  background: var(--surf-lo);
+}
+
+[data-theme="light"] .history-msg-item {
+  background: var(--surface);
+  border-color: var(--border);
+}

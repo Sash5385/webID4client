@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'ID4Drive — Школа водіння',
-        short_name: 'ID4Drive',
+        name: 'OlhaDrive — Школа водіння',
+        short_name: 'OlhaDrive',
         description: 'Онлайн-запис на уроки водіння',
         theme_color: '#ff5a3c',
         background_color: '#1c1d21',

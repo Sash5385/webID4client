@@ -227,3 +227,22 @@
 .contact-btn--tg    { background: #29a8eb; box-shadow: 0 3px 10px rgba(41,168,235,0.4); }
 .contact-btn--viber { background: #7360f2; box-shadow: 0 3px 10px rgba(115,96,242,0.4); }
 .contact-btn--wa    { background: #25d366; box-shadow: 0 3px 10px rgba(37,211,102,0.4); }
+
+/* ─── LIGHT THEME ──────────────────────────────────────────────── */
+[data-theme="light"] .profile-banner {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme="light"] .profile-section {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme="light"] .contact-link {
+  background: var(--surf-lo);
+}
+
+[data-theme="light"] .contact-phone-block {
+  background: var(--surf-lo);
+}

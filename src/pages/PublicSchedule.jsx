@@ -87,50 +87,29 @@ export default function PublicSchedule({ onBook }) {
   const nextMonth = () => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))
 
   return (
-    <div style={{ maxWidth: 480, margin: '0 auto', paddingTop: 'env(safe-area-inset-top, 0px)', paddingLeft: 16, paddingRight: 16, paddingBottom: 80 }}>
+    <div style={{ maxWidth: 480, margin: '0 auto', paddingTop: 'env(safe-area-inset-top, 0px)', paddingLeft: 16, paddingRight: 16, paddingBottom: 80, overflowX: 'hidden' }}>
 
       {/* HEADER */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 0 8px' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 0 8px', gap:8 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:8, minWidth:0, flex:1 }}>
           <button
             onClick={() => navigate(-1)}
             aria-label="Назад"
-            style={{ width:36, height:36, borderRadius:10, background:'var(--surface)', border:'none',
+            style={{ width:34, height:34, borderRadius:10, background:'var(--surface)', border:'none',
               cursor:'pointer', color:'var(--text)', display:'flex', alignItems:'center', justifyContent:'center',
               boxShadow:'var(--shadow)', flexShrink:0 }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <button
-            onClick={() => navigate(1)}
-            aria-label="Вперед"
-            style={{ width:36, height:36, borderRadius:10, background:'var(--surface)', border:'none',
-              cursor:'pointer', color:'var(--text)', display:'flex', alignItems:'center', justifyContent:'center',
-              boxShadow:'var(--shadow)', flexShrink:0 }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-          <div>
-            <div style={{ fontWeight:900, fontSize:22, color:'var(--text)', lineHeight:1.1 }}>ID4Drive</div>
-            <div style={{ fontSize:11, color:'var(--dim)', marginTop:2 }}>Школа водіння · Онлайн-запис</div>
+          <div style={{ minWidth:0 }}>
+            <div style={{ fontWeight:900, fontSize:18, color:'var(--text)', lineHeight:1.1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>ID4Drive</div>
+            <div style={{ fontSize:10, color:'var(--dim)', marginTop:1 }}>Онлайн-запис</div>
           </div>
         </div>
-        <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-          <button
-            onClick={() => window.location.reload()}
-            aria-label="Оновити"
-            style={{ width:36, height:36, borderRadius:10, background:'var(--surface)', border:'none',
-              cursor:'pointer', color:'var(--text)', display:'flex', alignItems:'center', justifyContent:'center',
-              boxShadow:'var(--shadow)' }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="23 4 23 10 17 10"/>
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-            </svg>
-          </button>
+        <div style={{ display:'flex', gap:6, alignItems:'center', flexShrink:0 }}>
           <button
             onClick={toggle}
-            style={{ width:36, height:36, borderRadius:10, background:'var(--surface)', border:'none',
+            style={{ width:34, height:34, borderRadius:10, background:'var(--surface)', border:'none',
               cursor:'pointer', color:'var(--text)', fontSize:16, display:'flex', alignItems:'center', justifyContent:'center',
               boxShadow:'var(--shadow)' }}
           >
@@ -138,9 +117,10 @@ export default function PublicSchedule({ onBook }) {
           </button>
           <button
             onClick={() => navigate('/auth')}
-            style={{ height:36, padding:'0 14px', borderRadius:10, background:'var(--surface)', border:'none',
-              color:'var(--text)', fontSize:13, fontWeight:700, cursor:'pointer',
-              boxShadow:'var(--shadow)' }}
+            style={{ height:34, padding:'0 12px', borderRadius:10,
+              background:'linear-gradient(165deg,var(--acc-hi),var(--accent))', border:'none',
+              color:'white', fontSize:13, fontWeight:700, cursor:'pointer',
+              boxShadow:'0 3px 10px rgba(255,90,60,0.4)', flexShrink:0 }}
           >
             Увійти
           </button>

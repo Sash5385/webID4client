@@ -190,6 +190,29 @@ exports.lessonReminder = onSchedule(
   }
 );
 
+// ─── 4a. onStudentMessage ────────────────────────────────────────
+// When student sends a message in direct chat → push to admin/instructor
+exports.onStudentMessage = onValueCreated(
+  {
+    ref: "chats/{uid}/{msgId}",
+    region: REGION,
+    instance: INSTANCE,
+  },
+  async (event) => {
+    const { uid } = event.params;
+    if (uid === "general") return;
+
+    const message = event.data.val();
+    if (!message || message.from !== "student") return;
+
+    const profileSnap = await db.ref(`users/${uid}/profile/name`).get();
+    const name = profileSnap.val() || "Учень";
+
+    await db.ref(`chatMeta/${uid}/unreadForAdmin`).transaction((cur) => (cur || 0) + 1);
+    await sendAdminPush(`💬 ${name}`, message.text || "Нове повідомлення");
+  }
+);
+
 // ─── 4. onInstructorMessage ───────────────────────────────────────
 // When instructor sends a message in direct chat → push to student
 exports.onInstructorMessage = onValueCreated(
