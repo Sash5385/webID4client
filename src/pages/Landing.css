@@ -1,14 +1,10 @@
 .landing-page {
   padding-bottom: 40px;
   position: relative;
-}
-
-@media (min-width: 600px) {
-  .landing-page {
-    height: 100vh;
-    overflow-y: auto;
-    overscroll-behavior: none;
-  }
+  height: 100dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
 }
 
 .landing-topbar {
