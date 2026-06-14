@@ -12,7 +12,8 @@ export function useBookings(uid, profile) {
       return
     }
     setLoading(true)
-    const unsub = subscribeMyBookings(uid, (list) => {
+    const phone = profile?.phone || ''
+    const unsub = subscribeMyBookings(uid, phone, (list) => {
       // Сортуємо: найближчі першими
       list.sort((a, b) => {
         const dateA = new Date(`${a.date}T${a.time || '00:00'}`)
@@ -23,7 +24,7 @@ export function useBookings(uid, profile) {
       setLoading(false)
     })
     return unsub
-  }, [uid])
+  }, [uid, profile?.phone])
 
   const manualHours = profile?.hoursOffset || 0
   const schoolHours = getConfirmedSchoolHours(bookings) + manualHours

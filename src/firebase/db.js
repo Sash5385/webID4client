@@ -70,14 +70,40 @@ export async function getMyBookings(uid) {
   return Object.entries(data).map(([id, b]) => ({ id, ...b }))
 }
 
-export function subscribeMyBookings(uid, callback) {
-  const r = ref(db, `bookings/${uid}`)
-  const handler = onValue(r, snap => {
-    if (!snap.exists()) return callback([])
-    const data = snap.val()
-    callback(Object.entries(data).map(([id, b]) => ({ id, ...b })))
+export function subscribeMyBookings(uid, phone, callback) {
+  const r1 = ref(db, `bookings/${uid}`)
+  const sanitizedPhone = (phone || '').replace(/\D/g, '')
+  const r2 = sanitizedPhone ? ref(db, `bookings_by_phone/${sanitizedPhone}`) : null
+
+  let list1 = []
+  let list2 = []
+
+  const merge = () => {
+    const seen = new Set()
+    callback([...list1, ...list2].filter(b => {
+      if (seen.has(b.id)) return false
+      seen.add(b.id)
+      return true
+    }))
+  }
+
+  const h1 = onValue(r1, snap => {
+    list1 = snap.exists() ? Object.entries(snap.val()).map(([id, b]) => ({ id, ...b })) : []
+    merge()
   })
-  return () => off(r, 'value', handler)
+
+  let h2 = null
+  if (r2) {
+    h2 = onValue(r2, snap => {
+      list2 = snap.exists() ? Object.entries(snap.val()).map(([id, b]) => ({ id, ...b })) : []
+      merge()
+    })
+  }
+
+  return () => {
+    off(r1, 'value', h1)
+    if (r2 && h2) off(r2, 'value', h2)
+  }
 }
 
 export async function createBooking(uid, booking) {
