@@ -366,3 +366,35 @@ npm run type-check
 8. Предложить дальнейшие улучшения только отдельным списком.
 
 Главная цель: стабильный коммерческий продукт, а не идеальный код.
+
+---
+
+# Деплой на Firebase Hosting
+
+## Хостинг
+
+Firebase. Проєкт: `id4drive-booking-44182`
+
+Сайт: https://id4drive-booking-44182.web.app
+
+## Правила деплою
+
+- Деплоїти тільки ті репо, де були зміни
+- Перед деплоєм завжди робити build
+
+## Авторизація
+
+Service account ключ зберігається в: `/home/user/id4drive-sa.json`
+
+На початку нової сесії користувач завантажує ключ з Firebase Console:
+Project Settings → Service accounts → Generate new private key
+
+## Команди
+
+```bash
+# Build
+GOOGLE_APPLICATION_CREDENTIALS=/home/user/id4drive-sa.json npm run build
+
+# Deploy
+GOOGLE_APPLICATION_CREDENTIALS=/home/user/id4drive-sa.json firebase deploy --only hosting
+```
