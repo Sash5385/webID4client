@@ -41,6 +41,14 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
         runtimeCaching: [
           {
+            urlPattern: /^\/manifest\.json/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'manifest-cache',
+              expiration: { maxEntries: 1, maxAgeSeconds: 0 }
+            }
+          },
+          {
             urlPattern: /^https:\/\/firebasestorage\.googleapis\.com/,
             handler: 'CacheFirst',
             options: {
