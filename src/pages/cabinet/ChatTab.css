@@ -346,11 +346,12 @@
   align-items: flex-start;
   gap: 12px;
   padding: 12px 14px;
-  background: rgba(0,0,0,0.42);
+  background: rgba(255,255,255,0.85);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-radius: 14px;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-left: 4px solid hsl(160, 70%, 50%);
 }
 
 .history-msg-icon {
@@ -415,6 +416,7 @@
 }
 
 [data-theme="light"] .history-msg-item {
-  background: var(--surface);
-  border-color: var(--border);
+  background: rgba(255,255,255,0.85);
+  border-color: rgba(0,0,0,0.08);
+  border-left-color: hsl(160, 70%, 50%);
 }
