@@ -3,12 +3,11 @@
   position: relative;
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: scroll;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: none;
-  touch-action: pan-y;
-  -webkit-user-select: text;
-  user-select: text;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .landing-topbar {
