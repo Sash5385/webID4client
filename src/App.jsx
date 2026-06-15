@@ -51,10 +51,10 @@ export default function App() {
             data: { url },
           })
         }).catch(() => {
-          new Notification(title, { body, icon: '/icon-192.png' })
+          navigator.serviceWorker.ready.then(reg =>
+            reg.showNotification(title, { body, icon: '/icon-192.png' })
+          ).catch(() => {})
         })
-      } else {
-        new Notification(title, { body, icon: '/icon-192.png' })
       }
     })
   }, [user])
