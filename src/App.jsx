@@ -4,6 +4,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from './firebase/config'
 import { getUserProfile, createBooking, markSlotsUnavailable } from './firebase/db'
 import { requestNotificationPermission, onForegroundMessage, getFirebaseSwReg } from './firebase/push'
+import { initAutoUpdate } from './utils/autoUpdate'
 
 import Auth from './pages/Auth'
 import Cabinet from './pages/Cabinet'
@@ -16,6 +17,10 @@ export default function App() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const pendingBookingRef = useRef(null)
+
+  useEffect(() => {
+    initAutoUpdate()
+  }, [])
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {

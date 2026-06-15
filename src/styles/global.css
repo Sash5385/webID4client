@@ -12,50 +12,19 @@ html, body {
   transition: background .3s, color .3s;
   overflow-x: hidden;
   overscroll-behavior-y: none;
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 #root {
-  min-height: 100dvh;
+  height: 100dvh;
   background: transparent;
   color: var(--text);
   isolation: isolate;
   display: flex;
   flex-direction: column;
   position: relative;
-}
-
-#root::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image: url('/id4-hero.jpg');
-  background-size: cover;
-  background-position: calc(50% - 173px) top;
-  background-repeat: no-repeat;
-}
-
-#root::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: linear-gradient(to bottom,
-    rgba(28,29,33,0.45) 0%,
-    rgba(28,29,33,0.72) 55%,
-    rgba(28,29,33,0.88) 100%
-  );
-}
-
-[data-theme="light"] #root::after {
-  background: linear-gradient(to bottom,
-    rgba(240,241,245,0.5) 0%,
-    rgba(240,241,245,0.82) 55%,
-    rgba(240,241,245,0.95) 100%
-  );
+  overflow: hidden;
 }
 
 @media (min-width: 600px) {
