@@ -11,9 +11,8 @@ html, body {
   font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   transition: background .3s, color .3s;
   overflow-x: hidden;
-  overscroll-behavior-y: none;
   height: 100dvh;
-  overflow: hidden;
+  overflow-y: visible;
 }
 
 #root {
@@ -24,7 +23,6 @@ html, body {
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
 }
 
 @media (min-width: 600px) {

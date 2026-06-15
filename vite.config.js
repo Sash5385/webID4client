@@ -49,6 +49,14 @@ export default defineConfig({
             }
           },
           {
+            urlPattern: /\.(css)$/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'css-cache',
+              expiration: { maxEntries: 10, maxAgeSeconds: 3600 }
+            }
+          },
+          {
             urlPattern: /^https:\/\/firebasestorage\.googleapis\.com/,
             handler: 'CacheFirst',
             options: {
