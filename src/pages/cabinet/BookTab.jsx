@@ -609,7 +609,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         }
         const baseP = selectedService.price || 0
         const totalPrice = applyDiscount(baseP + surcharge)
-        const dateLabel = formatDateYMD(selectedDate).slice(-5).replace('-', '.')
+        const dateLabel = formatDateYMD(selectedDate).slice(-5).split('-').reverse().join('.')
         return (
           <>
             {surcharge > 0 ? (

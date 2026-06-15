@@ -235,7 +235,7 @@ export default function PublicSchedule({ onBook }) {
           style={{ marginTop: 16 }}
           onClick={() => onBook({ serviceType, duration, date: formatDateYMD(selectedDate), time: selectedTime })}
         >
-          Записатись на {formatDateYMD(selectedDate).slice(-5).replace('-','.')} о {selectedTime} →
+          Записатись на {formatDateYMD(selectedDate).slice(-5).split('-').reverse().join('.')} о {selectedTime} →
         </button>
       )}
 
