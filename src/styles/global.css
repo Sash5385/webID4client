@@ -12,6 +12,7 @@ html, body {
   transition: background .3s, color .3s;
   height: 100dvh;
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 #root {
