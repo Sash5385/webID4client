@@ -1,13 +1,11 @@
 .landing-page {
   padding-bottom: 40px;
   position: relative;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
-  overflow-y: scroll;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: none;
-  -webkit-user-select: none;
-  user-select: none;
+  overscroll-behavior: contain;
 }
 
 .landing-topbar {
