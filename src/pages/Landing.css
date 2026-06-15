@@ -1,13 +1,15 @@
 .landing-page {
   padding-bottom: 40px;
   position: relative;
+  height: 100dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
 }
 
 @media (min-width: 600px) {
   .landing-page {
     height: 100vh;
-    overflow-y: auto;
-    overscroll-behavior: none;
   }
 }
 
