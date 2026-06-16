@@ -78,7 +78,7 @@ export default function Landing({ user }) {
                 </svg>
               )}
             </button>
-            <button className="btn-login" onClick={goAuth}>
+            <button className="btn-login" onClick={goRegister}>
               {user ? 'Кабінет' : 'Увійти'}
             </button>
           </div>
