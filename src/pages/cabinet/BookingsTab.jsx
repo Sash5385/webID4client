@@ -18,7 +18,8 @@ function hoursUntilLesson(booking) {
 }
 
 // ─── RESCHEDULE MODAL ────────────────────────────────────────────
-function RescheduleModal({ booking, user, onClose, onDone }) {
+function RescheduleModal({ booking, user, profile, onClose, onDone }) {
+  const isVipStudent = profile?.isVip === true
   const [today] = useState(() => { const d = new Date(); d.setHours(0,0,0,0); return d })
   const [viewMonth, setViewMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
   const [selectedDate, setSelectedDate] = useState(null)
@@ -73,6 +74,7 @@ function RescheduleModal({ booking, user, onClose, onDone }) {
 
   const slotsList = useMemo(() => Object.values(slots)
     .filter(s => (s.time || '').endsWith(':00'))
+    .filter(s => !s.vipOnly || isVipStudent)
     .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
     .map(s => ({
       ...s,
@@ -81,7 +83,7 @@ function RescheduleModal({ booking, user, onClose, onDone }) {
     }))
     .filter(s => !s.lunchBlocked)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  , [slots, adminSettings, durationHours])
+  , [slots, adminSettings, durationHours, isVipStudent])
 
   const days = useMemo(() => getMonthGrid(viewMonth.getFullYear(), viewMonth.getMonth()), [viewMonth])
 
@@ -90,6 +92,31 @@ function RescheduleModal({ booking, user, onClose, onDone }) {
     setSaving(true)
     try {
       const newDate = formatDateYMD(selectedDate)
+
+      // Перерахунок надбавки за новими слотами + заборона VIP-годин для не-VIP
+      const [nh, nm] = selectedTime.split(':').map(Number)
+      const newStartMin = nh * 60 + (nm || 0)
+      let newSurcharge = 0
+      for (let i = 0; i < durationHours; i++) {
+        const slotMin = newStartMin + i * 60
+        const key = `slot${String(Math.floor(slotMin / 60)).padStart(2, '0')}${String(slotMin % 60).padStart(2, '0')}`
+        newSurcharge += slots[key]?.surcharge || 0
+        if (i > 0 && !isVipStudent && slots[key]?.vipOnly) {
+          alert('Неможливо перенести: наступна година є VIP-слотом')
+          setSaving(false)
+          return
+        }
+      }
+      // Ціна = стара ціна + різниця надбавки (з урахуванням знижки, застосованої до запису)
+      const discountFactor = 1 - (booking.discountPct || 0) / 100
+      const oldSurcharge = booking.surcharge || 0
+      let newPrice = booking.price
+      if (booking.price != null) {
+        newPrice = booking.price + Math.round((newSurcharge - oldSurcharge) * discountFactor)
+      } else if (newSurcharge > 0) {
+        newPrice = Math.round(newSurcharge * discountFactor)
+      }
+
       // 1. Атомарно займаємо новий слот ДО скасування старого
       const claimed = await claimSlot(newDate, selectedTime)
       if (!claimed) {
@@ -106,7 +133,9 @@ function RescheduleModal({ booking, user, onClose, onDone }) {
         serviceType: booking.serviceType,
         serviceId: booking.serviceId,
         serviceName: booking.serviceName,
-        price: booking.price,
+        price: newPrice,
+        surcharge: newSurcharge || undefined,
+        discountPct: booking.discountPct || undefined,
         durationHours,
         studentName: booking.studentName,
         phone: booking.phone,
@@ -338,6 +367,7 @@ export default function BookingsTab({ user, profile, bookingsData }) {
         <RescheduleModal
           booking={rescheduleBooking}
           user={user}
+          profile={profile}
           onClose={() => setRescheduleBooking(null)}
           onDone={() => { setRescheduleBooking(null); showToast('Урок перенесено') }}
         />
