@@ -4,7 +4,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from './firebase/config'
 import { getUserProfile, createBooking, markSlotsUnavailable } from './firebase/db'
 import { requestNotificationPermission, onForegroundMessage, getFirebaseSwReg } from './firebase/push'
-import { initAutoUpdate } from './utils/autoUpdate'
+import { useAppUpdate } from './hooks/useAppUpdate'
 
 import Auth from './pages/Auth'
 import Cabinet from './pages/Cabinet'
@@ -17,10 +17,7 @@ export default function App() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const pendingBookingRef = useRef(null)
-
-  useEffect(() => {
-    initAutoUpdate()
-  }, [])
+  const { needRefresh, updateServiceWorker, isUpdating } = useAppUpdate()
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
@@ -106,6 +103,7 @@ export default function App() {
   }
 
   return (
+    <>
     <Routes>
       {/* Лендінг — тільки для не авторизованих */}
       <Route path="/" element={
@@ -137,5 +135,14 @@ export default function App() {
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    {needRefresh && (
+      <div className={`update-banner${isUpdating ? ' update-banner--loading' : ''}`} onClick={updateServiceWorker}>
+        {isUpdating
+          ? <><span className="update-spinner" /> Оновлення...</>
+          : 'Доступне оновлення — натисніть щоб оновити'
+        }
+      </div>
+    )}
+    </>
   )
 }
