@@ -6,6 +6,17 @@ import { googleCalendarLink, downloadICS } from '../../utils/calendar'
 import './BookingsTab.css'
 import './BookTab.css'
 
+// Мінімальний час до уроку, коли учень ще може самостійно скасувати (год)
+const CANCEL_WINDOW_HOURS = 24
+
+function hoursUntilLesson(booking) {
+  if (!booking?.date || !booking?.time) return Infinity
+  const [h, m] = booking.time.split(':').map(Number)
+  const d = parseYMD(booking.date)
+  d.setHours(h, m || 0, 0, 0)
+  return (d.getTime() - Date.now()) / 3600000
+}
+
 // ─── RESCHEDULE MODAL ────────────────────────────────────────────
 function RescheduleModal({ booking, user, onClose, onDone }) {
   const [today] = useState(() => { const d = new Date(); d.setHours(0,0,0,0); return d })
@@ -214,6 +225,10 @@ export default function BookingsTab({ user, profile, bookingsData }) {
   }
 
   const handleCancel = async (booking) => {
+    if (hoursUntilLesson(booking) < CANCEL_WINDOW_HOURS) {
+      alert(`Скасувати урок можна не пізніше ніж за ${CANCEL_WINDOW_HOURS} год до початку. Зверніться до інструктора.`)
+      return
+    }
     if (!confirm(`Скасувати урок ${booking.date} о ${booking.time}?`)) return
     try {
       await cancelBooking(user.uid, booking.id)
@@ -232,6 +247,7 @@ export default function BookingsTab({ user, profile, bookingsData }) {
           return `${String(Math.floor(total / 60)).padStart(2,'0')}:${String(total % 60).padStart(2,'0')}`
         })()
       : null
+    const cancelLocked = hoursUntilLesson(b) < CANCEL_WINDOW_HOURS
     const statusClass = b.status === 'confirmed' ? 'status-confirmed'
       : b.status === 'cancelled' ? 'status-cancelled' : 'status-pending'
     const statusText = b.status === 'confirmed' ? (isPast ? 'Завершено' : 'Підтверджено')
@@ -257,6 +273,11 @@ export default function BookingsTab({ user, profile, bookingsData }) {
           </div>
           <div className="booking-meta">📍 Верховинна, 44</div>
           <div className={`booking-status ${statusClass}`}>{statusText}</div>
+          {!isPast && b.status !== 'cancelled' && cancelLocked && (
+            <div className="booking-meta" style={{ color: 'var(--dim)', marginTop: 4 }}>
+              ⏳ Скасування — не пізніше ніж за {CANCEL_WINDOW_HOURS} год
+            </div>
+          )}
           {!isPast && b.status !== 'cancelled' && (
             <div className="booking-cal-row">
               <a href={googleCalendarLink(b)} target="_blank" rel="noopener noreferrer" className="cal-add-btn">
@@ -271,7 +292,13 @@ export default function BookingsTab({ user, profile, bookingsData }) {
         {!isPast && b.status !== 'cancelled' && (
           <div className="booking-actions">
             <button className="action-btn" title="Перенести" onClick={() => setRescheduleBooking(b)}>📅</button>
-            <button className="action-btn" title="Скасувати" onClick={() => handleCancel(b)}>✕</button>
+            <button
+              className="action-btn"
+              title={cancelLocked ? `Скасування доступне не пізніше ніж за ${CANCEL_WINDOW_HOURS} год` : 'Скасувати'}
+              onClick={() => handleCancel(b)}
+              disabled={cancelLocked}
+              style={cancelLocked ? { opacity: 0.4 } : {}}
+            >✕</button>
           </div>
         )}
       </div>
