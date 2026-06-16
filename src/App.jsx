@@ -4,7 +4,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from './firebase/config'
 import { getUserProfile, createBooking, markSlotsUnavailable } from './firebase/db'
 import { requestNotificationPermission, onForegroundMessage, getFirebaseSwReg } from './firebase/push'
-import { useRegisterSW } from 'virtual:pwa-register/react'
+import { useAppUpdate } from './hooks/useAppUpdate'
 
 import Auth from './pages/Auth'
 import Cabinet from './pages/Cabinet'
@@ -17,13 +17,7 @@ export default function App() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const pendingBookingRef = useRef(null)
-  const { needRefresh: [needRefresh], updateServiceWorker: _doUpdate } = useRegisterSW()
-  const [isUpdating, setIsUpdating] = useState(false)
-  const updateServiceWorker = async () => {
-    if (isUpdating) return
-    setIsUpdating(true)
-    await _doUpdate(true)
-  }
+  const { needRefresh, updateServiceWorker, isUpdating } = useAppUpdate()
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {

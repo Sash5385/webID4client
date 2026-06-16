@@ -1,58 +1,69 @@
-import { useEffect, useState } from 'react'
-
-async function hasNewVersion() {
-  try {
-    const res = await fetch('/index.html?_=' + Date.now(), { cache: 'no-store' })
-    const html = await res.text()
-    const remoteMatch = html.match(/\/assets\/index-([^"]+)\.js/)
-    if (!remoteMatch) return false
-    const currentScript = document.querySelector('script[src*="/assets/index-"]')
-    if (!currentScript) return false
-    const localMatch = currentScript.src.match(/\/assets\/index-([^"]+)\.js/)
-    if (!localMatch) return false
-    return remoteMatch[1] !== localMatch[1]
-  } catch {
-    return false
-  }
-}
+import { useEffect, useState, useRef } from 'react'
 
 export function useAppUpdate() {
   const [needRefresh, setNeedRefresh] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
+  const waitingWorkerRef = useRef(null)
 
   useEffect(() => {
-    const trigger = () => setNeedRefresh(true)
+    if (!('serviceWorker' in navigator)) return
 
-    if ('serviceWorker' in navigator) {
-      const hadController = !!navigator.serviceWorker.controller
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (hadController) trigger()
+    const trackWorker = (worker) => {
+      worker.addEventListener('statechange', () => {
+        if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+          waitingWorkerRef.current = worker
+          setNeedRefresh(true)
+        }
       })
-      navigator.serviceWorker.ready.then(r => r.update()).catch(() => {})
     }
 
-    const check = async () => { if (await hasNewVersion()) trigger() }
-    check()
-    const timer = setInterval(check, 60_000)
-    const onVisible = () => { if (!document.hidden) check() }
+    navigator.serviceWorker.ready.then((reg) => {
+      if (reg.waiting && navigator.serviceWorker.controller) {
+        waitingWorkerRef.current = reg.waiting
+        setNeedRefresh(true)
+      }
+
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing
+        if (newWorker) trackWorker(newWorker)
+      })
+
+      reg.update().catch(() => {})
+    })
+
+    const onVisible = () => {
+      if (!document.hidden) {
+        navigator.serviceWorker.ready.then(r => r.update()).catch(() => {})
+      }
+    }
     document.addEventListener('visibilitychange', onVisible)
 
     return () => {
-      clearInterval(timer)
       document.removeEventListener('visibilitychange', onVisible)
     }
   }, [])
 
-  const updateServiceWorker = async () => {
+  const updateServiceWorker = () => {
     if (isUpdating) return
     setIsUpdating(true)
-    if ('serviceWorker' in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations()
-      regs.forEach(reg => {
-        if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' })
+
+    const doReload = () => window.location.reload()
+    const worker = waitingWorkerRef.current
+
+    if (worker) {
+      navigator.serviceWorker.addEventListener('controllerchange', doReload, { once: true })
+      worker.postMessage({ type: 'SKIP_WAITING' })
+    } else {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        const waiting = regs.find(r => r.waiting)
+        if (waiting) {
+          navigator.serviceWorker.addEventListener('controllerchange', doReload, { once: true })
+          waiting.waiting.postMessage({ type: 'SKIP_WAITING' })
+        } else {
+          doReload()
+        }
       })
     }
-    setTimeout(() => window.location.reload(), 300)
   }
 
   return { needRefresh, updateServiceWorker, isUpdating }
