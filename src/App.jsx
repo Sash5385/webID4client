@@ -2,7 +2,7 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useEffect, useState, useRef } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from './firebase/config'
-import { getUserProfile, createBooking, markSlotsUnavailable } from './firebase/db'
+import { getUserProfile, createBooking, markSlotsUnavailable, claimSlot } from './firebase/db'
 import { requestNotificationPermission, onForegroundMessage, getFirebaseSwReg } from './firebase/push'
 import { useAppUpdate } from './hooks/useAppUpdate'
 
@@ -68,17 +68,23 @@ export default function App() {
     const pb = pendingBookingRef.current
     if (pb && p) {
       try {
-        await createBooking(auth.currentUser.uid, {
-          date: pb.date,
-          time: pb.time,
-          serviceType: p.studentType || pb.serviceType,
-          serviceName: (p.studentType || pb.serviceType) === 'school' ? 'Автошкола' : 'Приватний',
-          durationHours: pb.duration,
-          studentName: p.name,
-          phone: p.phone || auth.currentUser.phoneNumber,
-          tscCenter: p.tscCenter,
-        })
-        await markSlotsUnavailable(pb.date, pb.time, pb.duration, 30)
+        // Атомарно займаємо слот — міг бути зайнятий поки користувач авторизувався
+        const claimed = await claimSlot(pb.date, pb.time)
+        if (!claimed) {
+          alert('На жаль, цей слот вже зайняли поки ви авторизувались. Оберіть інший час.')
+        } else {
+          await createBooking(auth.currentUser.uid, {
+            date: pb.date,
+            time: pb.time,
+            serviceType: p.studentType || pb.serviceType,
+            serviceName: (p.studentType || pb.serviceType) === 'school' ? 'Автошкола' : 'Приватний',
+            durationHours: pb.duration,
+            studentName: p.name,
+            phone: p.phone || auth.currentUser.phoneNumber,
+            tscCenter: p.tscCenter,
+          })
+          await markSlotsUnavailable(pb.date, pb.time, pb.duration, 30)
+        }
       } catch (e) {
         console.error('Auto-book failed:', e)
       }

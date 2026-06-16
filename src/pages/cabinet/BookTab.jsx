@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { subscribeSlotsForDate, createBooking, joinQueue, leaveQueue, subscribeQueueForSlot, getAdminSettings, getAdminServices, markSlotsUnavailable, claimReservedSlot, setViewingSlot, clearViewingSlot, subscribeMonthAvailability } from '../../firebase/db'
+import { subscribeSlotsForDate, createBooking, joinQueue, leaveQueue, subscribeQueueForSlot, getAdminSettings, getAdminServices, markSlotsUnavailable, claimSlot, claimReservedSlot, setViewingSlot, clearViewingSlot, subscribeMonthAvailability } from '../../firebase/db'
 import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay } from '../../utils/date'
 import { getInitials, pluralize } from '../../utils/format'
 import './BookTab.css'
@@ -230,6 +230,16 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       }
       const totalPrice = applyDiscount((selectedService?.price || 0) + surcharge)
       const currentSlot = slots[`slot${selectedTime.replace(':', '')}`]
+      const isOfferedToMe = !!currentSlot?.offeredTo?.[user?.uid]
+      // Атомарно займаємо слот (крім випадку, коли його зарезервовано саме для мене)
+      if (!isOfferedToMe) {
+        const claimed = await claimSlot(dateStr, selectedTime)
+        if (!claimed) {
+          alert('Цей слот щойно зайняли. Оберіть інший час.')
+          setSubmitting(false)
+          return
+        }
+      }
       await createBooking(user.uid, {
         date: dateStr,
         time: selectedTime,
@@ -245,7 +255,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         tscCenter: profile.tscCenter,
       })
       await markSlotsUnavailable(dateStr, selectedTime, durationHours, adminSettings.interval || 30)
-      if (currentSlot?.offeredTo?.[user?.uid]) {
+      if (isOfferedToMe) {
         await claimReservedSlot(dateStr, selectedTime, user.uid)
       }
       setSelectedTime(null)

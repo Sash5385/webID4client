@@ -1,5 +1,5 @@
 ﻿import {
-  ref, get, set, update, push, onValue, off, remove, increment, onDisconnect
+  ref, get, set, update, push, onValue, off, remove, increment, onDisconnect, runTransaction
 } from 'firebase/database'
 import { db } from './config'
 
@@ -214,6 +214,20 @@ export function getCompletedHours(bookings) {
 }
 
 // ─── TIMESLOTS ───────────────────────────────────────────────────
+// Атомарно займає початковий слот через транзакцію.
+// Повертає true якщо вдалось зайняти, false якщо слот уже зайнятий іншим.
+export async function claimSlot(date, startTime) {
+  const slotId = `slot${startTime.replace(':', '')}`
+  const slotRef = ref(db, `timeslots/${date}/${slotId}`)
+  const result = await runTransaction(slotRef, current => {
+    if (current && current.available === false) {
+      return undefined // вже зайнятий — скасувати транзакцію
+    }
+    return { ...(current || {}), available: false, time: startTime }
+  })
+  return result.committed
+}
+
 export async function markSlotsUnavailable(date, startTime, durationHours, intervalMin = 30) {
   const [h, m] = startTime.split(':').map(Number)
   const startMin = h * 60 + m

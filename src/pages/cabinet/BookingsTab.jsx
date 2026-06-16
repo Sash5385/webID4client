@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { cancelBooking, createBooking, markSlotsUnavailable, subscribeSlotsForDate, getAdminSettings, subscribeMonthAvailability } from '../../firebase/db'
+import { cancelBooking, createBooking, markSlotsUnavailable, claimSlot, subscribeSlotsForDate, getAdminSettings, subscribeMonthAvailability } from '../../firebase/db'
 import { parseYMD, getMonthShort, getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay, formatDateLabel } from '../../utils/date'
 import { googleCalendarLink, downloadICS } from '../../utils/calendar'
 import './BookingsTab.css'
@@ -79,9 +79,16 @@ function RescheduleModal({ booking, user, onClose, onDone }) {
     setSaving(true)
     try {
       const newDate = formatDateYMD(selectedDate)
-      // 1. Скасовуємо старий запис (відновлює слоти)
+      // 1. Атомарно займаємо новий слот ДО скасування старого
+      const claimed = await claimSlot(newDate, selectedTime)
+      if (!claimed) {
+        alert('Цей слот щойно зайняли. Оберіть інший час.')
+        setSaving(false)
+        return
+      }
+      // 2. Скасовуємо старий запис (відновлює старі слоти)
       await cancelBooking(user.uid, booking.id, { isReschedule: true })
-      // 2. Створюємо новий
+      // 3. Створюємо новий
       await createBooking(user.uid, {
         date: newDate,
         time: selectedTime,
@@ -95,7 +102,7 @@ function RescheduleModal({ booking, user, onClose, onDone }) {
         tscCenter: booking.tscCenter,
         rescheduledFrom: `${booking.date} ${booking.time}`,
       })
-      // 3. Закриваємо слоти
+      // 4. Закриваємо слоти (фантомні 30-хв + повна тривалість)
       await markSlotsUnavailable(newDate, selectedTime, durationHours, adminSettings.interval || 30)
       onDone()
     } catch (e) {
