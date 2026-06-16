@@ -9,6 +9,10 @@ export function useAppUpdate() {
 
     const hadController = !!navigator.serviceWorker.controller
     const onControllerChange = () => {
+      if (sessionStorage.getItem('sw-reloading')) {
+        sessionStorage.removeItem('sw-reloading')
+        return
+      }
       if (hadController) setNeedRefresh(true)
     }
     navigator.serviceWorker.addEventListener('controllerchange', onControllerChange)
@@ -31,6 +35,7 @@ export function useAppUpdate() {
   const updateServiceWorker = () => {
     if (isUpdating) return
     setIsUpdating(true)
+    sessionStorage.setItem('sw-reloading', '1')
     window.location.reload()
   }
 
