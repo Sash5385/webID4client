@@ -94,7 +94,7 @@ export default function ProgressTab({ user, profile, bookingsData }) {
           </div>
           <div className="stat-block">
             <div className="num">{schoolHours}</div>
-            <div className="lbl">годин school</div>
+            <div className="lbl">годин (школа)</div>
           </div>
         </div>
       </div>
