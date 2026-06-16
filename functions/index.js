@@ -417,8 +417,8 @@ exports.unlockVipSlots = onSchedule(
     const usersSnap = await db.ref("users").get();
     const usersData = usersSnap.val() || {};
     const tokens = Object.values(usersData)
-      .filter(u => u.fcmToken && !u.isVip)
-      .map(u => u.fcmToken);
+      .filter(u => u.fcmTokens?.web?.token && !u.isVip)
+      .map(u => u.fcmTokens.web.token);
     if (!tokens.length) return;
 
     for (let i = 0; i < tokens.length; i += 500) {
