@@ -1,8 +1,20 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "../../firebase/auth";
+import { updateUserProfile } from "../../firebase/db";
 import { useTheme } from "../../hooks/useTheme";
 import { getInitials, formatPhone } from "../../utils/format";
 import "./ProfileTab.css";
+
+const TSCS = [
+  { id: "8041", name: "ТСЦ 8041", area: "вул. Перемоги 20" },
+  { id: "8042", name: "ТСЦ 8042", area: "вул. Мрії 19" },
+];
+
+const EXPERIENCES = [
+  { id: "no_license", name: "Не маю посвідчення, збираюсь складати іспит" },
+  { id: "has_license", name: "Маю посвідчення, не маю досвіду водіння" },
+];
 
 const TSC_LABELS = {
   "8041": "ТСЦ 8041 — вул. Перемоги 20",
@@ -22,9 +34,53 @@ const EXPERIENCE_LABELS = {
   licensed: "З правами",
 };
 
-export default function ProfileTab({ user, profile }) {
+export default function ProfileTab({ user, profile, onProfileUpdate }) {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState(null);
+
+  const startEdit = () => {
+    setForm({
+      name: profile.name || "",
+      studentType: profile.studentType || "school",
+      tscCenter: profile.tscCenter || "8041",
+      experience: profile.experience || "no_license",
+      filmingConsent: profile.filmingConsent ?? true,
+    });
+    setEditing(true);
+  };
+
+  const cancelEdit = () => {
+    setEditing(false);
+    setForm(null);
+  };
+
+  const handleSave = async () => {
+    if (!form.name.trim()) {
+      alert("Введи імʼя");
+      return;
+    }
+    setSaving(true);
+    try {
+      await updateUserProfile(user.uid, {
+        name: form.name.trim(),
+        studentType: form.studentType,
+        tscCenter: form.studentType === "school" ? form.tscCenter : null,
+        experience: form.experience,
+        filmingConsent: form.filmingConsent,
+      });
+      await onProfileUpdate?.();
+      setEditing(false);
+      setForm(null);
+    } catch (e) {
+      alert("Помилка: " + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleLogout = async () => {
     if (!confirm("Вийти з акаунту?")) return;
@@ -49,27 +105,116 @@ export default function ProfileTab({ user, profile }) {
       </div>
 
       <div className="profile-section">
-        <div className="section-title">Анкета</div>
-        <div className="profile-row">
-          <span className="key">Тип учня</span>
-          <span className="val">{STUDENT_TYPE_LABELS[profile.studentType] || "—"}</span>
+        <div className="section-head">
+          <div className="section-title">Анкета</div>
+          {!editing && (
+            <button className="edit-btn" onClick={startEdit}>✏️ Редагувати</button>
+          )}
         </div>
-        {profile.studentType === "school" && (
-          <div className="profile-row">
-            <span className="key">ТСЦ</span>
-            <span className="val">{TSC_LABELS[profile.tscCenter] || profile.tscCenter || "—"}</span>
+
+        {!editing ? (
+          <>
+            <div className="profile-row">
+              <span className="key">Імʼя</span>
+              <span className="val">{profile.name || "—"}</span>
+            </div>
+            <div className="profile-row">
+              <span className="key">Тип учня</span>
+              <span className="val">{STUDENT_TYPE_LABELS[profile.studentType] || "—"}</span>
+            </div>
+            {profile.studentType === "school" && (
+              <div className="profile-row">
+                <span className="key">ТСЦ</span>
+                <span className="val">{TSC_LABELS[profile.tscCenter] || profile.tscCenter || "—"}</span>
+              </div>
+            )}
+            {profile.studentType === "private" && (
+              <div className="profile-row">
+                <span className="key">Досвід</span>
+                <span className="val">{EXPERIENCE_LABELS[profile.experience] || profile.experience || "—"}</span>
+              </div>
+            )}
+            <div className="profile-row">
+              <span className="key">Зйомка відео/аудіо для реклами</span>
+              <span className="val">{profile.filmingConsent ? "Так" : "Ні"}</span>
+            </div>
+          </>
+        ) : (
+          <div className="profile-edit">
+            <label className="edit-label">Імʼя та прізвище</label>
+            <input
+              className="edit-input"
+              type="text"
+              value={form.name}
+              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+            />
+
+            <label className="edit-label">Тип учня</label>
+            <div className="edit-tiles">
+              {["school", "private"].map(t => (
+                <button
+                  key={t}
+                  className={`edit-tile${form.studentType === t ? " selected" : ""}`}
+                  onClick={() => setForm(f => ({ ...f, studentType: t }))}
+                >
+                  {STUDENT_TYPE_LABELS[t]}
+                </button>
+              ))}
+            </div>
+
+            {form.studentType === "school" && (
+              <>
+                <label className="edit-label">ТСЦ</label>
+                <div className="edit-list">
+                  {TSCS.map(t => (
+                    <button
+                      key={t.id}
+                      className={`edit-item${form.tscCenter === t.id ? " selected" : ""}`}
+                      onClick={() => setForm(f => ({ ...f, tscCenter: t.id }))}
+                    >
+                      <span className="edit-item-title">{t.name}</span>
+                      <span className="edit-item-sub">{t.area}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {form.studentType === "private" && (
+              <>
+                <label className="edit-label">Досвід</label>
+                <div className="edit-list">
+                  {EXPERIENCES.map(ex => (
+                    <button
+                      key={ex.id}
+                      className={`edit-item${form.experience === ex.id ? " selected" : ""}`}
+                      onClick={() => setForm(f => ({ ...f, experience: ex.id }))}
+                    >
+                      <span className="edit-item-title">{ex.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            <div className="edit-toggle-row">
+              <span className="key">Зйомка відео/аудіо для реклами</span>
+              <button
+                className={`edit-switch${form.filmingConsent ? " on" : ""}`}
+                onClick={() => setForm(f => ({ ...f, filmingConsent: !f.filmingConsent }))}
+              >
+                <span className="edit-switch-knob" />
+              </button>
+            </div>
+
+            <div className="edit-actions">
+              <button className="edit-cancel" onClick={cancelEdit} disabled={saving}>Скасувати</button>
+              <button className="edit-save" onClick={handleSave} disabled={saving}>
+                {saving ? "Збереження…" : "Зберегти"}
+              </button>
+            </div>
           </div>
         )}
-        {profile.studentType === "private" && (
-          <div className="profile-row">
-            <span className="key">Досвід</span>
-            <span className="val">{EXPERIENCE_LABELS[profile.experience] || profile.experience || "—"}</span>
-          </div>
-        )}
-        <div className="profile-row">
-          <span className="key">Зйомка відео/аудіо для реклами</span>
-          <span className="val">{profile.filmingConsent ? "Так" : "Ні"}</span>
-        </div>
       </div>
 
 

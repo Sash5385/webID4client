@@ -135,7 +135,7 @@ export default function App() {
       {/* Кабінет */}
       <Route path="/cabinet/*" element={
         user && profile
-          ? <Cabinet user={user} profile={profile} />
+          ? <Cabinet user={user} profile={profile} onProfileUpdate={reloadProfile} />
           : <Navigate to="/" replace />
       } />
 

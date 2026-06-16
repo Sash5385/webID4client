@@ -25,7 +25,7 @@ const TITLES = {
   profile: 'Профіль'
 }
 
-export default function Cabinet({ user, profile }) {
+export default function Cabinet({ user, profile, onProfileUpdate }) {
   const { theme, toggle } = useTheme()
   const loc = useLocation()
   const nav = useNavigate()
@@ -238,7 +238,7 @@ export default function Cabinet({ user, profile }) {
           <Route path="/queue" element={<QueueTab user={user} />} />
           <Route path="/chat" element={<ChatTab user={user} profile={profile} />} />
           <Route path="/notifications" element={<NotifTab user={user} onSeen={markNotifsSeen} />} />
-          <Route path="/profile" element={<ProfileTab user={user} profile={profile} bookingsData={bookingsData} />} />
+          <Route path="/profile" element={<ProfileTab user={user} profile={profile} bookingsData={bookingsData} onProfileUpdate={onProfileUpdate} />} />
           <Route path="*" element={<Navigate to="/cabinet" />} />
         </Routes>
       </div>
