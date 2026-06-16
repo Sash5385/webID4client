@@ -172,6 +172,8 @@ export default function Auth({ user, profile, onProfileSaved }) {
       console.error(e)
       setPhoneError(getSmsErrorMessage(e.code))
       await resetRecaptcha()
+      const onSolved = iosDevice ? () => setCaptchaSolved(true) : null
+      renderRecaptcha('recaptcha-container', onSolved, null).catch(() => {})
     } finally {
       setSending(false)
     }
