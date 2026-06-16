@@ -30,7 +30,7 @@ function starsStr(rating) {
   return '★'.repeat(rating) + '☆'.repeat(5 - rating)
 }
 
-export default function Landing({ user }) {
+export default function Landing({ user, profile }) {
   const { theme, toggle } = useTheme()
   const nav = useNavigate()
   const [reviews, setReviews] = useState([])
@@ -43,8 +43,8 @@ export default function Landing({ user }) {
       .catch(() => {})
   }, [])
 
-  const goAuth = () => nav(user ? '/cabinet' : '/schedule')
-  const goRegister = () => nav(user ? '/cabinet' : '/auth')
+  const goAuth = () => nav(user && profile ? '/cabinet' : '/schedule')
+  const goRegister = () => nav(user && profile ? '/cabinet' : '/auth')
 
   return (
     <div className="landing-page">

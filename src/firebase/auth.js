@@ -53,7 +53,7 @@ export function getSmsErrorMessage(code) {
 
 export async function renderRecaptcha(containerId = 'recaptcha-container', onSolved = null, onExpired = null) {
   const verifier = initRecaptcha(containerId, false, onSolved, onExpired)
-  try { await verifier.render() } catch {}
+  try { await verifier.render() } catch (e) { console.error('[reCAPTCHA render]', e.code, e.message) }
 }
 
 // containerId used for resend (different container on SMS step)
