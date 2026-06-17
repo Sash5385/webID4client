@@ -298,7 +298,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     if (selectedDate) {
       const ov = (adminSettings.dateOverrides || []).find(o => o.date === dateStr)
       if (ov?.type === 'closed') return []
-      if (!ov) {
+      if (!ov && Object.keys(slots).length === 0) {
         const dow = (selectedDate.getDay() + 6) % 7  // Mon=0..Sun=6
         const ws = (adminSettings.weekSchedule || [])[dow]
         if (ws && ws.enabled === false) return []
