@@ -33,34 +33,48 @@ export function initRecaptcha(containerId = 'recaptcha-container', force = false
   return recaptchaVerifier
 }
 
-export function getSmsErrorMessage(code) {
-  switch (code) {
+export function getSmsErrorMessage(code, message) {
+  // Firebase sometimes embeds the code inside the message string
+  const extracted = !code && message ? (message.match(/\(([^)]+)\)/)?.[1] ?? message.match(/auth\/\S+/)?.[0]) : null
+  const c = code || extracted
+  switch (c) {
     case 'auth/invalid-phone-number': return 'Невірний формат номера телефону'
     case 'auth/too-many-requests': return 'Забагато спроб. Спробуй пізніше або використай Email'
     case 'auth/quota-exceeded': return 'SMS-ліміт вичерпано. Увійди через Email'
     case 'auth/captcha-check-failed':
-    case 'auth/invalid-app-credential': return 'Перевірка не пройдена. Оновіть сторінку'
+    case 'auth/missing-client-identifier':
+    case 'auth/invalid-app-credential': return 'Перевірка reCAPTCHA не пройдена. Оновіть сторінку і спробуй ще раз'
     case 'auth/missing-phone-number': return 'Введи номер телефону'
     case 'auth/user-disabled': return 'Акаунт заблоковано'
     case 'auth/web-storage-unsupported': return 'Браузер блокує сховище. Відкрий у Safari або Chrome'
     case 'auth/unauthorized-domain': return 'Домен не авторизований. Зверніться до адміністратора'
     case 'auth/network-request-failed': return 'Помилка мережі. Перевір зʼєднання і спробуй ще раз'
-    case 'auth/internal-error': return 'Внутрішня помилка Firebase. Спробуй Email'
+    case 'auth/internal-error': return 'Внутрішня помилка сервісу. Спробуй Email'
     case 'auth/operation-not-allowed': return 'SMS-вхід вимкнено. Використай Email'
-    default: return `Не вдалось надіслати SMS. Спробуй Email (${code ?? 'unknown'})`
+    default: return 'Не вдалось надіслати SMS. Спробуй Email або Google'
   }
 }
 
 export async function renderRecaptcha(containerId = 'recaptcha-container', onSolved = null, onExpired = null) {
   const verifier = initRecaptcha(containerId, false, onSolved, onExpired)
-  try { await verifier.render() } catch (e) { console.error('[reCAPTCHA render]', e.code, e.message) }
+  try { await verifier.render() } catch (e) {
+    console.error('[reCAPTCHA render]', e.code, e.message)
+    try { verifier.clear() } catch {}
+    recaptchaVerifier = null
+  }
 }
 
 // containerId used for resend (different container on SMS step)
 export async function sendSmsCode(phoneNumber, containerId = 'recaptcha-container') {
   const verifier = initRecaptcha(containerId)
-  confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, verifier)
-  return confirmationResult
+  try {
+    confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, verifier)
+    return confirmationResult
+  } catch (e) {
+    try { recaptchaVerifier?.clear() } catch {}
+    recaptchaVerifier = null
+    throw e
+  }
 }
 
 export async function verifySmsCode(code) {

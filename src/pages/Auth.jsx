@@ -111,12 +111,12 @@ export default function Auth({ user, profile, onProfileSaved }) {
         setCaptchaSolved(false)
         setTimeout(() => renderRecaptcha('recaptcha-container', onSolved, onExpired).catch(e => {
           console.error('[reCAPTCHA expire re-init]', e)
-          if (iosDevice) setPhoneError(getSmsErrorMessage(e.code))
+          if (iosDevice) setPhoneError(getSmsErrorMessage(e.code, e.message))
         }), 100)
       } : null
       renderRecaptcha('recaptcha-container', onSolved, onExpired).catch(e => {
         console.error('[reCAPTCHA init]', e)
-        if (iosDevice) setPhoneError(getSmsErrorMessage(e.code))
+        if (iosDevice) setPhoneError(getSmsErrorMessage(e.code, e.message))
       })
     }
   }, [step, authMode])
@@ -142,14 +142,14 @@ export default function Auth({ user, profile, onProfileSaved }) {
         setResendTimer(45)
         setCode('')
       } catch (e) {
-        setCodeError(getSmsErrorMessage(e.code))
+        setCodeError(getSmsErrorMessage(e.code, e.message))
       } finally {
         setResendCaptchaNeeded(false)
         setSending(false)
       }
     }).catch(e => {
       console.error('[reCAPTCHA resend]', e)
-      setCodeError(getSmsErrorMessage(e.code))
+      setCodeError(getSmsErrorMessage(e.code, e.message))
       setResendCaptchaNeeded(false)
     })
   }, [resendCaptchaNeeded])
@@ -170,7 +170,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
       setResendTimer(45)
     } catch (e) {
       console.error(e)
-      setPhoneError(getSmsErrorMessage(e.code))
+      setPhoneError(getSmsErrorMessage(e.code, e.message))
       await resetRecaptcha()
       const onSolved = iosDevice ? () => setCaptchaSolved(true) : null
       renderRecaptcha('recaptcha-container', onSolved, null).catch(() => {})
@@ -219,7 +219,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
       setResendTimer(45)
       setCode('')
     } catch (e) {
-      setCodeError(getSmsErrorMessage(e.code))
+      setCodeError(getSmsErrorMessage(e.code, e.message))
     } finally {
       setSending(false)
     }

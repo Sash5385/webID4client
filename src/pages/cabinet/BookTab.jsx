@@ -397,6 +397,11 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slots, durationHours, adminSettings, profile?.isVip, selectedDate, selectedService, bookingsData.upcoming])
 
+  useEffect(() => {
+    if (!selectedTime) return
+    if (!slotsList.some(s => s.time === selectedTime)) setSelectedTime(null)
+  }, [slotsList, selectedTime])
+
   const QueueIcons = ({ n }) => {
     const max = Math.min(n, 3)
     return (
