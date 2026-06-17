@@ -73,7 +73,7 @@ export default function PublicSchedule({ onBook }) {
 
   const days = useMemo(() => getMonthGrid(viewMonth.getFullYear(), viewMonth.getMonth()), [viewMonth])
   const slotsList = useMemo(() => Object.values(slots)
-    .filter(slot => (slot.time || '').endsWith(':00'))
+    .filter(slot => !!(slot.time))
     .sort((a, b) => (a.time||'').localeCompare(b.time||''))
     .map(slot => ({
       ...slot,
