@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { signOut } from "../../firebase/auth";
 import { updateUserProfile } from "../../firebase/db";
 import { useTheme } from "../../hooks/useTheme";
@@ -37,6 +37,7 @@ const EXPERIENCE_LABELS = {
 export default function ProfileTab({ user, profile, onProfileUpdate }) {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -84,6 +85,7 @@ export default function ProfileTab({ user, profile, onProfileUpdate }) {
 
   const handleLogout = async () => {
     if (!confirm("Вийти з акаунту?")) return;
+    localStorage.setItem('redirectAfterLogin', location.pathname)
     await signOut();
     navigate("/", { replace: true });
   };

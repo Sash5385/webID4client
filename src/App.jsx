@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useState, useRef } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from './firebase/config'
@@ -10,6 +10,12 @@ import Auth from './pages/Auth'
 import Cabinet from './pages/Cabinet'
 import Landing from './pages/Landing'
 import PublicSchedule from './pages/PublicSchedule'
+
+function SaveRedirect({ to }) {
+  const location = useLocation()
+  localStorage.setItem('redirectAfterLogin', location.pathname + location.search)
+  return <Navigate to={to} replace />
+}
 
 export default function App() {
   const navigate = useNavigate()
@@ -136,7 +142,7 @@ export default function App() {
       <Route path="/cabinet/*" element={
         user && profile
           ? <Cabinet user={user} profile={profile} onProfileUpdate={reloadProfile} />
-          : <Navigate to="/" replace />
+          : <SaveRedirect to="/" />
       } />
 
       <Route path="*" element={<Navigate to="/" replace />} />
