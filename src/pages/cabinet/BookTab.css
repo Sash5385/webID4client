@@ -402,6 +402,16 @@
 
 .slot.my-booked .slot-time { text-decoration: none; opacity: 1; }
 
+.slot.interval-blocked {
+  background: rgba(239, 68, 68, 0.13);
+  border-color: rgba(239, 68, 68, 0.35);
+  cursor: not-allowed;
+}
+
+.slot.interval-blocked .slot-time {
+  opacity: 0.5;
+}
+
 .slot-queue {
   display: flex;
   gap: 2px;

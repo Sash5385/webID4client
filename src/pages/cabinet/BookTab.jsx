@@ -187,6 +187,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   const days = useMemo(() => getMonthGrid(viewMonth.getFullYear(), viewMonth.getMonth()), [viewMonth])
 
   const handleSlotClick = (slot) => {
+    if (isIntervalBlocked) return
     if (slot.lunchBlocked || slot.overlapBlocked) return
     if (slot.offeredTo?.[user?.uid]) {
       // Слот зарезервований для мене → одразу до бронювання
@@ -397,6 +398,20 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slots, durationHours, adminSettings, profile?.isVip, selectedDate, selectedService, bookingsData.upcoming])
 
+  const isIntervalBlocked = useMemo(() => {
+    const minDays = adminSettings?.minBookingIntervalDays ?? 0;
+    if (!minDays || profile?.noIntervalLimit) return false;
+    if (!selectedDate) return false;
+    const selMs = new Date(formatDateYMD(selectedDate) + 'T12:00:00').getTime();
+    const msPerDay = 24 * 60 * 60 * 1000;
+    return bookingsData.upcoming.some(b => {
+      if (!b.date) return false;
+      const bMs = new Date(b.date + 'T12:00:00').getTime();
+      const diffDays = Math.abs(selMs - bMs) / msPerDay;
+      return diffDays > 0 && diffDays < minDays;
+    });
+  }, [selectedDate, adminSettings, bookingsData.upcoming, profile]);
+
   const QueueIcons = ({ n }) => {
     const max = Math.min(n, 3)
     return (
@@ -543,14 +558,14 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                   const isPartOfMyBooking = slot.isPartOfMyBooking
                   const isTaken = !isAvailable && !isMyReserved
                   const isTakenByOthers = isTaken && !isPartOfMyBooking
-                  const isUnavailable = isLunch || isOverlap || isVipLocked || isTaken || isMyBooked
+                  const isUnavailable = isLunch || isOverlap || isVipLocked || isTaken || isMyBooked || isIntervalBlocked
                   return (
                     <div key={slot.time} style={{position:'relative'}}>
                       <button
-                        className={`slot ${isMyReserved || isMyQueue ? 'my-queue' : isPartOfMyBooking ? 'my-booked' : isUnavailable ? 'taken' : ''} ${isSelected ? 'selected' : ''}`}
+                        className={`slot ${isMyReserved || isMyQueue ? 'my-queue' : isPartOfMyBooking ? 'my-booked' : isIntervalBlocked ? 'interval-blocked' : isUnavailable ? 'taken' : ''} ${isSelected ? 'selected' : ''}`}
                         style={{width:'100%'}}
                         onClick={() => !isMyQueue && !isMyBooked && handleSlotClick(slot)}
-                        disabled={isLunch || isOverlap || isMyBooked}
+                        disabled={isLunch || isOverlap || isMyBooked || isIntervalBlocked}
                         title={isExactlyMine ? 'Ваш урок' : isPartOfMyBooking ? 'Ваш урок (продовження)' : isMyBooked ? 'Перетин з вашим уроком' : isLunch ? 'Обідня перерва' : isOverlap ? 'Перетин з іншим уроком' : isVipLocked ? 'VIP слот' : isMyReserved ? 'Зарезервовано для вас!' : isTaken ? 'Зайнято — стати в чергу?' : undefined}
                       >
                         <div className="slot-time">{slot.time}</div>
