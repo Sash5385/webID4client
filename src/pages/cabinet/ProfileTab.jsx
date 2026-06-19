@@ -4,6 +4,7 @@ import { signOut } from "../../firebase/auth";
 import { updateUserProfile } from "../../firebase/db";
 import { useTheme } from "../../hooks/useTheme";
 import { getInitials, formatPhone } from "../../utils/format";
+import { APP_VERSION } from "../../version.js";
 import "./ProfileTab.css";
 
 const TSCS = [
@@ -248,6 +249,10 @@ export default function ProfileTab({ user, profile, onProfileUpdate }) {
             <div className="val">Київ, Верховинна 44</div>
           </div>
         </a>
+      </div>
+
+      <div style={{textAlign:"center",padding:"12px 0 4px",color:"#5a5c62",fontSize:13,fontWeight:600,letterSpacing:0.5}}>
+        {APP_VERSION}
       </div>
 
       <button className="logout-btn" onClick={handleLogout}>
