@@ -138,6 +138,9 @@ export default function App() {
           : <Auth user={user} profile={profile} onProfileSaved={reloadProfile} />
       } />
 
+      {/* Лендінг для авторизованих — перегляд без виходу */}
+      <Route path="/home" element={<Landing user={user} profile={profile} />} />
+
       {/* Кабінет */}
       <Route path="/cabinet/*" element={
         user && profile
