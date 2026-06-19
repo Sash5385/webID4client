@@ -1,5 +1,51 @@
 # CLAUDE.md — Production Rules для ID4Drive
 
+---
+
+# ⚡ ОБЯЗАТЕЛЬНЫЙ ПОРЯДОК РАБОТЫ (читать перед каждой задачей)
+
+## Шаг 0 — Уточнение (ВСЕГДА, до любых действий)
+
+Перед тем как что-либо исправлять, создавать или менять — **обязательно уточнить и спросить**.
+Не начинать реализацию без подтверждения от пользователя.
+
+## Шаг 1 — Git pull всех репозиториев
+
+```bash
+cd /home/user/webid4          && git pull origin master
+cd /home/user/webOlhaDrive    && git pull origin main
+cd /home/user/webID4client    && git pull origin master
+cd /home/user/webOlhaDriveClient && git pull origin main
+```
+
+## Шаг 2 — Проверить текущую версию
+
+```bash
+cat /home/user/webid4/src/version.js
+cat /home/user/webOlhaDrive/src/version.js
+```
+
+## Шаг 3 — Сделать фикс или новую функцию
+
+Только после шагов 0–2.
+
+## Шаг 4 — Обновить версию
+
+Формат: `vДД.ММ.N` (N — порядковый номер за день).
+Обновить в обоих файлах: `src/version.js`.
+
+## Шаг 5 — Запушить и задеплоить
+
+```bash
+# webid4
+git add . && git commit -m "..." && git checkout master && git pull --rebase origin master && git merge <branch> --no-edit && git push origin master && git checkout <branch>
+
+# webOlhaDrive
+git add . && git commit -m "..." && git checkout main && git pull --rebase origin main && git merge <branch> --no-edit && git push origin main && git checkout <branch>
+```
+
+---
+
 ## О проекте
 
 ID4Drive — SaaS-платформа онлайн-записи для инструкторов вождения с перспективой развития в универсальный маркетплейс услуг.
