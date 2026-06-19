@@ -252,7 +252,9 @@
   color: var(--text);
 }
 
-[data-theme="light"] .cal-day { color: #888; }
+[data-theme="light"] .cal-day { color: rgba(0,0,0,0.55); }
+[data-theme="light"] .cal-day.disabled { color: rgba(0,0,0,0.18); cursor: not-allowed; }
+[data-theme="light"] .cal-day.has-slots { color: rgba(0,0,0,0.75); font-weight: 700; }
 [data-theme="light"] .cal-day:not(.disabled):not(.selected):not(.day-free):not(.day-partial):not(.day-full):hover {
   background: #f0f2f7;
   color: #333;
