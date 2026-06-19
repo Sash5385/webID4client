@@ -1,4 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { ref, onValue } from "firebase/database";
+import { db } from "../../firebase/config";
 import "./ProgressTab.css";
 
 export default function ProgressTab({ user, profile, bookingsData }) {
@@ -6,6 +8,14 @@ export default function ProgressTab({ user, profile, bookingsData }) {
 
   const studentType = profile?.studentType || "school";
   const isSchool = studentType === "school";
+
+  const [examPassed, setExamPassed] = useState(null);
+  useEffect(() => {
+    if (!user?.uid || !isSchool) return;
+    const r = ref(db, `users/${user.uid}/internalExam/passed`);
+    const unsub = onValue(r, snap => setExamPassed(snap.exists() ? snap.val() : undefined));
+    return () => unsub();
+  }, [user?.uid, isSchool]);
   const target = 40;
   const current = Math.min(schoolHours, target);
   const percent = (current / target) * 100;
@@ -80,20 +90,44 @@ export default function ProgressTab({ user, profile, bookingsData }) {
       <div className="progress-hero" style={{ marginTop: 14 }}>
         <div className="progress-title" style={{ marginBottom: 14 }}>Статистика уроків</div>
         <div className="stat-row">
-          <div className="stat-block">
+          <div className="stat-btn">
             <div className="num">{totalLessons}</div>
             <div className="lbl">всього</div>
           </div>
-          <div className="stat-block">
+          <div className="stat-btn">
             <div className="num">{schoolHours}</div>
-            <div className="lbl">автошкола (год)</div>
+            <div className="lbl">автошкола</div>
           </div>
-          <div className="stat-block">
+          <div className="stat-btn">
             <div className="num">{privateLessons}</div>
             <div className="lbl">приватні</div>
           </div>
         </div>
       </div>
+
+      {isSchool && (
+        <div className="progress-hero" style={{ marginTop: 14 }}>
+          <div className="progress-title" style={{ marginBottom: 14 }}>Внутрішній іспит</div>
+          {examPassed === true && (
+            <div className="exam-card exam-card--pass">
+              <span className="exam-ico">✓</span>
+              <span className="exam-lbl">Складено</span>
+            </div>
+          )}
+          {examPassed === false && (
+            <div className="exam-card exam-card--fail">
+              <span className="exam-ico">✗</span>
+              <span className="exam-lbl">Не складено</span>
+            </div>
+          )}
+          {(examPassed === null || examPassed === undefined) && (
+            <div className="exam-card exam-card--pending">
+              <span className="exam-ico">⏳</span>
+              <span className="exam-lbl">Очікується</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {totalLessons >= 10 && (
         <div className="progress-hero" style={{ marginTop: 14 }}>
