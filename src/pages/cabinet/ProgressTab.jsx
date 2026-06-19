@@ -85,16 +85,12 @@ export default function ProgressTab({ user, profile, bookingsData }) {
             <div className="lbl">всього</div>
           </div>
           <div className="stat-block">
-            <div className="num">{schoolLessons}</div>
-            <div className="lbl">автошкола</div>
+            <div className="num">{schoolHours}</div>
+            <div className="lbl">автошкола (год)</div>
           </div>
           <div className="stat-block">
             <div className="num">{privateLessons}</div>
             <div className="lbl">приватні</div>
-          </div>
-          <div className="stat-block">
-            <div className="num">{schoolHours}</div>
-            <div className="lbl">годин (школа)</div>
           </div>
         </div>
       </div>
