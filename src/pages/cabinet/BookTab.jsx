@@ -492,7 +492,9 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         <div className="cal-days">
           {days.map((d, i) => {
             if (!d) return <div key={i} className="cal-day empty"></div>
-            const disabled = isPast(d)
+            const maxDays = adminSettings.calendarOpenDays ?? 30
+            const maxDate = new Date(today); maxDate.setDate(maxDate.getDate() + maxDays)
+            const disabled = isPast(d) || d > maxDate
             const isToday = isSameDay(d, today)
             const selected = selectedDate && isSameDay(d, selectedDate)
             const dateStr = formatDateYMD(d)
