@@ -78,6 +78,14 @@ export default function Landing({ user, profile }) {
                 </svg>
               )}
             </button>
+            <a
+              href="https://lark.id4drive.pro"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-school"
+            >
+              АВТОШКОЛА
+            </a>
             <button className="btn-login" onClick={goRegister}>
               {user ? 'Кабінет' : 'Увійти'}
             </button>
