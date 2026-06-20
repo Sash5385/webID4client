@@ -510,41 +510,9 @@
   width: 72px;
   height: 72px;
   border-radius: 22px;
-  background: linear-gradient(165deg, #ff7a5c, #ff5a3c);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  font-weight: 900;
-  color: white;
+  object-fit: cover;
   flex-shrink: 0;
-  box-shadow: -3px 4px 12px rgba(0,0,0,0.4), inset 3px 3px 0 rgba(255,255,255,0.45), inset -2px -2px 0 rgba(0,0,0,0.2);
-  position: relative;
-  overflow: hidden;
-}
-
-.instructor-avatar::after {
-  content: '';
-  position: absolute;
-  top: -10%;
-  right: -10%;
-  width: 70%;
-  height: 60%;
-  background: radial-gradient(ellipse at top right, rgba(255,255,255,0.75), rgba(255,255,255,0.2) 45%, transparent 75%);
-  pointer-events: none;
-}
-
-.instructor-avatar::before {
-  content: '';
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.9);
-  filter: blur(3px);
-  z-index: 2;
+  box-shadow: -3px 4px 12px rgba(0,0,0,0.4);
 }
 
 .instructor-info { flex: 1; }
