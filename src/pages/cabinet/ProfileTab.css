@@ -295,6 +295,26 @@
   box-shadow: 0 2px 8px rgba(255,90,60,0.4);
 }
 
+.school-btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  margin-top: 18px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(59,130,246,0.4);
+  text-align: center;
+  text-decoration: none;
+  letter-spacing: 1px;
+  box-sizing: border-box;
+}
+.school-btn:active { transform: scale(0.98); }
+
 .logout-btn {
   width: 100%;
   padding: 14px;

@@ -255,6 +255,15 @@ export default function ProfileTab({ user, profile, onProfileUpdate }) {
         {APP_VERSION}
       </div>
 
+      <a
+        href="https://lark.id4drive.pro"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="school-btn"
+      >
+        АВТОШКОЛА
+      </a>
+
       <button className="logout-btn" onClick={handleLogout}>
         Вийти з акаунту
       </button>
