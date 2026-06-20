@@ -206,6 +206,13 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
 
   const handleBook = async () => {
     if (!selectedDate || !selectedTime || !selectedService) return
+    const slotDt = new Date(selectedDate)
+    const [slotH, slotM] = selectedTime.split(':').map(Number)
+    slotDt.setHours(slotH, slotM, 0, 0)
+    if (slotDt <= new Date()) {
+      alert('Не можна записатись на минулий час')
+      return
+    }
     const dateStr = formatDateYMD(selectedDate)
     if (overlapsMyBooking(dateStr, selectedTime, durationHours)) {
       alert('Ви вже записані на цей час')
@@ -269,6 +276,14 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
 
   const handleJoinQueue = async () => {
     if (!dialogSlot || !selectedDate || !selectedService) return
+    const slotDt = new Date(selectedDate)
+    const [slotH, slotM] = (dialogSlot.time || '0:0').split(':').map(Number)
+    slotDt.setHours(slotH, slotM, 0, 0)
+    if (slotDt <= new Date()) {
+      setDialogSlot(null)
+      alert('Не можна стати в чергу на минулий час')
+      return
+    }
     const dateStr = formatDateYMD(selectedDate)
     if (overlapsMyBooking(dateStr, dialogSlot.time, durationHours)) {
       setDialogSlot(null)
@@ -393,6 +408,13 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           curMin = prevMin
         }
         return (h * 60 + m - curMin) % 60 === 0
+      })
+      .filter(slot => {
+        if (!selectedDate || !isSameDay(selectedDate, new Date())) return true
+        const [h, m] = (slot.time || '0:0').split(':').map(Number)
+        const slotDt = new Date(selectedDate)
+        slotDt.setHours(h, m, 0, 0)
+        return slotDt > new Date()
       })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slots, durationHours, adminSettings, profile?.isVip, selectedDate, selectedService, bookingsData.upcoming])

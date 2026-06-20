@@ -80,8 +80,15 @@ export default function PublicSchedule({ onBook }) {
       lunchBlocked:   isBlockedByLunch(slot.time, duration),
       overlapBlocked: slot.available !== false && wouldOverlapTaken(slot.time, duration),
     }))
+    .filter(slot => {
+      if (!selectedDate || !isSameDay(selectedDate, new Date())) return true
+      const [h, m] = (slot.time || '0:0').split(':').map(Number)
+      const slotDt = new Date(selectedDate)
+      slotDt.setHours(h, m, 0, 0)
+      return slotDt > new Date()
+    })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  , [slots, duration, adminSettings])
+  , [slots, duration, adminSettings, selectedDate])
 
   const prevMonth = () => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))
   const nextMonth = () => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))
