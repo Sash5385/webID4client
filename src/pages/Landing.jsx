@@ -232,7 +232,7 @@ export default function Landing({ user, profile }) {
           <div className="lsection-title">Інструктор</div>
           <h2>Олександр</h2>
           <div className="instructor-card">
-            <div className="instructor-avatar">ОЛ</div>
+            <img src="/instructor.png" className="instructor-avatar" alt="Олександр" />
             <div className="instructor-info">
               <div className="instructor-name">Олександр</div>
               <div className="instructor-role">Інструктор з водіння</div>
