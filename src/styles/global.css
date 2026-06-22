@@ -50,6 +50,10 @@ html, body {
   );
 }
 
+[data-theme="dark"] #root::before {
+  opacity: 0.5;
+}
+
 [data-theme="light"] #root::before {
   opacity: 0;
 }
