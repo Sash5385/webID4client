@@ -1,11 +1,9 @@
 import { useMemo, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { ref, onValue } from "firebase/database";
 import { db } from "../../firebase/config";
 import "./ProgressTab.css";
 
 export default function ProgressTab({ user, profile, bookingsData }) {
-  const navigate = useNavigate()
   const { bookings, schoolHours, manualHours, canBookPrivate } = bookingsData || { bookings: [], schoolHours: 0, manualHours: 0, canBookPrivate: false };
 
   const studentType = profile?.studentType || "school";
@@ -140,24 +138,6 @@ export default function ProgressTab({ user, profile, bookingsData }) {
         </div>
       )}
 
-      <div className="progress-hero" style={{ marginTop: 14 }}>
-        <div className="progress-title" style={{ marginBottom: 8 }}>🚦 Тест ПДР</div>
-        <div className="progress-subtitle">
-          Перевір знання правил дорожнього руху на перехрестях — проїзд, знаки, світлофор, кільце.
-        </div>
-        <button
-          onClick={() => navigate('/cabinet/test')}
-          style={{
-            display: 'block', width: '100%', marginTop: 14, padding: 14,
-            borderRadius: 14, border: 'none', cursor: 'pointer',
-            background: 'linear-gradient(135deg, #f6b21b, #e09500)',
-            color: '#1a1206', fontSize: 14, fontWeight: 800, fontFamily: 'inherit',
-            boxShadow: '0 4px 14px rgba(246,178,27,0.4)',
-          }}
-        >
-          Пройти тест →
-        </button>
-      </div>
     </div>
   );
 }
