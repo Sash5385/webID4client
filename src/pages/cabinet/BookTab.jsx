@@ -40,6 +40,11 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   const [queueMap, setQueueMap] = useState({}) // time → count
   const [selectedTime, setSelectedTime] = useState(notifParams?.time || null)
   const [loading, setLoading] = useState(false)
+  const initialDateSet = useRef(true)
+  useEffect(() => {
+    if (initialDateSet.current) { initialDateSet.current = false; return }
+    setSelectedTime(null)
+  }, [selectedDate])
   const [adminSettings, setAdminSettings] = useState({ lunchEnabled: true, lunchStart: 12, lunchEnd: 13 })
   const [monthAvail, setMonthAvail] = useState({})
   const timeSectionRef = useRef(null)
