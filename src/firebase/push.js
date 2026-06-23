@@ -42,6 +42,7 @@ export async function requestNotificationPermission(uid) {
     const token = await getToken(msg, { vapidKey: VAPID_KEY, ...(swReg ? { serviceWorkerRegistration: swReg } : {}) })
     if (token && uid) {
       await set(ref(db, `users/${uid}/fcmTokens/web/token`), token)
+      await set(ref(db, `studentTokens/${uid}`), token)
     }
     return token
   } catch (e) {
