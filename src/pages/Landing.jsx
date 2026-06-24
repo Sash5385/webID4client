@@ -59,7 +59,7 @@ export default function Landing({ user, profile }) {
           </div>
           <div className="topbar-actions">
             <a
-              href="https://lark.id4drive.pro"
+              href="https://zhaivoronok.com.ua"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-school"
