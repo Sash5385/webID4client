@@ -39,7 +39,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   const [slots, setSlots] = useState({})
   const [queueMap, setQueueMap] = useState({}) // time → count
   const [selectedTime, setSelectedTime] = useState(notifParams?.time || null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(() => !!notifParams?.date)
   const initialDateSet = useRef(true)
   useEffect(() => {
     if (initialDateSet.current) { initialDateSet.current = false; return }
@@ -134,7 +134,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   useEffect(() => {
     if (!selectedDate || !timeSectionRef.current) return
     setTimeout(() => {
-      timeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      timeSectionRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' })
     }, 100)
   }, [selectedDate])
 
@@ -533,7 +533,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
               <button
                 key={i}
                 className={`cal-day ${disabled ? 'disabled' : ''} ${isToday ? 'today' : ''} ${selected ? 'selected' : ''} ${dayClass}`}
-                onClick={() => !disabled && setSelectedDate(d)}
+                onClick={() => { if (!disabled) { setLoading(true); setSelectedDate(d) } }}
                 disabled={disabled}
               >
                 {d.getDate()}
