@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { subscribeUserQueue, leaveQueue } from '../../firebase/db'
 import { formatDateLabel, parseYMD } from '../../utils/date'
+import { useToast } from '../../hooks/useToast'
 
 function formatSlotDate(dateStr) {
   try {
@@ -15,6 +16,7 @@ function formatSlotDate(dateStr) {
 }
 
 export default function QueueTab({ user }) {
+  const { showToast, ToastEl } = useToast()
   const [slots, setSlots] = useState(null)
   const [leaving, setLeaving] = useState(null)
 
@@ -28,7 +30,7 @@ export default function QueueTab({ user }) {
     try {
       await leaveQueue(user.uid, slot.date, slot.time)
     } catch (e) {
-      alert('Помилка: ' + e.message)
+      showToast('Помилка: ' + e.message)
     } finally {
       setLeaving(null)
     }
@@ -118,6 +120,7 @@ export default function QueueTab({ user }) {
           </div>
         )
       })}
+      {ToastEl}
     </div>
   )
 }

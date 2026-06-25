@@ -288,7 +288,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     slotDt.setHours(slotH, slotM, 0, 0)
     if (slotDt <= new Date()) {
       setDialogSlot(null)
-      alert('Не можна стати в чергу на минулий час')
+      showToast('Не можна стати в чергу на минулий час')
       return
     }
     const dateStr = formatDateYMD(selectedDate)
