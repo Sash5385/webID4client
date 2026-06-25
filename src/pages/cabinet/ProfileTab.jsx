@@ -85,8 +85,9 @@ export default function ProfileTab({ user, profile, onProfileUpdate }) {
     }
   };
 
+  const [logoutPending, setLogoutPending] = useState(false);
+
   const handleLogout = async () => {
-    if (!confirm("Вийти з акаунту?")) return;
     await signOut();
     navigate("/", { replace: true });
   };
@@ -266,9 +267,16 @@ export default function ProfileTab({ user, profile, onProfileUpdate }) {
         АВТОШКОЛА
       </a>
 
-      <button className="logout-btn" onClick={handleLogout}>
-        Вийти з акаунту
-      </button>
+      {!logoutPending ? (
+        <button className="logout-btn" onClick={() => setLogoutPending(true)}>
+          Вийти з акаунту
+        </button>
+      ) : (
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", padding: "8px 0" }}>
+          <button className="logout-btn" style={{ flex: 1 }} onClick={handleLogout}>Так, вийти</button>
+          <button className="edit-cancel" style={{ flex: 1 }} onClick={() => setLogoutPending(false)}>Скасувати</button>
+        </div>
+      )}
       {ToastEl}
     </div>
   );

@@ -45,8 +45,11 @@ function DirectChat({ user, profile }) {
 
   const initials = (profile?.name || 'У').split(' ').map(w => w[0]).slice(0, 2).join('')
 
+  const [clearPending, setClearPending] = useState(false)
+
   const handleClear = async () => {
-    if (!window.confirm('Очистити всю переписку?')) return
+    if (!clearPending) { setClearPending(true); return }
+    setClearPending(false)
     await clearStudentChat(user.uid)
   }
 
@@ -60,14 +63,27 @@ function DirectChat({ user, profile }) {
           <div className="chat-instructor-status">Відповідає протягом дня</div>
         </div>
         {messages.length > 0 && (
-          <button className="chat-clear-btn" onClick={handleClear} aria-label="Очистити чат">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="3 6 5 6 21 6"/>
-              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-              <path d="M10 11v6M14 11v6"/>
-              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-            </svg>
-          </button>
+          clearPending ? (
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <button
+                style={{ fontSize: 11, padding: '3px 8px', background: 'rgba(229,57,53,0.15)', color: '#e53935', border: '1px solid rgba(229,57,53,0.3)', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}
+                onClick={handleClear}
+              >Очистити</button>
+              <button
+                style={{ fontSize: 11, padding: '3px 8px', background: 'rgba(255,255,255,0.08)', color: 'var(--dim)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, cursor: 'pointer' }}
+                onClick={() => setClearPending(false)}
+              >Ні</button>
+            </div>
+          ) : (
+            <button className="chat-clear-btn" onClick={handleClear} aria-label="Очистити чат">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                <path d="M10 11v6M14 11v6"/>
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
+            </button>
+          )
         )}
       </div>
 
