@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { signOut } from "../../firebase/auth";
 import { updateUserProfile } from "../../firebase/db";
 import { useTheme } from "../../hooks/useTheme";
+import { useToast } from "../../hooks/useToast";
 import { getInitials, formatPhone } from "../../utils/format";
 import { APP_VERSION } from "../../version.js";
 import "./ProfileTab.css";
@@ -37,6 +38,7 @@ const EXPERIENCE_LABELS = {
 
 export default function ProfileTab({ user, profile, onProfileUpdate }) {
   const { theme, setTheme } = useTheme();
+  const { showToast, ToastEl } = useToast();
   const navigate = useNavigate();
 
   const [editing, setEditing] = useState(false);
@@ -61,7 +63,7 @@ export default function ProfileTab({ user, profile, onProfileUpdate }) {
 
   const handleSave = async () => {
     if (!form.name.trim()) {
-      alert("Введи імʼя");
+      showToast("Введи імʼя");
       return;
     }
     setSaving(true);
@@ -77,7 +79,7 @@ export default function ProfileTab({ user, profile, onProfileUpdate }) {
       setEditing(false);
       setForm(null);
     } catch (e) {
-      alert("Помилка: " + e.message);
+      showToast("Помилка: " + e.message);
     } finally {
       setSaving(false);
     }
@@ -267,6 +269,7 @@ export default function ProfileTab({ user, profile, onProfileUpdate }) {
       <button className="logout-btn" onClick={handleLogout}>
         Вийти з акаунту
       </button>
+      {ToastEl}
     </div>
   );
 }

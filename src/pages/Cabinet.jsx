@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
+import { useToast } from '../hooks/useToast'
 import { useBookings } from '../hooks/useBookings'
 import { subscribeQueueOffers, clearQueueOffer, claimQueueOffer, declineQueueOffer, subscribeDirectUnread, markDirectChatRead, subscribeNotifications, subscribeUserQueue } from '../firebase/db'
 
@@ -29,6 +30,7 @@ const TITLES = {
 
 export default function Cabinet({ user, profile, onProfileUpdate }) {
   const { theme, toggle } = useTheme()
+  const { showToast, ToastEl } = useToast()
   const loc = useLocation()
   const nav = useNavigate()
   const bookingsData = useBookings(user?.uid, profile)
@@ -136,7 +138,7 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
       await claimQueueOffer(user.uid, selectedOffer.slotKey, selectedOffer.offer, profile)
       setSelectedOffer(null)
     } catch (e) {
-      alert('Помилка: ' + e.message)
+      showToast('Помилка: ' + e.message)
     } finally {
       setOfferSubmitting(false)
     }
@@ -149,7 +151,7 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
       await declineQueueOffer(user.uid, selectedOffer.slotKey, selectedOffer.offer.date, selectedOffer.offer.time)
       setSelectedOffer(null)
     } catch (e) {
-      alert('Помилка: ' + e.message)
+      showToast('Помилка: ' + e.message)
     } finally {
       setOfferSubmitting(false)
     }
@@ -412,6 +414,7 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
         )
       })()}
 
+      {ToastEl}
     </div>
   )
 }
