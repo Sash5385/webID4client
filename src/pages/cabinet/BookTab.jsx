@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { subscribeSlotsForDate, createBooking, joinQueue, leaveQueue, subscribeQueueForSlot, getAdminSettings, getAdminServices, markSlotsUnavailable, claimSlot, claimReservedSlot, setViewingSlot, clearViewingSlot, subscribeMonthAvailability } from '../../firebase/db'
 import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay } from '../../utils/date'
 import { getInitials, pluralize } from '../../utils/format'
+import { useToast } from '../../hooks/useToast'
 import './BookTab.css'
 
 const FALLBACK_SERVICES = [
@@ -12,6 +13,7 @@ const FALLBACK_SERVICES = [
 ]
 
 export default function BookTab({ user, profile, bookingsData, notifParams }) {
+  const { showToast, ToastEl } = useToast()
   const isSchool = profile?.studentType === 'school'
   const isPrivateStudent = profile?.studentType === 'private'
   const schoolLimitReached = bookingsData.canBookPrivate // schoolHours >= 40
@@ -215,12 +217,12 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     const [slotH, slotM] = selectedTime.split(':').map(Number)
     slotDt.setHours(slotH, slotM, 0, 0)
     if (slotDt <= new Date()) {
-      alert('Не можна записатись на минулий час')
+      showToast('Не можна записатись на минулий час')
       return
     }
     const dateStr = formatDateYMD(selectedDate)
     if (overlapsMyBooking(dateStr, selectedTime, durationHours)) {
-      alert('Ви вже записані на цей час')
+      showToast('Ви вже записані на цей час')
       return
     }
     setSubmitting(true)
@@ -235,7 +237,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         surcharge += slots[key]?.surcharge || 0
         // Фінальна перевірка: заборонити якщо будь-який покритий слот є VIP (для звичайних учнів)
         if (i > 0 && !isVipStudent && slots[key]?.vipOnly) {
-          alert('Неможливо записатись: наступна година є VIP-слотом')
+          showToast('Неможливо записатись: наступна година є VIP-слотом')
           setSubmitting(false)
           return
         }
@@ -247,7 +249,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       if (!isOfferedToMe) {
         const claimed = await claimSlot(dateStr, selectedTime)
         if (!claimed) {
-          alert('Цей слот щойно зайняли. Оберіть інший час.')
+          showToast('Цей слот щойно зайняли. Оберіть інший час.')
           setSubmitting(false)
           return
         }
@@ -273,7 +275,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       setSelectedTime(null)
       setSuccessData({ type: 'booking', date: formatDateYMD(selectedDate), time: selectedTime, service: selectedService, surcharge, durationHours })
     } catch (e) {
-      alert('Помилка: ' + e.message)
+      showToast('Помилка: ' + e.message)
     } finally {
       setSubmitting(false)
     }
@@ -292,7 +294,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     const dateStr = formatDateYMD(selectedDate)
     if (overlapsMyBooking(dateStr, dialogSlot.time, durationHours)) {
       setDialogSlot(null)
-      alert('Ви вже записані на цей час')
+      showToast('Ви вже записані на цей час')
       return
     }
     setSubmitting(true)
@@ -301,7 +303,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       setDialogSlot(null)
       setSuccessData({ type: 'queue', date: formatDateYMD(selectedDate), time: dialogSlot.time, service: selectedService, durationHours, surcharge: dialogSlot.surcharge || 0 })
     } catch (e) {
-      alert('Помилка: ' + e.message)
+      showToast('Помилка: ' + e.message)
     } finally {
       setSubmitting(false)
     }
@@ -441,6 +443,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
 
   return (
     <div className="fade-up">
+      {ToastEl}
 
       {/* USER BANNER */}
       <div className="user-banner">

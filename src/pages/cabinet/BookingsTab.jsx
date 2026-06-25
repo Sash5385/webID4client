@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
+import { useToast } from '../../hooks/useToast'
 import { cancelBooking, confirmAttendance, createBooking, markSlotsUnavailable, claimSlot, subscribeSlotsForDate, getAdminSettings, subscribeMonthAvailability } from '../../firebase/db'
 import { parseYMD, getMonthShort, getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay, formatDateLabel } from '../../utils/date'
 import { googleCalendarLink, downloadICS } from '../../utils/calendar'
@@ -19,6 +20,7 @@ function hoursUntilLesson(booking) {
 
 // ─── RESCHEDULE MODAL ────────────────────────────────────────────
 function RescheduleModal({ booking, user, profile, onClose, onDone }) {
+  const { showToast: showModalToast, ToastEl: ModalToastEl } = useToast()
   const isVipStudent = profile?.isVip === true
   const [today] = useState(() => { const d = new Date(); d.setHours(0,0,0,0); return d })
   const [viewMonth, setViewMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
@@ -102,7 +104,7 @@ function RescheduleModal({ booking, user, profile, onClose, onDone }) {
         const key = `slot${String(Math.floor(slotMin / 60)).padStart(2, '0')}${String(slotMin % 60).padStart(2, '0')}`
         newSurcharge += slots[key]?.surcharge || 0
         if (i > 0 && !isVipStudent && slots[key]?.vipOnly) {
-          alert('Неможливо перенести: наступна година є VIP-слотом')
+          showModalToast('Неможливо перенести: наступна година є VIP-слотом')
           setSaving(false)
           return
         }
@@ -120,7 +122,7 @@ function RescheduleModal({ booking, user, profile, onClose, onDone }) {
       // 1. Атомарно займаємо новий слот ДО скасування старого
       const claimed = await claimSlot(newDate, selectedTime)
       if (!claimed) {
-        alert('Цей слот щойно зайняли. Оберіть інший час.')
+        showModalToast('Цей слот щойно зайняли. Оберіть інший час.')
         setSaving(false)
         return
       }
@@ -146,7 +148,7 @@ function RescheduleModal({ booking, user, profile, onClose, onDone }) {
       await markSlotsUnavailable(newDate, selectedTime, durationHours, adminSettings.interval || 30)
       onDone()
     } catch (e) {
-      alert('Помилка: ' + e.message)
+      showModalToast('Помилка: ' + e.message)
     } finally {
       setSaving(false)
     }
@@ -154,6 +156,7 @@ function RescheduleModal({ booking, user, profile, onClose, onDone }) {
 
   return createPortal(
     <div className="dialog-backdrop show" onClick={e => e.target.classList.contains('dialog-backdrop') && onClose()} ref={el => el && (el.scrollTop = 0)}>
+      {ModalToastEl}
       <div className="dialog">
         <div className="dialog-handle" />
         <div className="dialog-title" style={{ fontSize: 16, marginBottom: 4 }}>📅 Перенести урок</div>
@@ -248,23 +251,23 @@ export default function BookingsTab({ user, profile, bookingsData }) {
   const [rescheduleBooking, setRescheduleBooking] = useState(null)
   const [toast, setToast] = useState(null)
 
-  const showToast = (msg) => {
-    setToast(msg)
-    setTimeout(() => setToast(null), 3000)
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 3200)
   }
 
   const handleConfirmAttendance = async (booking) => {
     try {
       await confirmAttendance(user.uid, booking.id)
-      showToast('Присутність підтверджено')
+      showToast('Присутність підтверджено', 'success')
     } catch (e) {
-      alert('Помилка: ' + e.message)
+      showToast('Помилка: ' + e.message, 'error')
     }
   }
 
   const handleCancel = async (booking) => {
     if (hoursUntilLesson(booking) < CANCEL_WINDOW_HOURS) {
-      alert(`Скасувати урок можна не пізніше ніж за ${CANCEL_WINDOW_HOURS} год до початку. Зверніться до інструктора.`)
+      showToast(`Скасувати урок можна не пізніше ніж за ${CANCEL_WINDOW_HOURS} год до початку. Зверніться до інструктора.`, 'error')
       return
     }
     if (!confirm(`Скасувати урок ${booking.date} о ${booking.time}?`)) return
@@ -272,7 +275,7 @@ export default function BookingsTab({ user, profile, bookingsData }) {
       await cancelBooking(user.uid, booking.id)
       showToast(`Урок ${booking.date} о ${booking.time} скасовано`)
     } catch (e) {
-      alert('Помилка: ' + e.message)
+      showToast('Помилка: ' + e.message, 'error')
     }
   }
 
@@ -401,13 +404,13 @@ export default function BookingsTab({ user, profile, bookingsData }) {
       {toast && (
         <div style={{
           position:'fixed', bottom:90, left:'50%', transform:'translateX(-50%)',
-          background:'rgba(30,20,10,0.92)', color:'#f5e8d0',
-          padding:'10px 20px', borderRadius:12, fontSize:13, fontWeight:600,
-          boxShadow:'0 4px 20px rgba(0,0,0,0.4)', zIndex:9999,
-          border:'1px solid rgba(255,255,255,0.1)', whiteSpace:'nowrap',
-          animation:'fadeInUp .2s ease'
+          background:'var(--surface)', color: toast.type === 'error' ? 'var(--accent)' : 'var(--green)',
+          padding:'11px 18px', borderRadius:12, fontSize:13, fontWeight:600,
+          boxShadow:'var(--shadow)', zIndex:9999, maxWidth:340, width:'calc(100% - 32px)',
+          borderLeft: `3px solid ${toast.type === 'error' ? 'var(--accent)' : 'var(--green)'}`,
+          animation:'fadeInUp .2s ease', pointerEvents:'none',
         }}>
-          ✓ {toast}
+          {toast.type !== 'error' && '✓ '}{toast.msg}
         </div>
       )}
     </div>
