@@ -249,6 +249,7 @@ function RescheduleModal({ booking, user, profile, onClose, onDone }) {
 export default function BookingsTab({ user, profile, bookingsData }) {
   const { upcoming, completed, loading } = bookingsData
   const [rescheduleBooking, setRescheduleBooking] = useState(null)
+  const [cancelConfirmId, setCancelConfirmId] = useState(null)
   const [toast, setToast] = useState(null)
 
   const showToast = (msg, type = 'success') => {
@@ -270,7 +271,11 @@ export default function BookingsTab({ user, profile, bookingsData }) {
       showToast(`Скасувати урок можна не пізніше ніж за ${CANCEL_WINDOW_HOURS} год до початку. Зверніться до інструктора.`, 'error')
       return
     }
-    if (!confirm(`Скасувати урок ${booking.date} о ${booking.time}?`)) return
+    if (cancelConfirmId !== booking.id) {
+      setCancelConfirmId(booking.id)
+      return
+    }
+    setCancelConfirmId(null)
     try {
       await cancelBooking(user.uid, booking.id)
       showToast(`Урок ${booking.date} о ${booking.time} скасовано`)
@@ -349,13 +354,20 @@ export default function BookingsTab({ user, profile, bookingsData }) {
         {!isPast && b.status !== 'cancelled' && (
           <div className="booking-actions">
             <button className="action-btn" title="Перенести" onClick={() => setRescheduleBooking(b)}>📅</button>
-            <button
-              className="action-btn"
-              title={cancelLocked ? `Скасування доступне не пізніше ніж за ${CANCEL_WINDOW_HOURS} год` : 'Скасувати'}
-              onClick={() => handleCancel(b)}
-              disabled={cancelLocked}
-              style={cancelLocked ? { opacity: 0.4 } : {}}
-            >✕</button>
+            {cancelConfirmId === b.id ? (
+              <>
+                <button className="action-btn" style={{ color: '#e53935', fontSize: 11, padding: '2px 6px' }} onClick={() => handleCancel(b)}>Так</button>
+                <button className="action-btn" style={{ fontSize: 11, padding: '2px 6px' }} onClick={() => setCancelConfirmId(null)}>Ні</button>
+              </>
+            ) : (
+              <button
+                className="action-btn"
+                title={cancelLocked ? `Скасування доступне не пізніше ніж за ${CANCEL_WINDOW_HOURS} год` : 'Скасувати'}
+                onClick={() => handleCancel(b)}
+                disabled={cancelLocked}
+                style={cancelLocked ? { opacity: 0.4 } : {}}
+              >✕</button>
+            )}
           </div>
         )}
       </div>
