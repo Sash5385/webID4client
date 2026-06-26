@@ -313,7 +313,7 @@ export default function BookingsTab({ user, profile, bookingsData }) {
             {b.serviceType === 'school' ? '🎓' : '🚙'} {b.serviceName} · {b.durationHours || 1} год
             {(b.price > 0) && (
               <span style={{marginLeft:6, color:'var(--gold)', fontWeight:700}}>
-                {(b.price + (b.surcharge || 0))} ₴{b.surcharge > 0 ? ` (+${b.surcharge}₴)` : ''}
+                {b.price} ₴{b.surcharge > 0 ? ` (+${b.surcharge}₴)` : ''}
               </span>
             )}
           </div>
