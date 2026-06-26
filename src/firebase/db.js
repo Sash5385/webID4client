@@ -73,14 +73,18 @@ export async function getMyBookings(uid) {
 export function subscribeMyBookings(uid, phone, callback) {
   const r1 = ref(db, `bookings/${uid}`)
   const sanitizedPhone = (phone || '').replace(/\D/g, '')
+  // r2: legacy path (old admin-created guest bookings)
   const r2 = sanitizedPhone ? ref(db, `bookings_by_phone/${sanitizedPhone}`) : null
+  // r3: new path for admin-created guest bookings
+  const r3 = sanitizedPhone ? ref(db, `bookings/guest_${sanitizedPhone}`) : null
 
   let list1 = []
   let list2 = []
+  let list3 = []
 
   const merge = () => {
     const seen = new Set()
-    callback([...list1, ...list2].filter(b => {
+    callback([...list1, ...list2, ...list3].filter(b => {
       if (seen.has(b.id)) return false
       seen.add(b.id)
       return true
@@ -100,9 +104,18 @@ export function subscribeMyBookings(uid, phone, callback) {
     })
   }
 
+  let h3 = null
+  if (r3) {
+    h3 = onValue(r3, snap => {
+      list3 = snap.exists() ? Object.entries(snap.val()).map(([id, b]) => ({ id, ...b })) : []
+      merge()
+    })
+  }
+
   return () => {
     off(r1, 'value', h1)
     if (r2 && h2) off(r2, 'value', h2)
+    if (r3 && h3) off(r3, 'value', h3)
   }
 }
 
