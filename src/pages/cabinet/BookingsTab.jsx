@@ -391,6 +391,27 @@ export default function BookingsTab({ user, profile, bookingsData }) {
         </div>
       ) : (
         <>
+          {upcoming.length > 0 && (() => {
+            const next = upcoming[0]
+            const hrs = hoursUntilLesson(next)
+            const d = parseYMD(next.date)
+            const countdown = !isFinite(hrs) ? '' : hrs < 1 ? 'Менше за годину' : hrs < 24 ? `Через ${Math.round(hrs)} год` : `Через ${Math.ceil(hrs / 24)} дн`
+            return (
+              <div style={{borderRadius:18,background:'linear-gradient(135deg,rgba(99,155,255,0.1) 0%,rgba(120,80,255,0.06) 100%)',border:'1px solid rgba(99,155,255,0.18)',padding:'16px',marginBottom:16}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+                  <div style={{fontSize:11,color:'var(--dim)',fontWeight:700,textTransform:'uppercase',letterSpacing:1}}>Наступний урок</div>
+                  {countdown && <div style={{fontSize:11,fontWeight:800,color:'#6b9bff',background:'rgba(107,155,255,0.12)',padding:'3px 9px',borderRadius:8}}>{countdown}</div>}
+                </div>
+                <div style={{fontSize:28,fontWeight:900,color:'var(--text)',lineHeight:1}}>{next.time}</div>
+                <div style={{fontSize:14,fontWeight:700,color:'var(--text)',margin:'4px 0 2px'}}>{d.getDate()} {getMonthShort(d.getMonth())} · {next.serviceName}</div>
+                <div style={{fontSize:12,color:'var(--dim)',marginBottom:12}}>📍 Верховинна, 44 · {next.durationHours || 1} год</div>
+                <div className="booking-cal-row">
+                  <a href={googleCalendarLink(next)} target="_blank" rel="noopener noreferrer" className="cal-add-btn">Google Calendar</a>
+                  <button className="cal-add-btn" onClick={() => downloadICS(next)}>Apple Calendar</button>
+                </div>
+              </div>
+            )
+          })()}
           {upcoming.length > 0 && (
             <>
               <div className="section-title">Найближчі</div>
