@@ -318,7 +318,10 @@ export default function BookingsTab({ user, profile, bookingsData }) {
             )}
           </div>
           <div className="booking-meta">📍 Верховинна, 44</div>
-          <div className={`booking-status ${statusClass}`}>{statusText}</div>
+          <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+            <div className={`booking-status ${statusClass}`}>{statusText}</div>
+            {b.isPaid && <div style={{fontSize:10,fontWeight:700,color:"#63d37b",padding:"2px 7px",borderRadius:6,background:"rgba(99,211,120,0.12)"}}>✓ Оплачено</div>}
+          </div>
           {!isPast && b.status !== 'cancelled' && !b.studentConfirmed && (
             <button
               style={{ marginTop: 6, fontSize: 12, padding: '4px 10px',
