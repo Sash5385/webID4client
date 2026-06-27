@@ -276,6 +276,11 @@ export default function ProfileTab({ user, profile, onProfileUpdate }) {
             🎁 Ваш бонус: {profile.referralBonusLessons} бонусний урок{profile.referralBonusLessons > 1 ? "и" : ""}
           </div>
         )}
+        {(profile.lessonBalance || 0) > 0 && (
+          <div style={{textAlign:"center",fontSize:13,color:"#34d399",fontWeight:700,padding:"6px 0"}}>
+            🎓 Залишок уроків: {profile.lessonBalance}
+          </div>
+        )}
       </div>
 
       <div style={{textAlign:"center",padding:"12px 0 4px",color:"#5a5c62",fontSize:13,fontWeight:600,letterSpacing:0.5}}>
