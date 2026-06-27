@@ -5,6 +5,7 @@ import './NotifTab.css'
 const TYPE_META = {
   booking_confirmed:   { icon: '✅', label: 'Підтверджено', accent: 'green' },
   booking_cancelled:   { icon: '❌', label: 'Скасовано',    accent: 'red'   },
+  booking_noshow:      { icon: '⚠️', label: 'Пропущено',    accent: 'red'   },
   booking_rescheduled: { icon: '🔄', label: 'Перенесено',   accent: 'gold'  },
   queue_offer:         { icon: '🎉', label: 'Черга',        accent: 'blue'  },
   slot_freed:          { icon: '🚗', label: 'Слот вільний', accent: 'blue'  },
