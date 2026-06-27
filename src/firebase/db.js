@@ -128,6 +128,14 @@ export async function createBooking(uid, booking) {
     status: 'pending',
     createdAt: Date.now()
   })
+  push(ref(db, 'newBookingAlerts'), {
+    uid,
+    date: booking.date,
+    time: booking.time,
+    studentName: booking.studentName || '',
+    serviceName: booking.serviceName || '',
+    ts: Date.now(),
+  }).catch(() => {})
   return r.key
 }
 
