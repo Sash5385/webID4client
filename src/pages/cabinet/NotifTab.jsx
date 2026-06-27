@@ -8,6 +8,9 @@ const TYPE_META = {
   booking_rescheduled: { icon: '🔄', label: 'Перенесено',   accent: 'gold'  },
   queue_offer:         { icon: '🎉', label: 'Черга',        accent: 'blue'  },
   slot_freed:          { icon: '🚗', label: 'Слот вільний', accent: 'blue'  },
+  admin_message:       { icon: '📢', label: 'Від інструктора', accent: 'blue' },
+  lesson_reminder_day: { icon: '📅', label: 'Завтра урок', accent: 'gold'  },
+  reminder:            { icon: '🔔', label: 'Нагадування', accent: 'gold'  },
   system:              { icon: '🔔', label: 'Системне',     accent: 'dim'   },
 }
 
