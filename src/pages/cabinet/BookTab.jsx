@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { subscribeSlotsForDate, createBooking, joinQueue, leaveQueue, subscribeQueueForSlot, getAdminSettings, getAdminServices, markSlotsUnavailable, claimSlot, claimReservedSlot, setViewingSlot, clearViewingSlot, subscribeMonthAvailability } from '../../firebase/db'
-import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay } from '../../utils/date'
+import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay, parseYMD } from '../../utils/date'
 import { getInitials, pluralize } from '../../utils/format'
 import { googleCalendarLink, downloadICS } from '../../utils/calendar'
 import { useToast } from '../../hooks/useToast'
@@ -430,6 +430,33 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slots, durationHours, adminSettings, profile?.isVip, selectedDate, selectedService, bookingsData.upcoming])
 
+  const nextLesson = useMemo(() => {
+    const now = Date.now()
+    return (bookingsData?.upcoming || [])
+      .filter(b => b.status !== 'cancelled' && b.date && b.time)
+      .map(b => {
+        const d = parseYMD(b.date)
+        const [h, m] = b.time.split(':').map(Number)
+        d.setHours(h, m, 0, 0)
+        return { ...b, _ts: d.getTime() }
+      })
+      .filter(b => b._ts > now)
+      .sort((a, b) => a._ts - b._ts)[0] || null
+  }, [bookingsData?.upcoming])
+
+  const nextLessonLabel = useMemo(() => {
+    if (!nextLesson) return null
+    const ms = nextLesson._ts - Date.now()
+    const hours = ms / 3600000
+    if (hours < 1) return `через ${Math.ceil(ms / 60000)} хв`
+    if (hours < 24) return `сьогодні о ${nextLesson.time}`
+    if (hours < 48) return `завтра о ${nextLesson.time}`
+    const d = new Date(nextLesson._ts)
+    const DAY = ['нд','пн','вт','ср','чт','пт','сб']
+    const MON = ['','Січ','Лют','Бер','Кві','Тра','Чер','Лип','Сер','Вер','Жов','Лис','Гру']
+    return `${d.getDate()} ${MON[d.getMonth()+1]}, ${DAY[d.getDay()]} о ${nextLesson.time}`
+  }, [nextLesson])
+
   const QueueIcons = ({ n }) => {
     const max = Math.min(n, 3)
     return (
@@ -460,6 +487,25 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           </div>
         </div>
       </div>
+
+      {/* NEXT LESSON BANNER */}
+      {nextLesson && nextLessonLabel && (
+        <div style={{
+          background:'linear-gradient(135deg,rgba(91,155,255,0.13),rgba(37,99,235,0.08))',
+          border:'1px solid rgba(91,155,255,0.25)',
+          borderRadius:12, padding:'10px 14px',
+          display:'flex', alignItems:'center', gap:10, marginBottom:8,
+        }}>
+          <span style={{fontSize:22}}>📅</span>
+          <div style={{flex:1, minWidth:0}}>
+            <div style={{color:'#93c5fd', fontWeight:700, fontSize:13}}>Найближчий урок</div>
+            <div style={{color:'var(--text)', fontSize:12, marginTop:2}}>{nextLessonLabel}</div>
+          </div>
+          {nextLesson.status === 'pending' && (
+            <div style={{fontSize:10, fontWeight:700, color:'#fbbf24', background:'rgba(251,191,36,0.12)', padding:'2px 8px', borderRadius:6, flexShrink:0}}>очікує</div>
+          )}
+        </div>
+      )}
 
       {/* LESSON BALANCE BANNER */}
       {(profile?.lessonBalance > 0) && (
