@@ -254,6 +254,30 @@ export default function ProfileTab({ user, profile, onProfileUpdate }) {
         </a>
       </div>
 
+      <div className="profile-section">
+        <div className="section-title">🎁 Запросити друга</div>
+        <div style={{fontSize:13,color:"var(--dim)",marginBottom:10,lineHeight:1.5}}>
+          Поділіться посиланням — коли друг запишеться на перший урок, ви отримаєте бонусний урок!
+        </div>
+        <button
+          onClick={() => {
+            const link = `https://id4drive.pro/?ref=${user.uid}`;
+            navigator.clipboard.writeText(link)
+              .then(() => showToast("Посилання скопійовано!"))
+              .catch(() => showToast("Скопіюйте: " + link));
+          }}
+          className="edit-save"
+          style={{width:"100%",marginBottom:8}}
+        >
+          📋 Копіювати реферальне посилання
+        </button>
+        {(profile.referralBonusLessons || 0) > 0 && (
+          <div style={{textAlign:"center",fontSize:13,color:"#fbbf24",fontWeight:700,padding:"6px 0"}}>
+            🎁 Ваш бонус: {profile.referralBonusLessons} бонусний урок{profile.referralBonusLessons > 1 ? "и" : ""}
+          </div>
+        )}
+      </div>
+
       <div style={{textAlign:"center",padding:"12px 0 4px",color:"#5a5c62",fontSize:13,fontWeight:600,letterSpacing:0.5}}>
         {APP_VERSION}
       </div>

@@ -2,7 +2,7 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useEffect, useState, useRef } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from './firebase/config'
-import { getUserProfile, createBooking, markSlotsUnavailable, claimSlot } from './firebase/db'
+import { getUserProfile, updateUserProfile, createBooking, markSlotsUnavailable, claimSlot } from './firebase/db'
 import { requestNotificationPermission, onForegroundMessage, getFirebaseSwReg } from './firebase/push'
 import { useAppUpdate } from './hooks/useAppUpdate'
 import { useToast } from './hooks/useToast'
@@ -28,6 +28,13 @@ export default function App() {
         const p = await getUserProfile(u.uid)
         setProfile(p)
         requestNotificationPermission(u.uid).catch(() => {})
+        // Зберігаємо реферальний код якщо є ?ref= в URL
+        if (!p?.referredBy) {
+          const refParam = new URLSearchParams(window.location.search).get('ref')
+          if (refParam && refParam !== u.uid) {
+            updateUserProfile(u.uid, { referredBy: refParam }).catch(() => {})
+          }
+        }
       } else {
         setProfile(null)
       }
