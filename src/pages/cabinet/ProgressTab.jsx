@@ -107,6 +107,36 @@ export default function ProgressTab({ user, profile, bookingsData }) {
         </div>
       </div>
 
+      {totalLessons > 0 && (
+        <div className="progress-hero" style={{ marginTop: 14 }}>
+          <div className="progress-title" style={{ marginBottom: 10 }}>🏅 Досягнення</div>
+          <div style={{ display:'flex', gap:8, overflowX:'auto', paddingBottom:4 }}>
+            {[
+              { emoji:'🎓', label:'1 урок',    earned: totalLessons >= 1 },
+              { emoji:'🌱', label:'5 уроків',  earned: totalLessons >= 5 },
+              { emoji:'🚗', label:'10 уроків', earned: totalLessons >= 10 },
+              { emoji:'🏆', label:'20 уроків', earned: totalLessons >= 20 },
+              { emoji:'🌟', label:'30 уроків', earned: totalLessons >= 30 },
+              ...(isSchool ? [
+                { emoji:'🔓', label:'40 год',  earned: schoolHours >= 40 },
+                { emoji:'📋', label:'Іспит',   earned: examPassed === true },
+              ] : []),
+            ].map(({ emoji, label, earned }) => (
+              <div key={label} style={{
+                flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', gap:4,
+                padding:'8px 10px', borderRadius:12,
+                background: earned ? 'rgba(251,191,36,0.12)' : 'rgba(255,255,255,0.04)',
+                border: earned ? '1px solid rgba(251,191,36,0.3)' : '1px solid rgba(255,255,255,0.07)',
+                opacity: earned ? 1 : 0.45,
+              }}>
+                <span style={{ fontSize:22, lineHeight:1 }}>{emoji}</span>
+                <span style={{ fontSize:10, fontWeight:700, color: earned ? '#fbbf24' : 'var(--dim)', whiteSpace:'nowrap' }}>{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {isSchool && (
         <div className="progress-hero" style={{ marginTop: 14 }}>
           <div className="progress-title" style={{ marginBottom: 14 }}>Внутрішній іспит</div>
