@@ -326,6 +326,14 @@ export default function BookingsTab({ user, profile, bookingsData }) {
             <div className={`booking-status ${statusClass}`}>{statusText}</div>
             {b.isPaid && <div style={{fontSize:10,fontWeight:700,color:"#63d37b",padding:"2px 7px",borderRadius:6,background:"rgba(99,211,120,0.12)"}}>✓ Оплачено</div>}
           </div>
+          {isPast && b.status === 'confirmed' && b.instructorNote && (
+            <div style={{marginTop:6,padding:'7px 10px',borderRadius:9,
+              background:'rgba(59,130,246,0.08)',border:'1px solid rgba(59,130,246,0.2)',
+              fontSize:11,color:'var(--text)',lineHeight:1.5}}>
+              <span style={{fontSize:9,fontWeight:700,color:'rgba(96,165,250,0.8)',display:'block',marginBottom:2}}>📝 Нотатка інструктора</span>
+              {b.instructorNote}
+            </div>
+          )}
           {!isPast && b.status !== 'cancelled' && !b.studentConfirmed && (
             <button
               style={{ marginTop: 6, fontSize: 12, padding: '4px 10px',
