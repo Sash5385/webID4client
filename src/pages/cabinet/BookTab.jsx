@@ -461,6 +461,28 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         </div>
       </div>
 
+      {/* LESSON BALANCE BANNER */}
+      {(profile?.lessonBalance > 0) && (
+        <div style={{
+          background:'linear-gradient(135deg, #16a34a22, #4ade8022)',
+          border:'1px solid #4ade8044',
+          borderRadius:12,
+          padding:'10px 14px',
+          display:'flex',
+          alignItems:'center',
+          gap:10,
+          marginBottom:8,
+        }}>
+          <span style={{fontSize:22}}>🎫</span>
+          <div>
+            <div style={{color:'#4ade80', fontWeight:600, fontSize:14}}>
+              Передоплачено {profile.lessonBalance} {profile.lessonBalance === 1 ? 'урок' : profile.lessonBalance < 5 ? 'уроки' : 'уроків'}
+            </div>
+            <div style={{color:'var(--dim)', fontSize:12}}>Бронюйте — уроки вже оплачені</div>
+          </div>
+        </div>
+      )}
+
       {/* 1. ПОСЛУГА */}
       <div className="section-title" style={{color:'#ffffff', fontSize:13, textAlign:'center'}}>1. Послуга</div>
       {!servicesLoaded ? (
