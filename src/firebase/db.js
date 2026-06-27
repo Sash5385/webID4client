@@ -441,3 +441,21 @@ export function clearNotification(uid, notifId) {
 export function clearAllNotifications(uid) {
   return remove(ref(db, `notifications/${uid}`))
 }
+
+export async function sendWelcomeIfEnabled(uid) {
+  try {
+    const [settingsSnap, userSnap] = await Promise.all([
+      get(ref(db, 'admin_settings/autoWelcome')),
+      get(ref(db, `users/${uid}/welcomeSent`)),
+    ])
+    if (!settingsSnap.exists() || settingsSnap.val()?.enabled === false) return
+    if (userSnap.exists()) return
+    const _n = new Date()
+    const _dl = `${String(_n.getDate()).padStart(2,'0')}.${String(_n.getMonth()+1).padStart(2,'0')}`
+    const _tl = `${String(_n.getHours()).padStart(2,'0')}:${String(_n.getMinutes()).padStart(2,'0')}`
+    await Promise.all([
+      push(ref(db, `notifications/${uid}`), { type:'system', title:'Вітаємо в ID4Drive! 🎉', body:'Ваш профіль підключено. Забронюйте перший урок у вкладці «Запис».', date:_dl, time:_tl, ts:Date.now() }),
+      update(ref(db, `users/${uid}`), { welcomeSent: true }),
+    ])
+  } catch (_) {}
+}

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { sendSmsCode, verifySmsCode, resetRecaptcha, getSmsErrorMessage, renderRecaptcha, isIOSDevice, isInAppBrowser } from '../firebase/auth'
 import { signInWithEmail, signUpWithEmail, sendPasswordReset, signInWithGoogle } from '../firebase/auth-email'
-import { saveUserProfile, getUserProfile } from '../firebase/db'
+import { saveUserProfile, getUserProfile, sendWelcomeIfEnabled } from '../firebase/db'
 import { useTheme } from '../hooks/useTheme'
 import { useToast } from '../hooks/useToast'
 import { normalizePhone, formatPhone } from '../utils/format'
@@ -251,6 +251,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
       }
 
       await saveUserProfile(uid, data)
+      sendWelcomeIfEnabled(uid).catch(() => {})
       if (onProfileSaved) await onProfileSaved()
       nav('/cabinet')
     } catch (e) {
