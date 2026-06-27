@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useToast } from '../../hooks/useToast'
-import { cancelBooking, confirmAttendance, createBooking, markSlotsUnavailable, claimSlot, subscribeSlotsForDate, getAdminSettings, subscribeMonthAvailability } from '../../firebase/db'
+import { cancelBooking, confirmAttendance, rateBooking, createBooking, markSlotsUnavailable, claimSlot, subscribeSlotsForDate, getAdminSettings, subscribeMonthAvailability } from '../../firebase/db'
 import { parseYMD, getMonthShort, getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay, formatDateLabel } from '../../utils/date'
 import { googleCalendarLink, downloadICS } from '../../utils/calendar'
 import './BookingsTab.css'
@@ -332,6 +332,22 @@ export default function BookingsTab({ user, profile, bookingsData }) {
               fontSize:11,color:'var(--text)',lineHeight:1.5}}>
               <span style={{fontSize:9,fontWeight:700,color:'rgba(96,165,250,0.8)',display:'block',marginBottom:2}}>📝 Нотатка інструктора</span>
               {b.instructorNote}
+            </div>
+          )}
+          {isPast && b.status === 'confirmed' && (
+            <div style={{marginTop:6,display:'flex',alignItems:'center',gap:4}}>
+              <span style={{fontSize:10,color:'var(--dim)',marginRight:2}}>Оцінка:</span>
+              {[1,2,3,4,5].map(star => (
+                <span
+                  key={star}
+                  onClick={() => rateBooking(user.uid, b.id, star).catch(()=>{})}
+                  style={{
+                    fontSize:18, cursor:'pointer', lineHeight:1,
+                    color: (b.rating || 0) >= star ? '#fbbf24' : 'rgba(255,255,255,0.15)',
+                    transition:'color 0.15s',
+                  }}
+                >★</span>
+              ))}
             </div>
           )}
           {!isPast && b.status !== 'cancelled' && !b.studentConfirmed && (
