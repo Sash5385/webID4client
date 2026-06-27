@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { subscribeSlotsForDate, createBooking, joinQueue, leaveQueue, subscribeQueueForSlot, getAdminSettings, getAdminServices, markSlotsUnavailable, claimSlot, claimReservedSlot, setViewingSlot, clearViewingSlot, subscribeMonthAvailability } from '../../firebase/db'
 import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay } from '../../utils/date'
 import { getInitials, pluralize } from '../../utils/format'
+import { googleCalendarLink, downloadICS } from '../../utils/calendar'
 import { useToast } from '../../hooks/useToast'
 import './BookTab.css'
 
@@ -758,6 +759,22 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                 </div>
               )}
             </div>
+            {successData.type === 'booking' && (
+              <div style={{display:'flex', gap:8, padding:'0 4px 4px'}}>
+                <a
+                  href={googleCalendarLink({ date:successData.date, time:successData.time, durationHours:successData.durationHours, serviceName:successData.service?.name || successData.service })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="dialog-btn"
+                  style={{flex:1, textDecoration:'none', textAlign:'center', fontSize:13}}
+                >📅 Google</a>
+                <button
+                  className="dialog-btn"
+                  style={{flex:1, fontSize:13}}
+                  onClick={() => downloadICS({ date:successData.date, time:successData.time, durationHours:successData.durationHours, serviceName:successData.service?.name || successData.service })}
+                >🍎 Apple</button>
+              </div>
+            )}
             <div className="dialog-actions">
               <button className="dialog-btn primary" onClick={() => setSuccessData(null)}>Закрити</button>
             </div>
