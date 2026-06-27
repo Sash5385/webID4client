@@ -55,6 +55,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   const [dialogSlot, setDialogSlot] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [successData, setSuccessData] = useState(null) // {type:'booking'|'queue', date, time, service, duration}
+  const [studentNote, setStudentNote] = useState("")
 
   useEffect(() => {
     getAdminSettings().then(s => setAdminSettings(s)).catch(() => {})
@@ -267,7 +268,9 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         studentName: profile.name,
         phone: profile.phone || user.phoneNumber,
         tscCenter: profile.tscCenter,
+        studentNote: studentNote.trim() || undefined,
       })
+      setStudentNote("")
       await markSlotsUnavailable(dateStr, selectedTime, durationHours, adminSettings.interval || 30)
       if (isOfferedToMe) {
         await claimReservedSlot(dateStr, selectedTime, user.uid)
@@ -677,7 +680,21 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                 {discountPct > 0 && <span style={{marginLeft:6, color:'#4ade80', fontSize:11}}>−{discountPct}%</span>}
               </div>
             ) : null}
-            <button className="btn-primary" style={{marginTop:10}} onClick={handleBook} disabled={submitting}>
+            <textarea
+              value={studentNote}
+              onChange={e => setStudentNote(e.target.value)}
+              placeholder="Коментар для інструктора (необов'язково)…"
+              maxLength={120}
+              rows={2}
+              style={{
+                width:'100%', marginTop:10, padding:'10px 12px',
+                borderRadius:12, border:'1px solid rgba(255,255,255,0.1)',
+                background:'rgba(255,255,255,0.04)', color:'var(--text)',
+                fontSize:13, fontFamily:'inherit', resize:'none',
+                boxSizing:'border-box', outline:'none',
+              }}
+            />
+            <button className="btn-primary" style={{marginTop:8}} onClick={handleBook} disabled={submitting}>
               {submitting ? 'Записуємо...' : `✓ Записатись ${dateLabel} о ${selectedTime}${totalPrice ? ` · ${totalPrice}₴` : ''}`}
             </button>
           </>
