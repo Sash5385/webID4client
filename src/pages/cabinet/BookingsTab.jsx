@@ -251,6 +251,10 @@ export default function BookingsTab({ user, profile, bookingsData }) {
   const [rescheduleBooking, setRescheduleBooking] = useState(null)
   const [cancelConfirmId, setCancelConfirmId] = useState(null)
   const [toast, setToast] = useState(null)
+  const totalDebt = useMemo(
+    () => completed.filter(b => b.status === 'confirmed' && !b.isPaid && b.price > 0).reduce((s, b) => s + (b.price || 0), 0),
+    [completed]
+  )
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type })
@@ -391,6 +395,15 @@ export default function BookingsTab({ user, profile, bookingsData }) {
         </div>
       ) : (
         <>
+          {totalDebt > 0 && (
+            <div style={{borderRadius:14,background:'rgba(239,68,68,0.07)',border:'1px solid rgba(239,68,68,0.2)',padding:'12px 14px',marginBottom:12,display:'flex',alignItems:'center',gap:10}}>
+              <div style={{fontSize:22,flexShrink:0}}>💳</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,fontWeight:800,color:'#fca5a5'}}>Заборгованість: {totalDebt} ₴</div>
+                <div style={{fontSize:11,color:'var(--dim)',marginTop:2}}>Зверніться до інструктора для оплати</div>
+              </div>
+            </div>
+          )}
           {upcoming.length > 0 && (() => {
             const next = upcoming[0]
             const hrs = hoursUntilLesson(next)
