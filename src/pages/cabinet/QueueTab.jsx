@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { subscribeUserQueue, leaveQueue } from '../../firebase/db'
+import { subscribeUserQueue, leaveQueue, claimQueueOffer, declineQueueOffer } from '../../firebase/db'
 import { formatDateLabel, parseYMD } from '../../utils/date'
 import { useToast } from '../../hooks/useToast'
 
@@ -15,10 +15,12 @@ function formatSlotDate(dateStr) {
   } catch { return dateStr }
 }
 
-export default function QueueTab({ user }) {
+export default function QueueTab({ user, profile }) {
   const { showToast, ToastEl } = useToast()
   const [slots, setSlots] = useState(null)
   const [leaving, setLeaving] = useState(null)
+  const [accepting, setAccepting] = useState(null)
+  const [declining, setDeclining] = useState(null)
 
   useEffect(() => {
     if (!user?.uid) return
@@ -33,6 +35,29 @@ export default function QueueTab({ user }) {
       showToast('Помилка: ' + e.message)
     } finally {
       setLeaving(null)
+    }
+  }
+
+  const handleAccept = async (slot) => {
+    setAccepting(slot.slotKey)
+    try {
+      await claimQueueOffer(user.uid, slot.slotKey, { date: slot.date, time: slot.time }, profile)
+      showToast('✓ Урок заброньовано!')
+    } catch (e) {
+      showToast('Помилка: ' + e.message)
+    } finally {
+      setAccepting(null)
+    }
+  }
+
+  const handleDecline = async (slot) => {
+    setDeclining(slot.slotKey)
+    try {
+      await declineQueueOffer(user.uid, slot.slotKey, slot.date, slot.time)
+    } catch (e) {
+      showToast('Помилка: ' + e.message)
+    } finally {
+      setDeclining(null)
     }
   }
 
@@ -65,8 +90,11 @@ export default function QueueTab({ user }) {
       </div>
 
       {active.map(slot => {
-        const isOffered = slot.status === 'offered'
-        const isLeaving = leaving === slot.slotKey
+        const isOffered   = slot.status === 'offered'
+        const isLeaving   = leaving   === slot.slotKey
+        const isAccepting = accepting === slot.slotKey
+        const isDeclining = declining === slot.slotKey
+        const busy = isLeaving || isAccepting || isDeclining
         return (
           <div key={slot.slotKey} style={{
             background: isOffered
@@ -92,7 +120,7 @@ export default function QueueTab({ user }) {
                   background:'rgba(99,211,120,0.2)', color:'var(--green)',
                   borderRadius:8, padding:'4px 10px',
                   fontSize:11, fontWeight:700,
-                }}>Запрошено</div>
+                }}>🎉 Запрошено</div>
               ) : (
                 <div style={{
                   background:'rgba(255,255,255,0.06)', color:'var(--dim)',
@@ -102,21 +130,52 @@ export default function QueueTab({ user }) {
               )}
             </div>
 
-            {/* Leave button */}
-            <button
-              onClick={() => handleLeave(slot)}
-              disabled={isLeaving}
-              style={{
-                width:'100%', padding:'10px',
-                borderRadius:10, border:'none', cursor:'pointer',
-                background:'rgba(239,68,68,0.1)', color:'#f87171',
-                fontSize:13, fontWeight:700,
-                opacity: isLeaving ? 0.5 : 1,
-                transition:'opacity .15s',
-              }}
-            >
-              {isLeaving ? 'Виходжу...' : 'Вийти з черги'}
-            </button>
+            {isOffered ? (
+              <div style={{ display:'flex', gap:8 }}>
+                <button
+                  onClick={() => handleAccept(slot)}
+                  disabled={busy}
+                  style={{
+                    flex:1, padding:'10px',
+                    borderRadius:10, border:'none', cursor:'pointer',
+                    background:'rgba(99,211,120,0.2)', color:'var(--green)',
+                    fontSize:13, fontWeight:700,
+                    opacity: busy ? 0.5 : 1,
+                    transition:'opacity .15s',
+                  }}
+                >
+                  {isAccepting ? 'Бронюю...' : '✓ Прийняти'}
+                </button>
+                <button
+                  onClick={() => handleDecline(slot)}
+                  disabled={busy}
+                  style={{
+                    flex:1, padding:'10px',
+                    borderRadius:10, border:'none', cursor:'none', cursor:'pointer',
+                    background:'rgba(239,68,68,0.1)', color:'#f87171',
+                    fontSize:13, fontWeight:700,
+                    opacity: busy ? 0.5 : 1, transition:'opacity .15s',
+                  }}
+                >
+                  {isDeclining ? 'Відхиляю...' : '✕ Відхилити'}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => handleLeave(slot)}
+                disabled={isLeaving}
+                style={{
+                  width:'100%', padding:'10px',
+                  borderRadius:10, border:'none', cursor:'pointer',
+                  background:'rgba(239,68,68,0.1)', color:'#f87171',
+                  fontSize:13, fontWeight:700,
+                  opacity: isLeaving ? 0.5 : 1,
+                  transition:'opacity .15s',
+                }}
+              >
+                {isLeaving ? 'Виходжу...' : 'Вийти з черги'}
+              </button>
+            )}
           </div>
         )
       })}

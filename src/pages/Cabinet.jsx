@@ -242,7 +242,7 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
           <Route path="/" element={<BookTab user={user} profile={profile} bookingsData={bookingsData} notifParams={notifParams} />} />
           <Route path="/bookings" element={<BookingsTab user={user} profile={profile} bookingsData={bookingsData} />} />
           <Route path="/progress" element={<ProgressTab user={user} profile={profile} bookingsData={bookingsData} />} />
-          <Route path="/queue" element={<QueueTab user={user} />} />
+          <Route path="/queue" element={<QueueTab user={user} profile={profile} />} />
           <Route path="/chat" element={<ChatTab user={user} profile={profile} />} />
           <Route path="/notifications" element={<NotifTab user={user} onSeen={markNotifsSeen} />} />
           <Route path="/profile" element={<ProfileTab user={user} profile={profile} bookingsData={bookingsData} onProfileUpdate={onProfileUpdate} />} />
