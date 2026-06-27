@@ -277,7 +277,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         await claimReservedSlot(dateStr, selectedTime, user.uid)
       }
       setSelectedTime(null)
-      setSuccessData({ type: 'booking', date: formatDateYMD(selectedDate), time: selectedTime, service: selectedService, surcharge, durationHours })
+      setSuccessData({ type: 'booking', date: formatDateYMD(selectedDate), time: selectedTime, service: selectedService, surcharge, durationHours, pending: !!adminSettings.pendingEnabled })
     } catch (e) {
       showToast('Помилка: ' + e.message)
     } finally {
@@ -724,8 +724,13 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
               )}
             </div>
             <div className="dialog-title">
-              {successData.type === 'booking' ? 'Урок заброньовано!' : 'Ти в черзі!'}
+              {successData.type === 'booking'
+                ? (successData.pending ? 'Запит надіслано!' : 'Урок заброньовано!')
+                : 'Ти в черзі!'}
             </div>
+            {successData.type === 'booking' && successData.pending && (
+              <div className="dialog-sub">Очікуйте підтвердження від інструктора.</div>
+            )}
             {successData.type === 'queue' && (
               <div className="dialog-sub">Як тільки слот звільниться — отримаєте push-сповіщення.</div>
             )}
