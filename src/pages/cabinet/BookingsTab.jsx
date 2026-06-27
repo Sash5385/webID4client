@@ -251,6 +251,10 @@ export default function BookingsTab({ user, profile, bookingsData }) {
   const [rescheduleBooking, setRescheduleBooking] = useState(null)
   const [cancelConfirmId, setCancelConfirmId] = useState(null)
   const [toast, setToast] = useState(null)
+  const [adminCfg, setAdminCfg] = useState({ bookCutoffHours: 24, studentCanCancel: true })
+  useEffect(() => { getAdminSettings().then(s => setAdminCfg(s)).catch(() => {}) }, [])
+  const cancelCutoff = adminCfg.bookCutoffHours ?? 24
+  const cancelAllowed = adminCfg.studentCanCancel !== false
   const totalDebt = useMemo(
     () => completed.filter(b => b.status === 'confirmed' && !b.isPaid && b.price > 0).reduce((s, b) => s + (b.price || 0), 0),
     [completed]
@@ -271,8 +275,8 @@ export default function BookingsTab({ user, profile, bookingsData }) {
   }
 
   const handleCancel = async (booking) => {
-    if (hoursUntilLesson(booking) < CANCEL_WINDOW_HOURS) {
-      showToast(`Скасувати урок можна не пізніше ніж за ${CANCEL_WINDOW_HOURS} год до початку. Зверніться до інструктора.`, 'error')
+    if (!cancelAllowed || hoursUntilLesson(booking) < cancelCutoff) {
+      showToast(`Скасувати урок можна не пізніше ніж за ${cancelCutoff} год до початку. Зверніться до інструктора.`, 'error')
       return
     }
     if (cancelConfirmId !== booking.id) {
@@ -297,7 +301,7 @@ export default function BookingsTab({ user, profile, bookingsData }) {
           return `${String(Math.floor(total / 60)).padStart(2,'0')}:${String(total % 60).padStart(2,'0')}`
         })()
       : null
-    const cancelLocked = hoursUntilLesson(b) < CANCEL_WINDOW_HOURS
+    const cancelLocked = !cancelAllowed || hoursUntilLesson(b) < cancelCutoff
     const statusClass = b.status === 'confirmed' ? 'status-confirmed'
       : b.status === 'cancelled' ? 'status-cancelled' : 'status-pending'
     const statusText = b.status === 'confirmed' ? (isPast ? 'Завершено' : 'Підтверджено')
@@ -366,9 +370,9 @@ export default function BookingsTab({ user, profile, bookingsData }) {
               ✓ Ви підтвердили присутність
             </div>
           )}
-          {!isPast && b.status !== 'cancelled' && cancelLocked && (
+          {!isPast && b.status !== 'cancelled' && cancelLocked && cancelAllowed && (
             <div className="booking-meta" style={{ color: 'var(--dim)', marginTop: 4 }}>
-              ⏳ Скасування — не пізніше ніж за {CANCEL_WINDOW_HOURS} год
+              ⏳ Скасування — не пізніше ніж за {cancelCutoff} год
             </div>
           )}
           {!isPast && b.status !== 'cancelled' && (
@@ -393,7 +397,7 @@ export default function BookingsTab({ user, profile, bookingsData }) {
             ) : (
               <button
                 className="action-btn"
-                title={cancelLocked ? `Скасування доступне не пізніше ніж за ${CANCEL_WINDOW_HOURS} год` : 'Скасувати'}
+                title={cancelLocked ? `Скасування доступне не пізніше ніж за ${cancelCutoff} год` : 'Скасувати'}
                 onClick={() => handleCancel(b)}
                 disabled={cancelLocked}
                 style={cancelLocked ? { opacity: 0.4 } : {}}
