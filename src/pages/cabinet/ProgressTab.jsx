@@ -4,6 +4,13 @@ import { ref, onValue } from "firebase/database";
 import { db } from "../../firebase/config";
 import "./ProgressTab.css";
 
+const getWeekStart = dateStr => {
+  const d = new Date(dateStr + 'T12:00:00');
+  const dow = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - dow);
+  return d.toISOString().slice(0, 10);
+};
+
 export default function ProgressTab({ user, profile, bookingsData }) {
   const navigate = useNavigate()
   const { bookings, schoolHours, manualHours, canBookPrivate } = bookingsData || { bookings: [], schoolHours: 0, manualHours: 0, canBookPrivate: false };
@@ -30,6 +37,23 @@ export default function ProgressTab({ user, profile, bookingsData }) {
   const totalLessons = completed.length;
   const schoolLessons = completed.filter(b => b.serviceType === "school").length;
   const privateLessons = completed.filter(b => b.serviceType === "private").length;
+
+  const lessonStreak = useMemo(() => {
+    if (!completed.length) return 0;
+    const weeksWithLessons = new Set(completed.map(b => getWeekStart(b.date)));
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const dow = (today.getDay() + 6) % 7;
+    const thisWeekMs = today.getTime() - dow * 86400000;
+    const thisWeek = new Date(thisWeekMs).toISOString().slice(0, 10);
+    let streak = 0;
+    const startIdx = weeksWithLessons.has(thisWeek) ? 0 : 1;
+    for (let i = startIdx; i < 52; i++) {
+      const key = new Date(thisWeekMs - i * 7 * 86400000).toISOString().slice(0, 10);
+      if (weeksWithLessons.has(key)) streak++;
+      else break;
+    }
+    return streak;
+  }, [completed]);
 
   // Радіус кола
   const R = 70;
@@ -133,6 +157,19 @@ export default function ProgressTab({ user, profile, bookingsData }) {
                 <span style={{ fontSize:10, fontWeight:700, color: earned ? '#fbbf24' : 'var(--dim)', whiteSpace:'nowrap' }}>{label}</span>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {lessonStreak >= 2 && (
+        <div className="progress-hero" style={{ marginTop: 14 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+            <div style={{ fontSize:36, lineHeight:1 }}>🔥</div>
+            <div>
+              <div style={{ fontSize:18, fontWeight:900, color:'#fb923c', lineHeight:1 }}>{lessonStreak}</div>
+              <div style={{ fontSize:12, fontWeight:700, color:'#fb923c' }}>тижні поспіль</div>
+              <div style={{ fontSize:11, color:'var(--dim)', marginTop:3 }}>Чудова регулярність!</div>
+            </div>
           </div>
         </div>
       )}
