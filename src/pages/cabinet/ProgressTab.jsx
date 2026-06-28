@@ -41,6 +41,8 @@ export default function ProgressTab({ user, profile, bookingsData }) {
   const attendanceRate = totalLessons + noShowCount > 2
     ? Math.round(totalLessons / (totalLessons + noShowCount) * 100)
     : null;
+  const totalSpent = useMemo(() => completed.filter(b => b.isPaid && b.price > 0).reduce((s, b) => s + (b.price || 0), 0), [completed]);
+  const totalDebt = useMemo(() => completed.filter(b => !b.isPaid && b.price > 0).reduce((s, b) => s + (b.price || 0), 0), [completed]);
 
   const lessonStreak = useMemo(() => {
     if (!completed.length) return 0;
@@ -147,6 +149,26 @@ export default function ProgressTab({ user, profile, bookingsData }) {
           )}
         </div>
       </div>
+
+      {(totalSpent > 0 || totalDebt > 0) && (
+        <div className="progress-hero" style={{ marginTop: 14 }}>
+          <div className="progress-title" style={{ marginBottom: 10 }}>💰 Фінанси</div>
+          <div className="stat-row">
+            {totalSpent > 0 && (
+              <div className="stat-btn">
+                <div className="num" style={{ color:'#63d37b', fontSize:14 }}>{totalSpent.toLocaleString()} ₴</div>
+                <div className="lbl">оплачено</div>
+              </div>
+            )}
+            {totalDebt > 0 && (
+              <div className="stat-btn">
+                <div className="num" style={{ color:'#f87171', fontSize:14 }}>{totalDebt.toLocaleString()} ₴</div>
+                <div className="lbl">борг</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {nextLessonWithGoals && (
         <div className="progress-hero" style={{ marginTop: 14 }}>
