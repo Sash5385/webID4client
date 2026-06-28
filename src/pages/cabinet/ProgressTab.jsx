@@ -103,6 +103,24 @@ export default function ProgressTab({ user, profile, bookingsData }) {
           </div>
         );
       })()}
+      {(profile?.lessonBalance || 0) > 0 && (
+        <div className="progress-hero" style={{
+          marginBottom:14,
+          background:'linear-gradient(135deg,rgba(74,222,128,0.14),rgba(74,222,128,0.06))',
+          border:'1px solid rgba(74,222,128,0.3)',
+        }}>
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
+            <span style={{fontSize:28,lineHeight:1}}>🎓</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:11,color:'#4ade80',fontWeight:700,textTransform:'uppercase',letterSpacing:1,marginBottom:3}}>Залишок уроків</div>
+              <div style={{fontSize:18,fontWeight:900,color:'var(--text)'}}>
+                {profile.lessonBalance} {profile.lessonBalance === 1 ? 'урок' : profile.lessonBalance < 5 ? 'уроки' : 'уроків'}
+              </div>
+              <div style={{fontSize:12,color:'var(--dim)',marginTop:2}}>Передоплачених занять</div>
+            </div>
+          </div>
+        </div>
+      )}
       {isSchool && (
         <div className="progress-hero">
           <div className="progress-circle-wrap">
