@@ -37,6 +37,10 @@ export default function ProgressTab({ user, profile, bookingsData }) {
   const totalLessons = completed.length;
   const schoolLessons = completed.filter(b => b.serviceType === "school").length;
   const privateLessons = completed.filter(b => b.serviceType === "private").length;
+  const noShowCount = useMemo(() => bookings.filter(b => b.status === 'noshow').length, [bookings]);
+  const attendanceRate = totalLessons + noShowCount > 2
+    ? Math.round(totalLessons / (totalLessons + noShowCount) * 100)
+    : null;
 
   const lessonStreak = useMemo(() => {
     if (!completed.length) return 0;
@@ -135,6 +139,12 @@ export default function ProgressTab({ user, profile, bookingsData }) {
             <div className="num">{privateLessons}</div>
             <div className="lbl">приватні</div>
           </div>
+          {attendanceRate !== null && (
+            <div className="stat-btn">
+              <div className="num" style={{color: attendanceRate >= 90 ? '#63d37b' : attendanceRate >= 70 ? '#f6b21b' : '#f87171'}}>{attendanceRate}%</div>
+              <div className="lbl">явка</div>
+            </div>
+          )}
         </div>
       </div>
 
