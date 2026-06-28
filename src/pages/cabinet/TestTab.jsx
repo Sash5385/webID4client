@@ -571,6 +571,7 @@ function Start({ onStart }) {
   const [theme, setTheme] = useState("all")
   const [level, setLevel] = useState("all")
   const [timed, setTimed] = useState(false)
+  const [best] = useState(() => { try { return JSON.parse(localStorage.getItem('id4quiz_best') || 'null') } catch { return null } })
   const count = S.filter(s => (theme==="all"||s.theme===theme) && (level==="all"||s.level===level)).length
   return (
     <div className="card">
@@ -580,6 +581,15 @@ function Start({ onStart }) {
           Проїзд перехресть
           <small style={{fontSize:13}}>Хто проїде першим — за ПДР України</small>
         </div>
+        {best && (
+          <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',marginBottom:10,background:'rgba(246,178,27,0.08)',border:'1px solid rgba(246,178,27,0.22)',borderRadius:12}}>
+            <span style={{fontSize:20,lineHeight:1}}>🏆</span>
+            <div>
+              <div style={{fontSize:10,color:'var(--q-yellow2)',fontWeight:700,textTransform:'uppercase',letterSpacing:0.5,marginBottom:2}}>Найкращий результат</div>
+              <div style={{fontSize:14,fontWeight:800,color:'var(--q-text)'}}>{best.score}/{best.total} · {Math.round(best.p * 100)}%</div>
+            </div>
+          </div>
+        )}
         <div className="lbl2">Тема</div>
         <div className="grid">
           {Object.entries(THEMES).map(([k,v]) => (
@@ -621,6 +631,15 @@ function Quiz({ cfg, onExit }) {
   const [timeLeft, setTimeLeft] = useState(SEC)
   const total = deck.length
   const sc = deck[i]
+
+  useEffect(() => {
+    if (!done) return
+    try {
+      const p = total ? score / total : 0
+      const prev = JSON.parse(localStorage.getItem('id4quiz_best') || '{"p":0}')
+      if (p > (prev.p || 0)) localStorage.setItem('id4quiz_best', JSON.stringify({ score, total, p, ts: Date.now() }))
+    } catch {}
+  }, [done])
 
   useEffect(() => {
     if (!cfg.timed || sel !== null) return
