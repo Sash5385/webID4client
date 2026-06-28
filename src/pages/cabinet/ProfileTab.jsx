@@ -273,18 +273,32 @@ export default function ProfileTab({ user, profile, onProfileUpdate }) {
         <div style={{fontSize:13,color:"var(--dim)",marginBottom:10,lineHeight:1.5}}>
           Поділіться посиланням — коли друг запишеться на перший урок, ви отримаєте бонусний урок!
         </div>
-        <button
-          onClick={() => {
-            const link = `https://id4drive.pro/?ref=${user.uid}`;
-            navigator.clipboard.writeText(link)
-              .then(() => showToast("Посилання скопійовано!"))
-              .catch(() => showToast("Скопіюйте: " + link));
-          }}
-          className="edit-save"
-          style={{width:"100%",marginBottom:8}}
-        >
-          📋 Копіювати реферальне посилання
-        </button>
+        <div style={{display:"flex",gap:8,marginBottom:8}}>
+          <button
+            onClick={() => {
+              const link = `https://id4drive.pro/?ref=${user.uid}`;
+              navigator.clipboard.writeText(link)
+                .then(() => showToast("Посилання скопійовано!"))
+                .catch(() => showToast("Скопіюйте: " + link));
+            }}
+            className="edit-save"
+            style={{flex:1}}
+          >
+            📋 Копіювати
+          </button>
+          {typeof navigator !== 'undefined' && navigator.share && (
+            <button
+              onClick={() => {
+                const link = `https://id4drive.pro/?ref=${user.uid}`;
+                navigator.share({ title: 'ID4Drive', text: 'Запишись на уроки водіння!', url: link }).catch(() => {});
+              }}
+              className="edit-save"
+              style={{flex:1,background:'rgba(99,155,255,0.18)',color:'#6b9bff'}}
+            >
+              📤 Поділитись
+            </button>
+          )}
+        </div>
         {(profile.referralBonusLessons || 0) > 0 && (
           <div style={{textAlign:"center",fontSize:13,color:"#fbbf24",fontWeight:700,padding:"6px 0"}}>
             🎁 Ваш бонус: {profile.referralBonusLessons} бонусний урок{profile.referralBonusLessons > 1 ? "и" : ""}
