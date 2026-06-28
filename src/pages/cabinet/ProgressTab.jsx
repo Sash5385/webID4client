@@ -340,6 +340,7 @@ export default function ProgressTab({ user, profile, bookingsData }) {
         <div className="progress-subtitle">
           Перевір знання правил дорожнього руху на перехрестях — проїзд, знаки, світлофор, кільце.
         </div>
+        {(() => { try { const b=JSON.parse(localStorage.getItem('id4quiz_best')||'null'); if(!b) return null; return (<div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',marginTop:8,borderRadius:10,background:'rgba(246,178,27,0.08)',border:'1px solid rgba(246,178,27,0.18)'}}><span style={{fontSize:18}}>🏆</span><div><div style={{fontSize:9,color:'#f6b21b',fontWeight:700,textTransform:'uppercase',letterSpacing:0.5}}>Найкращий результат</div><div style={{fontSize:14,fontWeight:800,color:'var(--text)'}}>{b.score}/{b.total} · {Math.round(b.p*100)}%</div></div></div>); } catch { return null; } })()}
         <button
           onClick={() => navigate('/cabinet/test')}
           style={{
