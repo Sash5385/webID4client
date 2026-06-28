@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useToast } from '../../hooks/useToast'
-import { cancelBooking, confirmAttendance, rateBooking, saveGoals, createBooking, markSlotsUnavailable, claimSlot, subscribeSlotsForDate, getAdminSettings, subscribeMonthAvailability } from '../../firebase/db'
+import { cancelBooking, confirmAttendance, rateBooking, saveStudentNote, saveGoals, createBooking, markSlotsUnavailable, claimSlot, subscribeSlotsForDate, getAdminSettings, subscribeMonthAvailability } from '../../firebase/db'
 import { parseYMD, getMonthShort, getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay, formatDateLabel } from '../../utils/date'
 import { googleCalendarLink, downloadICS } from '../../utils/calendar'
 import './BookingsTab.css'
@@ -267,6 +267,8 @@ export default function BookingsTab({ user, profile, bookingsData }) {
   const [cancelConfirmId, setCancelConfirmId] = useState(null)
   const [goalsOpenId, setGoalsOpenId] = useState(null)
   const [goalsDraft, setGoalsDraft] = useState([])
+  const [noteOpenId, setNoteOpenId] = useState(null)
+  const [noteDraft, setNoteDraft] = useState('')
   const [toast, setToast] = useState(null)
   const [adminCfg, setAdminCfg] = useState({ bookCutoffHours: 24, studentCanCancel: true })
   useEffect(() => { getAdminSettings().then(s => setAdminCfg(s)).catch(() => {}) }, [])
@@ -446,6 +448,30 @@ export default function BookingsTab({ user, profile, bookingsData }) {
               <button className="cal-add-btn" onClick={() => downloadICS(b)}>
                 Apple Calendar
               </button>
+            </div>
+          )}
+          {!isPast && b.status !== 'cancelled' && (
+            <div style={{marginTop:6}}>
+              {noteOpenId === b.id ? (
+                <div>
+                  <textarea
+                    value={noteDraft}
+                    onChange={e=>setNoteDraft(e.target.value)}
+                    placeholder="Що хочете відпрацювати на уроці?"
+                    maxLength={150}
+                    rows={2}
+                    style={{width:'100%',padding:'8px 10px',borderRadius:10,border:'1px solid rgba(99,211,120,0.25)',background:'rgba(99,211,120,0.05)',color:'var(--text)',fontSize:12,fontFamily:'inherit',resize:'none',boxSizing:'border-box',outline:'none',marginBottom:5}}
+                  />
+                  <div style={{display:'flex',gap:6}}>
+                    <button onClick={()=>{saveStudentNote(user.uid,b.id,noteDraft.trim()).catch(()=>{});setNoteOpenId(null);}} style={{flex:1,padding:'5px 10px',borderRadius:10,border:'none',cursor:'pointer',background:'rgba(99,211,120,0.15)',color:'#63d37b',fontSize:12,fontWeight:700,fontFamily:'inherit'}}>Зберегти</button>
+                    <button onClick={()=>setNoteOpenId(null)} style={{padding:'5px 10px',borderRadius:10,border:'none',cursor:'pointer',background:'rgba(255,255,255,0.06)',color:'var(--dim)',fontSize:12,fontFamily:'inherit'}}>✕</button>
+                  </div>
+                </div>
+              ) : (
+                <button onClick={()=>{setNoteOpenId(b.id);setNoteDraft(b.studentNote||'');}} style={{fontSize:11,padding:'3px 10px',borderRadius:9,border:'1px dashed rgba(99,211,120,0.25)',background:'none',color:'var(--dim)',cursor:'pointer',fontFamily:'inherit'}}>
+                  {b.studentNote ? `💬 ${b.studentNote}` : '💬 Нотатка інструктору'}
+                </button>
+              )}
             </div>
           )}
         </div>

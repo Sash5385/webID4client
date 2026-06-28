@@ -147,6 +147,10 @@ export async function rateBooking(uid, bookingId, rating) {
   await update(ref(db, `bookings/${uid}/${bookingId}`), { rating })
 }
 
+export async function saveStudentNote(uid, bookingId, note) {
+  await update(ref(db, `bookings/${uid}/${bookingId}`), { studentNote: note || null })
+}
+
 export async function saveGoals(uid, bookingId, goals) {
   await update(ref(db, `bookings/${uid}/${bookingId}`), { goals: goals.length ? goals : null })
 }
