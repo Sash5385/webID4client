@@ -115,6 +115,13 @@ export default function ProfileTab({ user, profile, onProfileUpdate }) {
         <div className="profile-phone">{formatPhone(profile.phone || user?.phoneNumber)}</div>
       </div>
 
+      {(profile?.discount || 0) > 0 && (
+        <div style={{textAlign:'center',padding:'0 16px 12px'}}>
+          <div style={{display:'inline-flex',alignItems:'center',gap:6,padding:'5px 14px',borderRadius:10,background:'rgba(246,178,27,0.1)',border:'1px solid rgba(246,178,27,0.25)',fontSize:13,fontWeight:700,color:'#f6b21b'}}>
+            🏷️ Ваша знижка: {profile.discount}%
+          </div>
+        </div>
+      )}
       <div className="profile-section">
         <div className="section-head">
           <div className="section-title">Анкета</div>
