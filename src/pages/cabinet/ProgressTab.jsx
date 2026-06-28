@@ -55,6 +55,13 @@ export default function ProgressTab({ user, profile, bookingsData }) {
     return streak;
   }, [completed]);
 
+  const nextLessonWithGoals = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return bookings
+      .filter(b => b.status === 'confirmed' && b.date >= today && b.goals?.length > 0)
+      .sort((a, b_) => a.date.localeCompare(b_.date))[0] || null;
+  }, [bookings]);
+
   // Радіус кола
   const R = 70;
   const C = 2 * Math.PI * R;
@@ -130,6 +137,24 @@ export default function ProgressTab({ user, profile, bookingsData }) {
           </div>
         </div>
       </div>
+
+      {nextLessonWithGoals && (
+        <div className="progress-hero" style={{ marginTop: 14 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+            <span style={{ fontSize:18 }}>🎯</span>
+            <span style={{ fontSize:13, fontWeight:800, color:'var(--text)' }}>Ціль на наступний урок</span>
+          </div>
+          <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+            {nextLessonWithGoals.goals.map(g => (
+              <span key={g} style={{
+                fontSize:12, padding:'5px 11px', borderRadius:10,
+                background:'rgba(99,155,255,0.14)', color:'#6b9bff', fontWeight:700,
+              }}>{g}</span>
+            ))}
+          </div>
+          <div style={{ fontSize:11, color:'var(--dim)', marginTop:8 }}>{nextLessonWithGoals.date} · Готуйся!</div>
+        </div>
+      )}
 
       {totalLessons > 0 && (
         <div className="progress-hero" style={{ marginTop: 14 }}>
