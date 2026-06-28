@@ -121,6 +121,31 @@ export default function ProgressTab({ user, profile, bookingsData }) {
           </div>
         </div>
       )}
+      {completed.length > 0 && (() => {
+        const last = [...completed].sort((a,b_) => b_.date.localeCompare(a.date) || (b_.time||'').localeCompare(a.time||''))[0];
+        const [,mm,dd] = last.date.split('-');
+        return (
+          <div className="progress-hero" style={{
+            marginBottom:14,
+            background:'linear-gradient(135deg,rgba(168,85,247,0.10),rgba(168,85,247,0.04))',
+            border:'1px solid rgba(168,85,247,0.22)',
+          }}>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <span style={{fontSize:28,lineHeight:1}}>🏁</span>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:11,color:'rgba(192,132,252,0.9)',fontWeight:700,textTransform:'uppercase',letterSpacing:1,marginBottom:3}}>Останній урок</div>
+                <div style={{fontSize:18,fontWeight:900,color:'var(--text)'}}>{parseInt(dd)}.{parseInt(mm)}{last.time ? ` · ${last.time}` : ''}</div>
+                {last.serviceName && <div style={{fontSize:12,color:'var(--dim)',marginTop:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{last.serviceName}</div>}
+              </div>
+              {last.rating > 0 && (
+                <div style={{flexShrink:0}}>
+                  <span style={{fontSize:14,color:'#fbbf24'}}>{'★'.repeat(last.rating)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
       {isSchool && (
         <div className="progress-hero">
           <div className="progress-circle-wrap">
