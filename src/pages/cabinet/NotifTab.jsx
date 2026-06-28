@@ -2,6 +2,20 @@ import { useState, useEffect } from 'react'
 import { subscribeNotifications, clearNotification, clearAllNotifications } from '../../firebase/db'
 import './NotifTab.css'
 
+function fmtTs(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const p = n => String(n).padStart(2, '0');
+  const today = new Date();
+  const isToday = d.toDateString() === today.toDateString();
+  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+  const time = `${p(d.getHours())}:${p(d.getMinutes())}`;
+  if (isToday) return time;
+  if (isYesterday) return `вчора ${time}`;
+  return `${p(d.getDate())}.${p(d.getMonth()+1)} ${time}`;
+}
+
 const TYPE_META = {
   booking_confirmed:   { icon: '✅', label: 'Підтверджено', accent: 'green' },
   booking_cancelled:   { icon: '❌', label: 'Скасовано',    accent: 'red'   },
@@ -61,7 +75,7 @@ export default function NotifTab({ user, onSeen }) {
                   <span className={`notif-badge notif-badge-${meta.accent}`}>{meta.label}</span>
                 </div>
                 {n.body && <div className="notif-text">{n.body}</div>}
-                <div className="notif-time">{n.date} · {n.time}</div>
+                <div className="notif-time">{n.date ? `${n.date} · ${n.time}` : fmtTs(n.ts)}</div>
               </div>
               <button className="notif-dismiss" onClick={() => clearNotification(user.uid, n.id)} aria-label="Видалити">✕</button>
             </div>
