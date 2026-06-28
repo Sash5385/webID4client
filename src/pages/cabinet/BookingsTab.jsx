@@ -276,6 +276,7 @@ export default function BookingsTab({ user, profile, bookingsData }) {
     () => completed.filter(b => b.status === 'confirmed' && !b.isPaid && b.price > 0).reduce((s, b) => s + (b.price || 0), 0),
     [completed]
   )
+  const [showAllCompleted, setShowAllCompleted] = useState(false)
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type })
@@ -524,7 +525,20 @@ export default function BookingsTab({ user, profile, bookingsData }) {
           {completed.length > 0 && (
             <>
               <div className="section-title">Завершені ({completed.length})</div>
-              {completed.slice(0, 10).map(b => renderCard(b, true))}
+              {(showAllCompleted ? completed : completed.slice(0, 10)).map(b => renderCard(b, true))}
+              {completed.length > 10 && (
+                <button
+                  onClick={() => setShowAllCompleted(v => !v)}
+                  style={{
+                    display:'block', width:'100%', marginTop:8, padding:'10px 16px',
+                    borderRadius:12, border:'1px solid rgba(255,255,255,0.1)',
+                    background:'rgba(255,255,255,0.04)', color:'var(--dim)',
+                    fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit',
+                  }}
+                >
+                  {showAllCompleted ? '▲ Сховати' : `▼ Показати всі (${completed.length})`}
+                </button>
+              )}
             </>
           )}
         </>
