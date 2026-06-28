@@ -147,6 +147,10 @@ export async function rateBooking(uid, bookingId, rating) {
   await update(ref(db, `bookings/${uid}/${bookingId}`), { rating })
 }
 
+export async function saveGoals(uid, bookingId, goals) {
+  await update(ref(db, `bookings/${uid}/${bookingId}`), { goals: goals.length ? goals : null })
+}
+
 export async function cancelBooking(uid, bookingId, { isReschedule = false } = {}) {
   const snap = await get(ref(db, `bookings/${uid}/${bookingId}`))
   const booking = snap.val()

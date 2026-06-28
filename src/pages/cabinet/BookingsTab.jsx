@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useToast } from '../../hooks/useToast'
-import { cancelBooking, confirmAttendance, rateBooking, createBooking, markSlotsUnavailable, claimSlot, subscribeSlotsForDate, getAdminSettings, subscribeMonthAvailability } from '../../firebase/db'
+import { cancelBooking, confirmAttendance, rateBooking, saveGoals, createBooking, markSlotsUnavailable, claimSlot, subscribeSlotsForDate, getAdminSettings, subscribeMonthAvailability } from '../../firebase/db'
 import { parseYMD, getMonthShort, getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay, formatDateLabel } from '../../utils/date'
 import { googleCalendarLink, downloadICS } from '../../utils/calendar'
 import './BookingsTab.css'
@@ -250,6 +250,8 @@ export default function BookingsTab({ user, profile, bookingsData }) {
   const { upcoming, completed, loading } = bookingsData
   const [rescheduleBooking, setRescheduleBooking] = useState(null)
   const [cancelConfirmId, setCancelConfirmId] = useState(null)
+  const [goalsOpenId, setGoalsOpenId] = useState(null)
+  const [goalsDraft, setGoalsDraft] = useState([])
   const [toast, setToast] = useState(null)
   const [adminCfg, setAdminCfg] = useState({ bookCutoffHours: 24, studentCanCancel: true })
   useEffect(() => { getAdminSettings().then(s => setAdminCfg(s)).catch(() => {}) }, [])
@@ -352,6 +354,48 @@ export default function BookingsTab({ user, profile, bookingsData }) {
                   }}
                 >★</span>
               ))}
+            </div>
+          )}
+          {!isPast && b.status === 'confirmed' && completed.length >= 10 && (
+            <div style={{marginTop:6}}>
+              {b.goals?.length > 0 && goalsOpenId !== b.id ? (
+                <div style={{display:'flex',gap:4,flexWrap:'wrap',alignItems:'center'}}>
+                  {b.goals.map(g => <span key={g} style={{fontSize:10,padding:'3px 8px',borderRadius:8,background:'rgba(99,155,255,0.12)',color:'#6b9bff',fontWeight:700}}>{g}</span>)}
+                  <button onClick={()=>{setGoalsOpenId(b.id);setGoalsDraft(b.goals||[])}} style={{fontSize:10,padding:'3px 6px',borderRadius:8,background:'none',border:'none',color:'var(--dim)',cursor:'pointer'}}>✏️</button>
+                </div>
+              ) : goalsOpenId === b.id ? (
+                <div>
+                  <div style={{fontSize:10,color:'var(--dim)',marginBottom:5}}>🎯 Оберіть до 3 цілей уроку:</div>
+                  <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:6}}>
+                    {['🅿️ Паркування','🔄 Розворот','🏙 Місто','🛣 Швидкісні','⭕ Кільце','🚏 Зупинки'].map(g => {
+                      const sel = goalsDraft.includes(g)
+                      return (
+                        <button key={g} onClick={()=>setGoalsDraft(prev=>sel?prev.filter(x=>x!==g):prev.length<3?[...prev,g]:prev)} style={{
+                          fontSize:11,padding:'4px 9px',borderRadius:10,cursor:'pointer',fontFamily:'inherit',
+                          background:sel?'rgba(99,155,255,0.18)':'rgba(255,255,255,0.05)',
+                          border:sel?'1px solid rgba(99,155,255,0.4)':'1px solid rgba(255,255,255,0.1)',
+                          color:sel?'#6b9bff':'var(--dim)',fontWeight:sel?700:400,
+                        }}>{g}</button>
+                      )
+                    })}
+                  </div>
+                  <div style={{display:'flex',gap:6}}>
+                    <button onClick={()=>{saveGoals(user.uid,b.id,goalsDraft).catch(()=>{});setGoalsOpenId(null)}} style={{
+                      flex:1,padding:'5px 10px',borderRadius:10,border:'none',cursor:'pointer',
+                      background:'rgba(99,155,255,0.15)',color:'#6b9bff',fontSize:12,fontWeight:700,fontFamily:'inherit',
+                    }}>Зберегти</button>
+                    <button onClick={()=>setGoalsOpenId(null)} style={{
+                      padding:'5px 10px',borderRadius:10,border:'none',cursor:'pointer',
+                      background:'rgba(255,255,255,0.06)',color:'var(--dim)',fontSize:12,fontFamily:'inherit',
+                    }}>✕</button>
+                  </div>
+                </div>
+              ) : (
+                <button onClick={()=>{setGoalsOpenId(b.id);setGoalsDraft(b.goals||[])}} style={{
+                  fontSize:11,padding:'3px 10px',borderRadius:9,border:'1px dashed rgba(255,255,255,0.15)',
+                  background:'none',color:'var(--dim)',cursor:'pointer',fontFamily:'inherit',
+                }}>🎯 Цілі уроку</button>
+              )}
             </div>
           )}
           {!isPast && b.status !== 'cancelled' && !b.studentConfirmed && (
