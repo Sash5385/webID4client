@@ -75,6 +75,34 @@ export default function ProgressTab({ user, profile, bookingsData }) {
 
   return (
     <div className="progress-tab">
+      {(() => {
+        const today = new Date().toISOString().slice(0,10);
+        const next = bookings
+          .filter(b => b.status === 'confirmed' && b.date >= today)
+          .sort((a,b) => a.date.localeCompare(b.date) || (a.time||'').localeCompare(b.time||''))[0];
+        if (!next) return null;
+        const [,mm,dd] = next.date.split('-');
+        const tomorrowDate = new Date(); tomorrowDate.setDate(tomorrowDate.getDate()+1);
+        const isToday = next.date === today;
+        const isTomorrow = next.date === tomorrowDate.toISOString().slice(0,10);
+        const dayLabel = isToday ? 'Сьогодні' : isTomorrow ? 'Завтра' : `${parseInt(dd)}.${parseInt(mm)}`;
+        return (
+          <div className="progress-hero" style={{
+            marginBottom:14,
+            background:'linear-gradient(135deg,rgba(99,155,255,0.14),rgba(99,155,255,0.06))',
+            border:'1px solid rgba(99,155,255,0.3)',
+          }}>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <span style={{fontSize:28,lineHeight:1}}>📅</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:11,color:'#6b9bff',fontWeight:700,textTransform:'uppercase',letterSpacing:1,marginBottom:3}}>Наступний урок</div>
+                <div style={{fontSize:18,fontWeight:900,color:'var(--text)'}}>{dayLabel}{next.time ? ` · ${next.time}` : ''}</div>
+                {next.serviceName && <div style={{fontSize:12,color:'var(--dim)',marginTop:2}}>{next.serviceName}</div>}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
       {isSchool && (
         <div className="progress-hero">
           <div className="progress-circle-wrap">
