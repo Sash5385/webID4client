@@ -114,6 +114,15 @@ function DirectChat({ user, profile }) {
       </div>
 
       <div className="chat-input-area">
+        <div style={{display:'flex',gap:5,padding:'0 0 7px',overflowX:'auto',scrollbarWidth:'none'}}>
+          {['Підтверджую ✅','Скасовую ❌','Запізнюся ⏱','Дякую! 🙏','Коли наступний урок?'].map(q => (
+            <button key={q} onClick={() => setText(q)} style={{
+              flexShrink:0,fontSize:11,padding:'5px 11px',borderRadius:20,
+              border:'1px solid rgba(255,255,255,0.1)',background:'rgba(255,255,255,0.05)',
+              color:'var(--dim)',cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap',
+            }}>{q}</button>
+          ))}
+        </div>
         <div className="chat-input-box">
           <textarea
             ref={taRef}
