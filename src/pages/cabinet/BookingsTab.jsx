@@ -18,6 +18,21 @@ function hoursUntilLesson(booking) {
   return (d.getTime() - Date.now()) / 3600000
 }
 
+function lessonCountdown(b) {
+  if (!b?.date || !b?.time) return null
+  const [h, m] = b.time.split(':').map(Number)
+  const d = parseYMD(b.date)
+  d.setHours(h, m || 0, 0, 0)
+  const diff = d.getTime() - Date.now()
+  if (diff <= 0) return null
+  const days = Math.floor(diff / 86400000)
+  const hrs = Math.floor((diff % 86400000) / 3600000)
+  const mins = Math.floor((diff % 3600000) / 60000)
+  if (days > 0) return `${days} д ${hrs} год`
+  if (hrs > 0) return `${hrs} год ${mins} хв`
+  return `${mins} хв`
+}
+
 // ─── RESCHEDULE MODAL ────────────────────────────────────────────
 function RescheduleModal({ booking, user, profile, onClose, onDone }) {
   const { showToast: showModalToast, ToastEl: ModalToastEl } = useToast()
@@ -331,6 +346,9 @@ export default function BookingsTab({ user, profile, bookingsData }) {
           <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
             <div className={`booking-status ${statusClass}`}>{statusText}</div>
             {b.isPaid && <div style={{fontSize:10,fontWeight:700,color:"#63d37b",padding:"2px 7px",borderRadius:6,background:"rgba(99,211,120,0.12)"}}>✓ Оплачено</div>}
+            {!isPast && b.status === 'confirmed' && lessonCountdown(b) && (
+              <div style={{fontSize:10,fontWeight:700,color:'#fb923c',padding:'2px 7px',borderRadius:6,background:'rgba(251,146,60,0.1)'}}>⏱ {lessonCountdown(b)}</div>
+            )}
           </div>
           {isPast && b.status === 'confirmed' && b.instructorNote && (
             <div style={{marginTop:6,padding:'7px 10px',borderRadius:9,
