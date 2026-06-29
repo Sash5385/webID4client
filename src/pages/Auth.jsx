@@ -402,7 +402,6 @@ export default function Auth({ user, profile, onProfileSaved }) {
       {step === 'phone' && (
         <div className="fade-up" style={{display:'flex',flexDirection:'column'}}>
           <div className="auth-logo-block">
-            <div className="auth-logo-icon"><img src="/icon-192.png" alt="ID4Drive"/></div>
             <div className="auth-logo-name">ID4Drive</div>
           </div>
 

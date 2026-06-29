@@ -54,18 +54,9 @@ export default function Landing({ user, profile }) {
       <header className="landing-topbar">
         <div className="container landing-topbar-row">
           <div className="logo">
-            <div className="logo-icon"><img src="/icon-192.png" alt="ID4Drive"/></div>
             ID4Drive
           </div>
           <div className="topbar-actions">
-            <a
-              href="https://zhaivoronok.com.ua"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-school"
-            >
-              АВТОШКОЛА
-            </a>
             <button className="btn-login" onClick={goRegister}>
               {user ? 'Кабінет' : 'Увійти'}
             </button>
