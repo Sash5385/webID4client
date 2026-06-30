@@ -53,11 +53,18 @@ export default function PublicSchedule({ onBook }) {
     const [h, m] = slotTime.split(':').map(Number)
     const startMin = h * 60 + m
     const endMin = startMin + durationHours * 60
+    for (let i = 60; i < durationHours * 60; i += 60) {
+      const nextMin = startMin + i
+      const nextKey = `slot${String(Math.floor(nextMin/60)).padStart(2,'0')}${String(nextMin%60).padStart(2,'0')}`
+      if (!slots[nextKey] || slots[nextKey].available === false) return true
+    }
     return Object.values(slots).some(s => {
-      if (s.available !== false) return false
       const [sh, sm] = (s.time || '').split(':').map(Number)
       const sMin = sh * 60 + sm
-      return sMin >= startMin && sMin < endMin
+      if (sMin <= startMin || sMin >= endMin) return false
+      const offsetMin = sMin - startMin
+      if (offsetMin % 60 === 0) return s.available === false
+      return true
     })
   }
 
