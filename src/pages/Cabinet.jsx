@@ -11,8 +11,6 @@ import ProfileTab from './cabinet/ProfileTab'
 import ChatTab from './cabinet/ChatTab'
 import NotifTab from './cabinet/NotifTab'
 import QueueTab from './cabinet/QueueTab'
-import TestTab from './cabinet/TestTab'
-
 import { formatDateLabel } from '../utils/date'
 import './Cabinet.css'
 
@@ -21,7 +19,6 @@ const TITLES = {
   bookings: 'Мої записи',
   progress: 'Прогрес',
   queue: 'Черга',
-  test: 'Тест ПДР',
   chat: 'Чат',
   notifications: 'Повідомлення',
   profile: 'Профіль'
@@ -244,7 +241,6 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
           <Route path="/chat" element={<ChatTab user={user} profile={profile} />} />
           <Route path="/notifications" element={<NotifTab user={user} onSeen={markNotifsSeen} />} />
           <Route path="/profile" element={<ProfileTab user={user} profile={profile} bookingsData={bookingsData} onProfileUpdate={onProfileUpdate} />} />
-          <Route path="/test" element={<TestTab />} />
           <Route path="*" element={<Navigate to="/cabinet" />} />
         </Routes>
       </div>

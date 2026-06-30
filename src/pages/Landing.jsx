@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
-import TestTab from './cabinet/TestTab'
 import './Landing.css'
 
 const REVIEWS_URL = 'https://europe-west1-id4drive-booking-44182.cloudfunctions.net/getGoogleReviews'
@@ -212,15 +211,6 @@ export default function Landing({ user, profile }) {
               <div className="feature-title">Підготовка до іспиту</div>
               <div className="feature-desc">Проїзд маршрутів сервісних центрів, нюанси складання іспиту</div>
             </div>
-          </div>
-        </section>
-
-        {/* QUIZ */}
-        <section className="lsection">
-          <div className="lsection-title">Тест ПДР</div>
-          <h2>Перевір знання правил</h2>
-          <div style={{borderRadius: 20, overflow: 'hidden', marginTop: 4}}>
-            <TestTab />
           </div>
         </section>
 

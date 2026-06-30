@@ -73,13 +73,28 @@ export default function PublicSchedule({ onBook }) {
 
   const days = useMemo(() => getMonthGrid(viewMonth.getFullYear(), viewMonth.getMonth()), [viewMonth])
   const slotsList = useMemo(() => Object.values(slots)
-    .filter(slot => (slot.time || '').endsWith(':00'))
+    .filter(slot => {
+      // Вільні слоти — тільки цілогодинні (саме такі генерує адмін).
+      if (slot.available !== false) return (slot.time || '').endsWith(':00')
+      // Зайнятий слот: показуємо лише старт бронювання, а не кожні 30хв.
+      // Логіка ідентична BookTab — знаходимо перший блок у ланцюжку зайнятих 30хв.
+      const [h, m] = (slot.time || '0:0').split(':').map(Number)
+      let curMin = h * 60 + m
+      while (curMin >= 30) {
+        const prevMin = curMin - 30
+        const prevKey = `slot${String(Math.floor(prevMin/60)).padStart(2,'0')}${String(prevMin%60).padStart(2,'0')}`
+        if (!slots[prevKey] || slots[prevKey].available !== false) break
+        curMin = prevMin
+      }
+      return (h * 60 + m - curMin) % 60 === 0
+    })
     .sort((a, b) => (a.time||'').localeCompare(b.time||''))
     .map(slot => ({
       ...slot,
       lunchBlocked:   isBlockedByLunch(slot.time, duration),
       overlapBlocked: slot.available !== false && wouldOverlapTaken(slot.time, duration),
     }))
+    .filter(slot => !slot.lunchBlocked && !slot.overlapBlocked)
     .filter(slot => {
       if (!selectedDate || !isSameDay(selectedDate, new Date())) return true
       const [h, m] = (slot.time || '0:0').split(':').map(Number)
@@ -210,7 +225,7 @@ export default function PublicSchedule({ onBook }) {
             <>
               <div className="slots-grid">
                 {slotsList.map(slot => {
-                  const isUnavailable = slot.available === false || slot.lunchBlocked || slot.overlapBlocked
+                  const isUnavailable = slot.available === false
                   const isSelected = selectedTime === slot.time
                   return (
                     <button
@@ -218,10 +233,8 @@ export default function PublicSchedule({ onBook }) {
                       className={`slot ${isUnavailable?'taken':''} ${isSelected?'selected':''}`}
                       onClick={() => !isUnavailable && setSelectedTime(slot.time)}
                       disabled={isUnavailable}
-                      title={slot.lunchBlocked ? 'Обідня перерва' : slot.overlapBlocked ? 'Перетин з іншим уроком' : undefined}
                     >
                       <div className="slot-time">{slot.time}</div>
-                      {slot.lunchBlocked && <div style={{fontSize:8, opacity:0.5}}>обід</div>}
                     </button>
                   )
                 })}
