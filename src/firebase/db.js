@@ -31,10 +31,16 @@ export async function getSlotsForDate(date) {
 
 function classifyDay(slotsObj) {
   if (!slotsObj) return null
-  const slots = Object.values(slotsObj).filter(s => s && s.time && !s.adminBlocked)
+  // Use entries to derive time from key (slot1000 → 10:00) as fallback when time field missing.
+  // Count only :00 slots (admin-created hourly slots); ignore :30 phantoms from client bookings.
+  const slots = Object.entries(slotsObj).filter(([key, s]) => {
+    if (!s || s.adminBlocked) return false
+    const m = key.match(/^slot(\d{2})(\d{2})$/)
+    return m && parseInt(m[2], 10) === 0
+  })
   if (slots.length === 0) return null
-  const free  = slots.filter(s => s.available !== false).length
-  const taken = slots.filter(s => s.available === false).length
+  const free  = slots.filter(([, s]) => s.available !== false).length
+  const taken = slots.filter(([, s]) => s.available === false).length
   if (taken === 0) return 'free'
   if (free  === 0) return 'full'
   return 'partial'
