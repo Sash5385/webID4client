@@ -10,6 +10,23 @@ const messaging = admin.messaging();
 const REGION    = "europe-west1";
 const INSTANCE  = "id4drive-booking-44182-default-rtdb";
 
+// ─── HELPERS: templates + push log ───────────────────────────────
+async function getTemplate(type, defaultTitle, defaultBody) {
+  try {
+    const snap = await db.ref(`pushTemplates/${type}`).get();
+    const tpl  = snap.val();
+    if (tpl && tpl.title && tpl.body) return { title: tpl.title, body: tpl.body };
+  } catch (e) { console.warn("getTemplate error", e.message); }
+  return { title: defaultTitle, body: defaultBody };
+}
+function applyVars(str, vars) {
+  return (str || "").replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
+}
+async function writePushLog(entry) {
+  await db.ref("pushLog").push({ ...entry, sentAt: Date.now() })
+    .catch(e => console.error("pushLog write error", e.message));
+}
+
 // ─── HELPERS: text formatting ────────────────────────────────────
 function firstName(fullName) {
   return fullName ? fullName.trim().split(/\s+/)[0] : "";
@@ -114,7 +131,10 @@ exports.onAdminPush = onValueCreated(
   async (event) => {
     const req = event.data.val();
     if (!req || !req.uid) return;
-    await sendPush(req.uid, req.title || "Повідомлення", req.body || "", req.url || "/cabinet", "admin");
+    const title = req.title || "Повідомлення";
+    const body  = req.body  || "";
+    await sendPush(req.uid, title, body, req.url || "/cabinet", "admin");
+    if (!req.test) await writePushLog({ type: "admin", title, body, uid: req.uid });
     await db.ref(`adminPush/${event.params.pushId}`).remove().catch((e) => console.error("adminPush cleanup", e.message));
   }
 );
@@ -147,6 +167,7 @@ exports.processPushTasks = onValueCreated(
       sends.push(sendPush(uid, "🚗 Вільний слот", body, "/book", "slot_free"));
     }
     await Promise.allSettled(sends);
+    await writePushLog({ type: "slot_free", title: "🚗 Вільний слот", body, recipients: sends.length });
     await db.ref(`push_tasks/${event.params.taskId}`)
       .update({ status: "sent", sentAt: Date.now(), recipients: sends.length })
       .catch((e) => console.error("push_tasks update", e.message));
@@ -196,16 +217,23 @@ exports.onBookingStatusChanged = onValueWritten(
     const slot = date && time ? ` ${date} о ${time}` : "";
 
     if (newStatus === "confirmed") {
-      const fn   = firstName(name);
-      const when = date && time ? ukDaySlot(date, time) : slot.trim();
-      const body = fn ? `${fn}, чекаємо тебе ${when} 🎯` : `Чекаємо тебе ${when} 🎯`;
-      await sendPush(uid, "✅ Запис підтверджено", body, "/cabinet/bookings", "booking_confirmed");
+      const fn      = firstName(name);
+      const daySlot = date && time ? ukDaySlot(date, time) : slot.trim();
+      const tpl  = await getTemplate("booking_confirmed", "✅ Запис підтверджено", "{name}, чекаємо тебе {daySlot} 🎯");
+      const vars = { name: fn || "Вас", daySlot, time, date, dateLabel: ukDateLabel(date) };
+      const body = applyVars(tpl.body, vars);
+      await sendPush(uid, tpl.title, body, "/cabinet/bookings", "booking_confirmed");
+      await writePushLog({ type:"booking_confirmed", title:tpl.title, body, uid });
     } else if (newStatus === "cancelled") {
       if (after.cancelledBy === "reschedule") {
         await sendAdminPush("🔄 Учень переніс запис", `${name || "Учень"}${slot}`);
       } else {
         const dateLabel = date && time ? `${ukDateLabel(date)} о ${time}` : slot.trim();
-        await sendPush(uid, "❌ Запис скасовано", `Запис ${dateLabel} відмінено. Оберіть інший час ↩️`, "/book", "booking_cancelled");
+        const tpl  = await getTemplate("booking_cancelled", "❌ Запис скасовано", "Запис {dateLabel} відмінено. Оберіть інший час ↩️");
+        const vars = { name: firstName(name) || "Вас", dateLabel: ukDateLabel(date), time, date };
+        const body = applyVars(tpl.body, vars);
+        await sendPush(uid, tpl.title, body, "/book", "booking_cancelled");
+        await writePushLog({ type:"booking_cancelled", title:tpl.title, body, uid });
         if (after.cancelledBy === "student") {
           await sendAdminPush("❌ Учень скасував запис", `${name || "Учень"}${slot}`);
         }
@@ -252,19 +280,19 @@ exports.lessonReminder = onSchedule(
     if (!bookSnap.exists()) return;
 
     const all = bookSnap.val();
+    const tpl = await getTemplate("lesson_reminder", "⏰ Нагадування про урок", "{name}, завтра урок о {time} 🚗 Чекаємо!");
     const sends = [];
     for (const [uid, userBookings] of Object.entries(all)) {
       for (const b of Object.values(userBookings)) {
         if (b.date === dateStr && b.status !== "cancelled") {
           const fn   = firstName(b.studentName);
-          const body = fn
-            ? `${fn}, завтра урок о ${b.time || ""} 🚗 Чекаємо!`
-            : `Завтра урок о ${b.time || ""} 🚗 Чекаємо!`;
-          sends.push(sendPush(uid, "⏰ Нагадування про урок", body, "/cabinet/bookings", "system"));
+          const body = applyVars(tpl.body, { name: fn || "Вас", time: b.time || "", date: b.date || "", dateLabel: ukDateLabel(b.date) });
+          sends.push(sendPush(uid, tpl.title, body, "/cabinet/bookings", "system"));
         }
       }
     }
     await Promise.allSettled(sends);
+    if (sends.length) await writePushLog({ type: "lesson_reminder", title: tpl.title, body: tpl.body, recipients: sends.length });
   }
 );
 
