@@ -102,6 +102,40 @@ exports.onAdminPush = onValueCreated(
   }
 );
 
+// ─── processPushTasks ── розсилка про вільні слоти (BroadcastModal → push_tasks) ──
+// Адмінка пише push_tasks/{id} = {date, slots:[...], comment, status:"pending"};
+// шлемо всім незаблокованим учням пуш + внутрішнє сповіщення.
+exports.processPushTasks = onValueCreated(
+  {
+    ref: "push_tasks/{taskId}",
+    region: REGION,
+    instance: INSTANCE,
+  },
+  async (event) => {
+    const task = event.data.val();
+    if (!task || !task.date) return;
+    const slots = Array.isArray(task.slots) ? task.slots : (task.slots ? [task.slots] : []);
+    let dateLabel = task.date;
+    try {
+      dateLabel = new Date(task.date + "T12:00:00").toLocaleDateString("uk", { day: "numeric", month: "long" });
+    } catch (e) { /* залишаємо ISO-дату */ }
+    const timeStr = slots.length ? ` о ${slots.join(" та ")}` : "";
+    const body = `${dateLabel}${timeStr}${task.comment ? " — " + task.comment : ""}`;
+
+    const usersSnap = await db.ref("users").get();
+    const usersData = usersSnap.val() || {};
+    const sends = [];
+    for (const [uid, u] of Object.entries(usersData)) {
+      if (!u || u.blocked) continue;
+      sends.push(sendPush(uid, "🚗 Вільний слот", body, "/book", "slot_free"));
+    }
+    await Promise.allSettled(sends);
+    await db.ref(`push_tasks/${event.params.taskId}`)
+      .update({ status: "sent", sentAt: Date.now(), recipients: sends.length })
+      .catch((e) => console.error("push_tasks update", e.message));
+  }
+);
+
 // ─── 0. onNewBooking ─────────────────────────────────────────────
 exports.onNewBooking = onValueCreated(
   {
