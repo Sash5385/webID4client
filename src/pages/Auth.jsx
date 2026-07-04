@@ -100,6 +100,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
   const [filmingConsent, setFilmingConsent] = useState(true)
   const [termsAgreed, setTermsAgreed] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
+  const [surveyNameError, setSurveyNameError] = useState('')
 
   useEffect(() => {
     if (user && !profile) setStep('survey')
@@ -229,8 +230,8 @@ export default function Auth({ user, profile, onProfileSaved }) {
 
   // ─── SURVEY ──────────────────────────────────────────
   const handleSubmitSurvey = async () => {
-    if (!name.trim()) { showToast('Введи імʼя'); return }
-    if (!surname.trim()) { showToast('Введи прізвище'); return }
+    if (!name.trim() || !surname.trim()) { setSurveyNameError('Введіть ваше ПІБ'); return }
+    setSurveyNameError('')
     if (!user?.phoneNumber && surveyPhone.trim().length !== 9) { showToast('Введи коректний номер телефону'); return }
     if (!termsAgreed) { showToast('Прийми умови користування'); return }
 
@@ -640,13 +641,14 @@ export default function Auth({ user, profile, onProfileSaved }) {
 
           <div className="field">
             <div className="field-label">Імʼя *</div>
-            <input className="text-input" type="text" placeholder="Олександр" value={name} onChange={e=>setName(e.target.value)} autoFocus/>
+            <input className="text-input" type="text" placeholder="Олександр" value={name} onChange={e=>{setName(e.target.value);setSurveyNameError('')}} autoFocus/>
           </div>
 
           <div className="field">
             <div className="field-label">Прізвище *</div>
-            <input className="text-input" type="text" placeholder="Петренко" value={surname} onChange={e=>setSurname(e.target.value)}/>
+            <input className="text-input" type="text" placeholder="Петренко" value={surname} onChange={e=>{setSurname(e.target.value);setSurveyNameError('')}}/>
           </div>
+          {surveyNameError && <div className="auth-error" style={{marginTop:-8,marginBottom:8}}>{surveyNameError}</div>}
 
           {!user?.phoneNumber && (
             <div className="field">
