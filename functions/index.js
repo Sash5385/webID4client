@@ -85,6 +85,23 @@ async function sendAdminPush(title, body) {
   }
 }
 
+// ─── onAdminPush ── персональний пуш учню від адміна ─────────────
+// Адмінка пише adminPush/{id} = {uid, title, body}; шлемо FCM учню
+// (sendPush також збереже сповіщення в notifications/{uid}) і чистимо вузол.
+exports.onAdminPush = onValueCreated(
+  {
+    ref: "adminPush/{pushId}",
+    region: REGION,
+    instance: INSTANCE,
+  },
+  async (event) => {
+    const req = event.data.val();
+    if (!req || !req.uid) return;
+    await sendPush(req.uid, req.title || "Повідомлення", req.body || "", req.url || "/cabinet", "admin");
+    await db.ref(`adminPush/${event.params.pushId}`).remove().catch((e) => console.error("adminPush cleanup", e.message));
+  }
+);
+
 // ─── 0. onNewBooking ─────────────────────────────────────────────
 exports.onNewBooking = onValueCreated(
   {
