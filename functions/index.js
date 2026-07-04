@@ -10,6 +10,23 @@ const messaging = admin.messaging();
 const REGION    = "europe-west1";
 const INSTANCE  = "id4drive-booking-44182-default-rtdb";
 
+// ─── HELPERS: text formatting ────────────────────────────────────
+function firstName(fullName) {
+  return fullName ? fullName.trim().split(/\s+/)[0] : "";
+}
+function ukDateLabel(isoDate) {
+  try { return new Date(isoDate + "T12:00:00").toLocaleDateString("uk", { day: "numeric", month: "long" }); }
+  catch { return isoDate; }
+}
+function ukDaySlot(isoDate, time) {
+  try {
+    const d = new Date(isoDate + "T12:00:00");
+    const dow = d.toLocaleDateString("uk", { weekday: "long" });
+    const dm  = d.toLocaleDateString("uk", { day: "numeric", month: "long" });
+    return `${dow} ${dm} о ${time}`;
+  } catch { return `${isoDate} о ${time}`; }
+}
+
 // ─── HELPER: send FCM to a user token ────────────────────────────
 async function sendPush(uid, title, body, urlPath, type = 'system') {
   // Persist notification to DB so NotifTab can display it
@@ -175,19 +192,22 @@ exports.onBookingStatusChanged = onValueWritten(
 
     const date = after.date || "";
     const time = after.time || "";
+    const name = after.studentName || "";
     const slot = date && time ? ` ${date} о ${time}` : "";
 
     if (newStatus === "confirmed") {
-      await sendPush(uid, "✅ Запис підтверджено", `Ваш урок${slot} підтверджено інструктором`, "/cabinet/bookings", "booking_confirmed");
+      const fn   = firstName(name);
+      const when = date && time ? ukDaySlot(date, time) : slot.trim();
+      const body = fn ? `${fn}, чекаємо тебе ${when} 🎯` : `Чекаємо тебе ${when} 🎯`;
+      await sendPush(uid, "✅ Запис підтверджено", body, "/cabinet/bookings", "booking_confirmed");
     } else if (newStatus === "cancelled") {
       if (after.cancelledBy === "reschedule") {
-        const name = after.studentName || "Учень";
-        await sendAdminPush("🔄 Учень переніс запис", `${name}${slot}`);
+        await sendAdminPush("🔄 Учень переніс запис", `${name || "Учень"}${slot}`);
       } else {
-        await sendPush(uid, "❌ Запис скасовано", `Урок${slot} скасовано. Заплануйте новий.`, "/cabinet", "booking_cancelled");
+        const dateLabel = date && time ? `${ukDateLabel(date)} о ${time}` : slot.trim();
+        await sendPush(uid, "❌ Запис скасовано", `Запис ${dateLabel} відмінено. Оберіть інший час ↩️`, "/book", "booking_cancelled");
         if (after.cancelledBy === "student") {
-          const name = after.studentName || "Учень";
-          await sendAdminPush("❌ Учень скасував запис", `${name}${slot}`);
+          await sendAdminPush("❌ Учень скасував запис", `${name || "Учень"}${slot}`);
         }
       }
     }
@@ -236,15 +256,11 @@ exports.lessonReminder = onSchedule(
     for (const [uid, userBookings] of Object.entries(all)) {
       for (const b of Object.values(userBookings)) {
         if (b.date === dateStr && b.status !== "cancelled") {
-          sends.push(
-            sendPush(
-              uid,
-              "🚗 Нагадування про урок",
-              `Завтра урок о ${b.time || ""}. До зустрічі!`,
-              "/cabinet/bookings",
-              "system"
-            )
-          );
+          const fn   = firstName(b.studentName);
+          const body = fn
+            ? `${fn}, завтра урок о ${b.time || ""} 🚗 Чекаємо!`
+            : `Завтра урок о ${b.time || ""} 🚗 Чекаємо!`;
+          sends.push(sendPush(uid, "⏰ Нагадування про урок", body, "/cabinet/bookings", "system"));
         }
       }
     }
