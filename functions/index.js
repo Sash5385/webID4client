@@ -114,7 +114,11 @@ async function sendAdminPush(title, body) {
     if (snap.val()) { token = snap.val(); tokenPath = p; break; }
   }
   console.log("Admin token path:", tokenPath, "token exists:", !!token);
-  if (!token) { console.log("No admin FCM token found"); return; }
+  if (!token) {
+    console.log("No admin FCM token found");
+    await writePushLog({ type: "admin_alert", title, body, status: "no_token" });
+    return;
+  }
   try {
     // Data-only — показ виключно через onBackgroundMessage/onMessage (без дублю).
     await messaging.send({
@@ -125,8 +129,10 @@ async function sendAdminPush(title, body) {
       },
     });
     console.log("Admin push sent OK");
+    await writePushLog({ type: "admin_alert", title, body, status: "sent" });
   } catch (err) {
     console.error("Admin push error:", err.code, err.message);
+    await writePushLog({ type: "admin_alert", title, body, status: "error", error: err.code || err.message });
     if (
       err.code === "messaging/registration-token-not-registered" ||
       err.code === "messaging/invalid-registration-token"
