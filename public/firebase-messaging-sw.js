@@ -24,10 +24,12 @@ messaging.onBackgroundMessage(async (payload) => {
   const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
   if (clientList.some(c => c.visibilityState === 'visible')) return
 
-  const title = payload.notification?.title || 'ID4Drive'
+  // Data-only push (no top-level/webpush "notification" — інакше браузер показав би
+  // сповіщення сам ще раз ДОДАТКОВО до цього showNotification(), тобто дубль).
+  const title = payload.data?.title || 'ID4Drive'
   const url = payload.data?.url || 'https://id4drive.pro/cabinet'
   const options = {
-    body: payload.notification?.body || '',
+    body: payload.data?.body || '',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
     tag: 'id4drive-notif',

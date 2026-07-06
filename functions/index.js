@@ -80,12 +80,13 @@ async function sendPush(uid, title, body, urlPath, type = 'system') {
   }
   const link = (urlPath || "/").startsWith("http") ? (urlPath || "/") : `https://id4drive.pro${urlPath || "/"}`;
   try {
+    // Data-only message: якщо додати ще й top-level/webpush "notification",
+    // браузер покаже його автоматично ДОДАТКОВО до showNotification() у SW —
+    // звідси дублікат сповіщення. Показ повністю на боці onBackgroundMessage/onMessage.
     await messaging.send({
       token,
-      notification: { title, body },
-      data: { url: link },
+      data: { title, body, url: link },
       webpush: {
-        notification: { icon: "/favicon.svg", badge: "/favicon.svg", requireInteraction: true },
         fcmOptions: { link },
       },
     });
@@ -115,11 +116,11 @@ async function sendAdminPush(title, body) {
   console.log("Admin token path:", tokenPath, "token exists:", !!token);
   if (!token) { console.log("No admin FCM token found"); return; }
   try {
+    // Data-only — показ виключно через onBackgroundMessage/onMessage (без дублю).
     await messaging.send({
       token,
-      notification: { title, body },
+      data: { title, body, url: "/" },
       webpush: {
-        notification: { icon: "/favicon.svg", badge: "/favicon.svg" },
         fcmOptions: { link: "/" },
       },
     });
@@ -535,12 +536,12 @@ exports.unlockVipSlots = onSchedule(
     for (let i = 0; i < tokens.length; i += 500) {
       await messaging.sendEachForMulticast({
         tokens: tokens.slice(i, i + 500),
-        notification: {
+        data: {
           title: "🚗 З'явились нові слоти!",
           body: "Відкрились нові години для запису. Поспішай!",
+          url: "https://id4drive.pro/book",
         },
         webpush: {
-          notification: { icon: "/favicon.svg" },
           fcmOptions: { link: "https://id4drive.pro/book" },
         },
       }).catch(() => {});
