@@ -44,6 +44,17 @@ function ukDaySlot(isoDate, time) {
   } catch { return `${isoDate} о ${time}`; }
 }
 
+// ─── HELPER: поточні токени адміна (щоб не пушити самому собі) ────
+async function getAdminTokens() {
+  const paths = ["admin/fcmToken", "admin/fcmTokens/web/token"];
+  const tokens = [];
+  for (const p of paths) {
+    const snap = await db.ref(p).get();
+    if (snap.val()) tokens.push(snap.val());
+  }
+  return tokens;
+}
+
 // ─── HELPER: send FCM to a user token ────────────────────────────
 async function sendPush(uid, title, body, urlPath, type = 'system') {
   // Persist notification to DB so NotifTab can display it
@@ -60,6 +71,11 @@ async function sendPush(uid, title, body, urlPath, type = 'system') {
   const token = snap.val();
   if (!token) {
     console.warn(`sendPush: no token for uid=${uid}`);
+    return;
+  }
+  const adminTokens = await getAdminTokens();
+  if (adminTokens.includes(token)) {
+    console.warn(`sendPush: skip uid=${uid} — token collides with admin device (same browser was used to log in as this user)`);
     return;
   }
   const link = (urlPath || "/").startsWith("http") ? (urlPath || "/") : `https://id4drive.pro${urlPath || "/"}`;
