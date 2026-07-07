@@ -12,6 +12,16 @@ const FALLBACK_SERVICES = [
   { id:'sv4', name:'Приватний 2 год',  type:'private', duration:120, price:1300, colorId:'purple' },
 ]
 
+// Ціна послуги на дату уроку: якщо задано nextPrice/nextPriceFrom і дата
+// уроку вже досягла nextPriceFrom — використовуємо нову ціну (див. налаштування послуг в адмінці).
+function effectivePrice(svc, dateStr) {
+  if (!svc) return 0
+  if (svc.nextPrice != null && svc.nextPriceFrom && dateStr && dateStr >= svc.nextPriceFrom) {
+    return svc.nextPrice
+  }
+  return svc.price || 0
+}
+
 export default function BookTab({ user, profile, bookingsData, notifParams }) {
   const { showToast, ToastEl } = useToast()
   const isSchool = profile?.studentType === 'school'
@@ -242,7 +252,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           return
         }
       }
-      const totalPrice = applyDiscount((selectedService?.price || 0) + surcharge)
+      const totalPrice = applyDiscount(effectivePrice(selectedService, dateStr) + surcharge)
       const currentSlot = slots[`slot${selectedTime.replace(':', '')}`]
       const isOfferedToMe = !!currentSlot?.offeredTo?.[user?.uid]
       // Атомарно займаємо слот (крім випадку, коли його зарезервовано саме для мене)
@@ -391,7 +401,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           isPartOfMyBooking,
           vipBlocked,
           totalSurcharge,
-          totalPrice: (selectedService?.price || 0) + totalSurcharge,
+          totalPrice: effectivePrice(selectedService, dateStr) + totalSurcharge,
         }
       })
       .filter(slot => !slot.lunchBlocked && !slot.overlapBlocked)
@@ -649,7 +659,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           const key = `slot${String(Math.floor(slotMin/60)).padStart(2,'0')}${String(slotMin%60).padStart(2,'0')}`
           surcharge += slots[key]?.surcharge || 0
         }
-        const baseP = selectedService.price || 0
+        const baseP = effectivePrice(selectedService, formatDateYMD(selectedDate))
         const totalPrice = applyDiscount(baseP + surcharge)
         const dateLabel = formatDateYMD(selectedDate).slice(-5).split('-').reverse().join('.')
         return (
@@ -734,7 +744,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                 <div className="dialog-info-row">
                   <span className="lbl">Ціна</span>
                   <span className="val" style={{color:'var(--gold)'}}>
-                    {applyDiscount(successData.service.price + (successData.surcharge || 0))} ₴
+                    {applyDiscount(effectivePrice(successData.service, successData.date) + (successData.surcharge || 0))} ₴
                     {successData.surcharge > 0 && <span style={{fontSize:10, color:'var(--gold)', opacity:0.7}}> (+{successData.surcharge}₴)</span>}
                     {discountPct > 0 && <span style={{fontSize:10, color:'#4ade80', marginLeft:4}}>−{discountPct}%</span>}
                   </span>
@@ -773,7 +783,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                 <>
                   <div className="dialog-info-row">
                     <span className="lbl">Базова ціна</span>
-                    <span className="val">{selectedService?.price || 0}₴</span>
+                    <span className="val">{effectivePrice(selectedService, selectedDate ? formatDateYMD(selectedDate) : '')}₴</span>
                   </div>
                   <div className="dialog-info-row">
                     <span className="lbl" style={{color:'var(--gold)'}}>⚡ Надбавка</span>
@@ -787,7 +797,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                   )}
                   <div className="dialog-info-row" style={{borderTop:'1px solid rgba(255,255,255,0.07)', marginTop:4, paddingTop:4}}>
                     <span className="lbl" style={{fontWeight:700}}>Разом</span>
-                    <span className="val" style={{fontWeight:800}}>{applyDiscount((selectedService?.price || 0) + dialogSlot.surcharge)}₴</span>
+                    <span className="val" style={{fontWeight:800}}>{applyDiscount(effectivePrice(selectedService, selectedDate ? formatDateYMD(selectedDate) : '') + dialogSlot.surcharge)}₴</span>
                   </div>
                 </>
               )}
