@@ -133,18 +133,19 @@ export async function cancelBooking(uid, bookingId, { isReschedule = false } = {
   const booking = snap.val()
   if (!booking) return
 
-  await update(ref(db, `bookings/${uid}/${bookingId}`), {
-    status: 'cancelled',
-    cancelledAt: Date.now(),
-    cancelledBy: isReschedule ? 'reschedule' : 'student',
-  })
+  // Один атомарний update — щоб розрив з'єднання між "позначити скасованим"
+  // і "звільнити слоти" не міг лишити тільки перший запис (слот застряг би зайнятим).
+  const updates = {
+    [`bookings/${uid}/${bookingId}/status`]: 'cancelled',
+    [`bookings/${uid}/${bookingId}/cancelledAt`]: Date.now(),
+    [`bookings/${uid}/${bookingId}/cancelledBy`]: isReschedule ? 'reschedule' : 'student',
+  }
 
   // Відновити вільні слоти, видалити 30-хв фантоми
   if (booking.date && booking.time) {
     const [h, m] = booking.time.split(':').map(Number)
     const startMin = h * 60 + m
     const durMin = (booking.durationHours || 1) * 60
-    const updates = {}
     for (let i = 0; i < durMin; i += 30) {
       const slotMin = startMin + i
       const slotH = String(Math.floor(slotMin / 60)).padStart(2, '0')
@@ -159,8 +160,8 @@ export async function cancelBooking(uid, bookingId, { isReschedule = false } = {
         updates[path] = null
       }
     }
-    await update(ref(db, '/'), updates)
   }
+  await update(ref(db, '/'), updates)
 }
 
 // в”Ђв”Ђв”Ђ QUEUE (Р»РёСЃС‚ РѕС‡С–РєСѓРІР°РЅРЅСЏ) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ

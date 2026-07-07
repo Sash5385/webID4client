@@ -27,6 +27,29 @@ async function writePushLog(entry) {
     .catch(e => console.error("pushLog write error", e.message));
 }
 
+// ─── HELPER: звільнити timeslots при скасуванні (сервер-сайд safety net —
+// не залежить від того, чи встиг клієнт дописати другий запит після скасування) ─
+async function freeTimeslots(date, time, durationHours = 1) {
+  if (!date || !time) return;
+  const [h, m] = time.split(":").map(Number);
+  const startMin = h * 60 + m;
+  const durMin = (durationHours || 1) * 60;
+  const updates = {};
+  for (let i = 0; i < durMin; i += 30) {
+    const slotMin = startMin + i;
+    const slotH = String(Math.floor(slotMin / 60)).padStart(2, "0");
+    const slotM = String(slotMin % 60).padStart(2, "0");
+    const path = `timeslots/${date}/slot${slotH}${slotM}`;
+    if (i % 60 === 0) {
+      updates[`${path}/available`] = true;
+      updates[`${path}/time`] = `${slotH}:${slotM}`;
+    } else {
+      updates[path] = null;
+    }
+  }
+  await db.ref("/").update(updates).catch(e => console.error("freeTimeslots error", e.message));
+}
+
 // ─── HELPERS: text formatting ────────────────────────────────────
 function firstName(fullName) {
   return fullName ? fullName.trim().split(/\s+/)[0] : "";
@@ -248,6 +271,7 @@ exports.onBookingStatusChanged = onValueWritten(
       await sendPush(uid, tpl.title, body, "/cabinet/bookings", "booking_confirmed");
       await writePushLog({ type:"booking_confirmed", title:tpl.title, body, uid });
     } else if (newStatus === "cancelled") {
+      await freeTimeslots(date, time, after.durationHours);
       if (after.cancelledBy === "reschedule") {
         await sendAdminPush("🔄 Учень переніс запис", `${name || "Учень"}${slot}`);
       } else {
