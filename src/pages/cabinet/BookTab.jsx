@@ -506,7 +506,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                 <div>
                   <div style={{fontSize:10, fontWeight:800, lineHeight:1.3}}>{svc.name}</div>
                   <div style={{fontSize:9, color:'var(--dim)', marginTop:1}}>
-                    {isLocked ? (svc.type === 'school' ? 'недоступно' : 'після 40 уроків') : discountPct > 0 ? `${applyDiscount(svc.price)} ₴ (−${discountPct}%)` : `${svc.price} ₴`}
+                    {isLocked ? (svc.type === 'school' ? 'недоступно' : 'після 40 уроків') : discountPct > 0 ? `${applyDiscount(effectivePrice(svc, selectedDate ? formatDateYMD(selectedDate) : formatDateYMD(today)))} ₴ (−${discountPct}%)` : `${effectivePrice(svc, selectedDate ? formatDateYMD(selectedDate) : formatDateYMD(today))} ₴`}
                   </div>
                 </div>
               </div>

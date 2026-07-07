@@ -1,11 +1,21 @@
 import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useToast } from '../../hooks/useToast'
-import { cancelBooking, confirmAttendance, createBooking, markSlotsUnavailable, claimSlot, subscribeSlotsForDate, getAdminSettings, subscribeMonthAvailability } from '../../firebase/db'
+import { cancelBooking, confirmAttendance, createBooking, markSlotsUnavailable, claimSlot, subscribeSlotsForDate, getAdminSettings, getAdminServices, subscribeMonthAvailability } from '../../firebase/db'
 import { parseYMD, getMonthShort, getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay, formatDateLabel } from '../../utils/date'
 import { googleCalendarLink, downloadICS } from '../../utils/calendar'
 import './BookingsTab.css'
 import './BookTab.css'
+
+// Ціна послуги на дату уроку: якщо задано nextPrice/nextPriceFrom і дата
+// уроку вже досягла nextPriceFrom — використовуємо нову ціну (див. BookTab.jsx).
+function effectivePrice(svc, dateStr) {
+  if (!svc) return 0
+  if (svc.nextPrice != null && svc.nextPriceFrom && dateStr && dateStr >= svc.nextPriceFrom) {
+    return svc.nextPrice
+  }
+  return svc.price || 0
+}
 
 // Мінімальний час до уроку, коли учень ще може самостійно скасувати (год)
 const CANCEL_WINDOW_HOURS = 24
@@ -31,11 +41,13 @@ function RescheduleModal({ booking, user, profile, onClose, onDone }) {
   const [saving, setSaving] = useState(false)
   const [adminSettings, setAdminSettings] = useState({ lunchEnabled: true, lunchStart: 12, lunchEnd: 13 })
   const [monthAvail, setMonthAvail] = useState({})
+  const [services, setServices] = useState([])
 
   const durationHours = booking.durationHours || 1
 
   useEffect(() => {
     getAdminSettings().then(s => setAdminSettings(s)).catch(() => {})
+    getAdminServices().then(list => setServices(list)).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -109,11 +121,15 @@ function RescheduleModal({ booking, user, profile, onClose, onDone }) {
           return
         }
       }
-      // Ціна = стара ціна + різниця надбавки (з урахуванням знижки, застосованої до запису)
+      // Ціна: якщо є послуга — перераховуємо за її ціною на НОВУ дату (враховує
+      // заплановану зміну ціни, напр. з 1 серпня); інакше — стара ціна + різниця надбавки.
       const discountFactor = 1 - (booking.discountPct || 0) / 100
       const oldSurcharge = booking.surcharge || 0
+      const svc = services.find(s => s.id === booking.serviceId)
       let newPrice = booking.price
-      if (booking.price != null) {
+      if (svc) {
+        newPrice = Math.round((effectivePrice(svc, newDate) + newSurcharge) * discountFactor)
+      } else if (booking.price != null) {
         newPrice = booking.price + Math.round((newSurcharge - oldSurcharge) * discountFactor)
       } else if (newSurcharge > 0) {
         newPrice = Math.round(newSurcharge * discountFactor)
