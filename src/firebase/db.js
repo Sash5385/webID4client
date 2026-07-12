@@ -41,9 +41,12 @@ function classifyDay(slotsObj) {
   if (slots.length === 0) return null
   const free  = slots.filter(([, s]) => s.available !== false).length
   const taken = slots.filter(([, s]) => s.available === false).length
-  if (taken === 0) return 'free'
-  if (free  === 0) return 'full'
-  return 'partial'
+  // Зелений = є вільні слоти (день доступний для запису).
+  // Оранжевий = вільних мало (лишилось ≤2). Червоний = вільних немає.
+  if (free === 0) return 'full'
+  if (taken === 0) return 'free'   // повністю вільний день
+  if (free <= 2) return 'partial'  // майже заповнений — лишилось мало
+  return 'free'                    // вільних ще достатньо
 }
 
 export function subscribeMonthAvailability(year, month, callback) {
