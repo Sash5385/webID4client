@@ -31,22 +31,21 @@ export async function getSlotsForDate(date) {
 
 function classifyDay(slotsObj) {
   if (!slotsObj) return null
-  // Use entries to derive time from key (slot1000 → 10:00) as fallback when time field missing.
-  // Count only :00 slots (admin-created hourly slots); ignore :30 phantoms from client bookings.
+  // Рахуємо всі реальні слоти — і :00 (годинні від адміна), і :30
+  // (напр. слот, що звільнився після скасування запису на пів години).
+  // Раніше :30 ігнорувались повністю — і день із вільними :30-слотами
+  // не підсвічувався ні зеленим, ні оранжевим.
   const slots = Object.entries(slotsObj).filter(([key, s]) => {
     if (!s || s.adminBlocked) return false
-    const m = key.match(/^slot(\d{2})(\d{2})$/)
-    return m && parseInt(m[2], 10) === 0
+    return /^slot\d{4}$/.test(key)
   })
   if (slots.length === 0) return null
-  const free  = slots.filter(([, s]) => s.available !== false).length
-  const taken = slots.filter(([, s]) => s.available === false).length
-  // Зелений = є вільні слоти (день доступний для запису).
-  // Оранжевий = вільних мало (лишилось ≤2). Червоний = вільних немає.
+  const free = slots.filter(([, s]) => s.available !== false).length
+  // Колір за кількістю ВІЛЬНИХ слотів:
+  // 0 — червоний (все зайнято), 1–2 — оранжевий (мало), 3+ — зелений.
   if (free === 0) return 'full'
-  if (taken === 0) return 'free'   // повністю вільний день
-  if (free <= 2) return 'partial'  // майже заповнений — лишилось мало
-  return 'free'                    // вільних ще достатньо
+  if (free <= 2) return 'partial'
+  return 'free'
 }
 
 export function subscribeMonthAvailability(year, month, callback) {
