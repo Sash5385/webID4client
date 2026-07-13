@@ -129,7 +129,7 @@ export async function cancelBooking(uid, bookingId, { isReschedule = false } = {
     cancelledBy: isReschedule ? 'reschedule' : 'student',
   })
 
-  // Відновити вільні слоти, видалити 30-хв фантоми
+  // Відновити вільні слоти
   if (booking.date && booking.time) {
     const [h, m] = booking.time.split(':').map(Number)
     const startMin = h * 60 + m
@@ -140,14 +140,8 @@ export async function cancelBooking(uid, bookingId, { isReschedule = false } = {
       const slotH = String(Math.floor(slotMin / 60)).padStart(2, '0')
       const slotM = String(slotMin % 60).padStart(2, '0')
       const path = `timeslots/${booking.date}/slot${slotH}${slotM}`
-      if (i % 60 === 0) {
-        // Годинний слот — відновлюємо
-        updates[`${path}/available`] = true
-        updates[`${path}/time`] = `${slotH}:${slotM}`
-      } else {
-        // 30-хв фантом (створений markSlotsUnavailable) — видаляємо
-        updates[path] = null
-      }
+      updates[`${path}/available`] = true
+      updates[`${path}/time`] = `${slotH}:${slotM}`
     }
     await update(ref(db, '/'), updates)
   }
