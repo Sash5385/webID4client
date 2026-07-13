@@ -143,8 +143,12 @@ export async function cancelBooking(uid, bookingId, { isReschedule = false } = {
     [`bookings/${uid}/${bookingId}/cancelledBy`]: isReschedule ? 'reschedule' : 'student',
   }
 
-  // Відновити вільні слоти
+  // Відновити вільні слоти: лише ті, що існують у сітці дня.
+  // phantom-вузли (створені тільки під запис) видаляємо, щоб не спавнились
+  // випадкові вільні слоти поза розкладом.
   if (booking.date && booking.time) {
+    const daySnap = await get(ref(db, `timeslots/${booking.date}`))
+    const day = daySnap.val() || {}
     const [h, m] = booking.time.split(':').map(Number)
     const startMin = h * 60 + m
     const durMin = (booking.durationHours || 1) * 60
@@ -153,6 +157,8 @@ export async function cancelBooking(uid, bookingId, { isReschedule = false } = {
       const slotH = String(Math.floor(slotMin / 60)).padStart(2, '0')
       const slotM = String(slotMin % 60).padStart(2, '0')
       const path = `timeslots/${booking.date}/slot${slotH}${slotM}`
+      const node = day[`slot${slotH}${slotM}`]
+      if (!node || node.phantom) { updates[path] = null; continue }
       updates[`${path}/available`] = true
       updates[`${path}/time`] = `${slotH}:${slotM}`
     }
@@ -236,6 +242,8 @@ export async function claimSlot(date, startTime) {
 }
 
 export async function markSlotsUnavailable(date, startTime, durationHours, intervalMin = 30) {
+  const daySnap = await get(ref(db, `timeslots/${date}`))
+  const day = daySnap.val() || {}
   const [h, m] = startTime.split(':').map(Number)
   const startMin = h * 60 + m
   const endMin = startMin + durationHours * 60
@@ -244,6 +252,9 @@ export async function markSlotsUnavailable(date, startTime, durationHours, inter
     const slotH = String(Math.floor(min / 60)).padStart(2, '0')
     const slotM = String(min % 60).padStart(2, '0')
     const slotId = `slot${slotH}${slotM}`
+    // Вузол, якого нема в сітці дня, створюється лише під запис — phantom:
+    // при скасуванні він видалиться, а не стане вільним слотом.
+    if (!day[slotId]) updates[`timeslots/${date}/${slotId}/phantom`] = true
     updates[`timeslots/${date}/${slotId}/available`] = false
     updates[`timeslots/${date}/${slotId}/time`] = `${slotH}:${slotM}`
   }
