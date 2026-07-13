@@ -137,8 +137,8 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       // Слоти на рівній годинній межі — обов'язкові для багатогодинного уроку,
       // блокують тільки якщо вони вже зайняті.
       if (offsetMin % 60 === 0) return s.available === false
-      // Будь-який слот на нестандартному зміщенні (напр. +30хв) — конфлікт.
-      return true
+      // Нестандартне зміщення (+30хв) — конфлікт лише якщо слот зайнятий.
+      return s.available === false
     })
   }
 
