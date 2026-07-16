@@ -217,13 +217,13 @@ export function subscribeQueueForSlot(date, time, callback) {
 export function getConfirmedSchoolHours(bookings) {
   return bookings
     .filter(b => b.serviceType === 'school' && (b.status === 'confirmed' || b.status === 'completed') && new Date(b.date) < new Date())
-    .reduce((sum, b) => sum + (b.durationHours || 1), 0)
+    .reduce((sum, b) => sum + (b.durationHours || (b.durMin ? b.durMin / 60 : 1)), 0)
 }
 
 export function getCompletedHours(bookings) {
   return bookings
     .filter(b => b.status === 'confirmed' && new Date(b.date) < new Date())
-    .reduce((sum, b) => sum + (b.durationHours || 1), 0)
+    .reduce((sum, b) => sum + (b.durationHours || (b.durMin ? b.durMin / 60 : 1)), 0)
 }
 
 // ─── TIMESLOTS ───────────────────────────────────────────────────
