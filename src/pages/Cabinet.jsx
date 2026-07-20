@@ -3,6 +3,7 @@ import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-
 import { useTheme } from '../hooks/useTheme'
 import { useToast } from '../hooks/useToast'
 import { useBookings } from '../hooks/useBookings'
+import { useBackClose } from '../hooks/useBackButton'
 import { subscribeQueueOffers, clearQueueOffer, claimQueueOffer, declineQueueOffer, subscribeDirectUnread, markDirectChatRead, subscribeNotifications, subscribeUserQueue } from '../firebase/db'
 
 import BookTab from './cabinet/BookTab'
@@ -47,6 +48,7 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
   const [userQueue, setUserQueue] = useState([])
   const [queueOffers, setQueueOffers] = useState({})
   const [selectedOffer, setSelectedOffer] = useState(null)
+  useBackClose(!!selectedOffer, () => setSelectedOffer(null))
   const [offerSubmitting, setOfferSubmitting] = useState(false)
   const [unreadChat, setUnreadChat] = useState(0)
 

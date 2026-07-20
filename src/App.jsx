@@ -1,11 +1,14 @@
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useEffect, useState, useRef } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
+import { Capacitor } from '@capacitor/core'
+import { App as CapacitorApp } from '@capacitor/app'
 import { auth } from './firebase/config'
 import { getUserProfile, createBooking, markSlotsUnavailable, claimSlot } from './firebase/db'
 import { requestNotificationPermission, onForegroundMessage, getFirebaseSwReg } from './firebase/push'
 import { useAppUpdate } from './hooks/useAppUpdate'
 import { useToast } from './hooks/useToast'
+import { consumeBackHandler } from './hooks/useBackButton'
 
 import Auth from './pages/Auth'
 import Cabinet from './pages/Cabinet'
@@ -63,6 +66,23 @@ export default function App() {
       }
     })
   }, [user])
+
+  // Апаратна кнопка "назад" (Android): спершу закриває відкриту модалку/шторку,
+  // потім робить крок назад по історії застосунку, і лише як останній варіант
+  // згортає застосунок (а не закриває його повністю)
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+    let handle
+    CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+      if (consumeBackHandler()) return
+      if (canGoBack) {
+        navigate(-1)
+      } else {
+        CapacitorApp.minimizeApp().catch(() => CapacitorApp.exitApp())
+      }
+    }).then(h => { handle = h })
+    return () => { handle?.remove() }
+  }, [navigate])
 
   const reloadProfile = async () => {
     if (!auth.currentUser) return
