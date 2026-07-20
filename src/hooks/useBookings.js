@@ -30,7 +30,10 @@ export function useBookings(uid, profile) {
   const schoolHours = getConfirmedSchoolHours(bookings) + manualHours
   const completedHours = getCompletedHours(bookings)
   const upcoming = bookings.filter(b => b.status !== 'cancelled' && new Date(b.date) >= new Date(new Date().toDateString()))
-  const completed = bookings.filter(b => b.status === 'confirmed' && new Date(b.date) < new Date())
+  // Історія: усі записи з минулою датою (незалежно від статусу), найновіші першими
+  const completed = bookings
+    .filter(b => new Date(b.date) < new Date(new Date().toDateString()))
+    .sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`) - new Date(`${a.date}T${a.time || '00:00'}`))
 
   return {
     bookings,
