@@ -104,7 +104,6 @@ export default function App() {
             durationHours: pb.duration,
             studentName: p.name,
             phone: p.phone || auth.currentUser.phoneNumber,
-            tscCenter: p.tscCenter,
           })
           await markSlotsUnavailable(pb.date, pb.time, pb.duration, 30)
         }

@@ -162,7 +162,7 @@ export default function PublicSchedule({ onBook }) {
         <div className={`svc-tile ${serviceType==='school'?'selected':''}`} onClick={() => setServiceType('school')}>
           <div className="ico bk-ico-school">🎓</div>
           <div className="svc-title">Автошкола</div>
-          <div className="svc-dur">Курс · ТСЦ</div>
+          <div className="svc-dur">Повний курс</div>
         </div>
         <div className={`svc-tile ${serviceType==='private'?'selected':''}`} onClick={() => setServiceType('private')}>
           <div className="ico bk-ico-private">🚙</div>

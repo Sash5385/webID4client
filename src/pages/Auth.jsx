@@ -11,11 +11,6 @@ import './Auth.css'
 const iosDevice = isIOSDevice()
 const inAppBrowser = isInAppBrowser()
 
-const TSCS = [
-  { id: '8041', name: 'ТСЦ 8041', area: 'вул. Перемоги 20' },
-  { id: '8042', name: 'ТСЦ 8042', area: 'вул. Мрії 19' },
-]
-
 const EXPERIENCES = [
   { id: 'no_license', name: 'Не маю посвідчення, збираюсь складати іспит' },
   { id: 'has_license', name: 'Маю посвідчення, не маю досвіду водіння' },
@@ -95,7 +90,6 @@ export default function Auth({ user, profile, onProfileSaved }) {
   const [surname, setSurname] = useState('')
   const [surveyPhone, setSurveyPhone] = useState('')
   const [studentType, setStudentType] = useState('school')
-  const [tscId, setTscId] = useState('8041')
   const [experience, setExperience] = useState('no_license')
   const [filmingConsent, setFilmingConsent] = useState(true)
   const [termsAgreed, setTermsAgreed] = useState(false)
@@ -244,7 +238,6 @@ export default function Auth({ user, profile, onProfileSaved }) {
         name: `${name.trim()} ${surname.trim()}`,
         phone: user.phoneNumber || `+380${surveyPhone.trim()}`,
         studentType,
-        tscCenter: studentType === 'school' ? tscId : null,
         experience,
         filmingConsent,
         termsAccepted: true,
@@ -685,22 +678,6 @@ export default function Auth({ user, profile, onProfileSaved }) {
             </div>
           </div>
 
-          {studentType==='school' && (
-            <div className="field">
-              <div className="field-label">ТСЦ для іспиту</div>
-              <div className="select-list">
-                {TSCS.map(t=>(
-                  <div key={t.id} className={`select-item${tscId===t.id?' selected':''}`} onClick={()=>setTscId(t.id)}>
-                    <div className="select-radio"/>
-                    <div className="select-info">
-                      <div className="select-title">{t.name}</div>
-                      <div className="select-sub">{t.area}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {studentType === 'private' && (
             <div className="field">

@@ -101,7 +101,7 @@ export default function Landing({ user, profile }) {
               <div className="service-icon ico-school">🎓</div>
               <div className="service-info">
                 <div className="service-title">Автошкола</div>
-                <div className="service-desc">Повний курс з ТСЦ, 40 годин, документи</div>
+                <div className="service-desc">Повний курс, 40 годин, документи</div>
               </div>
               <div className="service-arrow">→</div>
             </div>
@@ -152,7 +152,7 @@ export default function Landing({ user, profile }) {
               <div className="flow-num">3</div>
               <div className="flow-body">
                 <div className="flow-title">Автошкола: 40 уроків</div>
-                <div className="flow-desc">Проходиш повний курс з ТСЦ і документами</div>
+                <div className="flow-desc">Проходиш повний курс з документами</div>
                 <div className="flow-progress">
                   <div className="flow-progress-bar"></div>
                 </div>

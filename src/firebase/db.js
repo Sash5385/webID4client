@@ -297,7 +297,6 @@ export async function claimQueueOffer(uid, slotKey, offer, profile) {
     durationHours,
     studentName: entry.name || profile?.name || '',
     phone: entry.phone || profile?.phone || '',
-    tscCenter: profile?.tscCenter,
   })
   await markSlotsUnavailable(offer.date, offer.time, durationHours, 30)
   await claimReservedSlot(offer.date, offer.time, uid)

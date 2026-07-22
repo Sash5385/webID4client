@@ -276,7 +276,6 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         durationHours,
         studentName: profile.name,
         phone: profile.phone || user.phoneNumber,
-        tscCenter: profile.tscCenter,
       })
       await markSlotsUnavailable(dateStr, selectedTime, durationHours, adminSettings.interval || 30)
       if (isOfferedToMe) {

@@ -7,11 +7,6 @@ import { getInitials, formatPhone } from "../../utils/format";
 import { APP_VERSION } from "../../version.js";
 import "./ProfileTab.css";
 
-const TSC_LABELS = {
-  "8041": "ТСЦ 8041 — вул. Перемоги 20",
-  "8042": "ТСЦ 8042 — вул. Мрії 19",
-};
-
 const STUDENT_TYPE_LABELS = {
   school: "Автошкола",
   private: "Приватний урок",
@@ -66,12 +61,6 @@ export default function ProfileTab({ user, profile, onProfileUpdate }) {
           <span className="key">Тип учня</span>
           <span className="val">{STUDENT_TYPE_LABELS[profile.studentType] || "—"}</span>
         </div>
-        {profile.studentType === "school" && (
-          <div className="profile-row">
-            <span className="key">ТСЦ</span>
-            <span className="val">{TSC_LABELS[profile.tscCenter] || profile.tscCenter || "—"}</span>
-          </div>
-        )}
         {profile.studentType === "private" && (
           <div className="profile-row">
             <span className="key">Досвід</span>

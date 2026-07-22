@@ -159,7 +159,6 @@ function RescheduleModal({ booking, user, profile, onClose, onDone }) {
         durationHours,
         studentName: booking.studentName,
         phone: booking.phone,
-        tscCenter: booking.tscCenter,
         rescheduledFrom: `${booking.date} ${booking.time}`,
       })
       // 4. Закриваємо слоти (фантомні 30-хв + повна тривалість)
