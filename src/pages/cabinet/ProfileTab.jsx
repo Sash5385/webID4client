@@ -32,6 +32,19 @@ export default function ProfileTab({ user, profile, onProfileUpdate }) {
     navigate("/", { replace: true });
   };
 
+  const forceUpdate = async () => {
+    try {
+      const regs = await navigator.serviceWorker?.getRegistrations?.() || [];
+      await Promise.all(regs.map(r => r.unregister()));
+      if (window.caches) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+    } finally {
+      window.location.reload();
+    }
+  };
+
   if (!profile) {
     return (
       <div style={{ padding: 40, textAlign: "center", color: "var(--dim)" }}>
@@ -106,7 +119,7 @@ export default function ProfileTab({ user, profile, onProfileUpdate }) {
         </a>
       </div>
 
-      <div style={{textAlign:"center",padding:"12px 0 4px",color:"#5a5c62",fontSize:13,fontWeight:600,letterSpacing:0.5}}>
+      <div onClick={forceUpdate} style={{textAlign:"center",padding:"12px 0 4px",color:"#5a5c62",fontSize:13,fontWeight:600,letterSpacing:0.5,cursor:"pointer"}}>
         {APP_VERSION}
       </div>
 
