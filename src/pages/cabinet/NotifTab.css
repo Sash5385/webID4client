@@ -78,7 +78,7 @@
 /* ─── TEXT / TIME ──────────────────────────────────────────────── */
 .notif-text {
   font-size: 12px;
-  color: var(--dim);
+  color: rgba(255,255,255,0.85);
   line-height: 1.45;
   margin-bottom: 4px;
   word-break: break-word;
@@ -86,9 +86,11 @@
 
 .notif-time {
   font-size: 10px;
-  color: var(--dim);
-  opacity: 0.7;
+  color: rgba(255,255,255,0.65);
 }
+
+[data-theme="light"] .notif-text { color: var(--dim); }
+[data-theme="light"] .notif-time { color: var(--dim); opacity: 0.7; }
 
 /* ─── TOOLBAR ──────────────────────────────────────────────────── */
 .notif-toolbar {

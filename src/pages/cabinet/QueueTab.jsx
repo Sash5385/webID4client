@@ -80,7 +80,7 @@ export default function QueueTab({ user }) {
                 <div style={{ fontSize:15, fontWeight:800, color:'var(--text)' }}>
                   {formatSlotDate(slot.date)}
                 </div>
-                <div style={{ fontSize:13, color:'var(--dim)', marginTop:2 }}>
+                <div className="notif-time" style={{ fontSize:13, marginTop:2 }}>
                   {slot.time}
                 </div>
               </div>
