@@ -4,6 +4,7 @@ import { useTheme } from '../hooks/useTheme'
 import { useToast } from '../hooks/useToast'
 import { useBookings } from '../hooks/useBookings'
 import { useBackClose } from '../hooks/useBackButton'
+import { signOut } from '../firebase/auth'
 import { subscribeQueueOffers, clearQueueOffer, claimQueueOffer, declineQueueOffer, subscribeDirectUnread, markDirectChatRead, subscribeNotifications, subscribeUserQueue } from '../firebase/db'
 
 import BookTab from './cabinet/BookTab'
@@ -162,6 +163,12 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
     window.scrollTo(0, 0)
   }
 
+  const handleLogout = async () => {
+    if (!window.confirm('Вийти з акаунту?')) return
+    await signOut()
+    nav('/', { replace: true })
+  }
+
   return (
     <div className="cabinet-page">
 
@@ -208,6 +215,13 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
             {bellCount > 0 && (
               <div className="badge">{bellCount}</div>
             )}
+          </button>
+          <button className="cab-icon-btn" onClick={handleLogout} aria-label="Вийти з акаунту">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
           </button>
         </div>
       </header>
@@ -308,15 +322,6 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
           {unreadNotifs > 0 && (
             <div className="botnav-badge">{unreadNotifs}</div>
           )}
-        </button>
-        <button className={`botnav-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => switchTab('profile')}>
-          <div className="botnav-ico">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="8" r="4"/>
-              <path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>
-            </svg>
-          </div>
-          <div className="botnav-lbl">Профіль</div>
         </button>
         </div>
       </nav>
