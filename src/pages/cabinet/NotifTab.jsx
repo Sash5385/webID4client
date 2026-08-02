@@ -54,7 +54,6 @@ export default function NotifTab({ user, onSeen }) {
               <div className="notif-body">
                 <div className="notif-header">
                   <span className="notif-title">{n.title}</span>
-                  <span className={`notif-badge notif-badge-${meta.accent}`}>{meta.label}</span>
                 </div>
                 {n.body && <div className="notif-text">{n.body}</div>}
                 <div className="notif-time">{n.date} · {n.time}</div>
