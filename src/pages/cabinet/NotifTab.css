@@ -29,11 +29,11 @@
   border-radius: 14px;
 }
 
-/* full-color gradient fill per notification type */
-.notif-accent-green { background: linear-gradient(155deg, rgba(126,217,87,0.87), rgba(126,217,87,0.2)); box-shadow: -1px 4px 12px rgba(126,217,87,0.35); }
-.notif-accent-red   { background: linear-gradient(155deg, rgba(239,68,68,0.87), rgba(239,68,68,0.2));   box-shadow: -1px 4px 12px rgba(239,68,68,0.35); }
-.notif-accent-gold  { background: linear-gradient(155deg, rgba(247,201,72,0.87), rgba(247,201,72,0.2)); box-shadow: -1px 4px 12px rgba(247,201,72,0.35); }
-.notif-accent-blue  { background: linear-gradient(155deg, rgba(91,155,255,0.87), rgba(91,155,255,0.2)); box-shadow: -1px 4px 12px rgba(91,155,255,0.35); }
+/* full-color gradient fill per notification type — mixed into bg-deep so it stays opaque, not see-through */
+.notif-accent-green { background: linear-gradient(155deg, color-mix(in srgb, #7ed957 58%, var(--bg-deep)) 0%, color-mix(in srgb, #7ed957 24%, var(--bg-deep)) 100%); box-shadow: -1px 4px 12px rgba(126,217,87,0.35); }
+.notif-accent-red   { background: linear-gradient(155deg, color-mix(in srgb, #ef4444 58%, var(--bg-deep)) 0%, color-mix(in srgb, #ef4444 24%, var(--bg-deep)) 100%); box-shadow: -1px 4px 12px rgba(239,68,68,0.35); }
+.notif-accent-gold  { background: linear-gradient(155deg, color-mix(in srgb, var(--gold) 58%, var(--bg-deep)) 0%, color-mix(in srgb, var(--gold) 24%, var(--bg-deep)) 100%); box-shadow: -1px 4px 12px rgba(247,201,72,0.35); }
+.notif-accent-blue  { background: linear-gradient(155deg, color-mix(in srgb, #5b9bff 58%, var(--bg-deep)) 0%, color-mix(in srgb, #5b9bff 24%, var(--bg-deep)) 100%); box-shadow: -1px 4px 12px rgba(91,155,255,0.35); }
 .notif-accent-dim   { background: linear-gradient(155deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04)); box-shadow: none; border: 1px solid rgba(255,255,255,0.07); }
 
 /* ─── ICON ─────────────────────────────────────────────────────── */

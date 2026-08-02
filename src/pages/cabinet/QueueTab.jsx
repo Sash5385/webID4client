@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { subscribeUserQueue, leaveQueue } from '../../firebase/db'
 import { formatDateLabel, parseYMD } from '../../utils/date'
 import { useToast } from '../../hooks/useToast'
+import './NotifTab.css'
 
 function formatSlotDate(dateStr) {
   try {
@@ -68,34 +69,30 @@ export default function QueueTab({ user }) {
         const isOffered = slot.status === 'offered'
         const isLeaving = leaving === slot.slotKey
         return (
-          <div key={slot.slotKey} style={{
-            background: isOffered
-              ? 'linear-gradient(135deg,rgba(99,211,120,0.15),rgba(99,211,120,0.05))'
-              : 'var(--surface)',
-            border: `1.5px solid ${isOffered ? 'rgba(99,211,120,0.5)' : 'var(--border)'}`,
+          <div key={slot.slotKey} className={`notif-card notif-accent-${isOffered ? 'green' : 'gold'}`} style={{
             borderRadius:14,
             padding:'14px 14px 12px',
-            display:'flex', flexDirection:'column', gap:10,
+            display:'flex', flexDirection:'column', alignItems:'stretch', gap:10,
           }}>
             {/* Date + time row */}
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div>
-                <div style={{ fontSize:15, fontWeight:800, color:'var(--text)' }}>
+                <div style={{ fontSize:15, fontWeight:800, color:'#fff', textShadow:'0 1px 2px rgba(0,0,0,0.35)' }}>
                   {formatSlotDate(slot.date)}
                 </div>
-                <div style={{ fontSize:13, color:'var(--dim)', marginTop:2 }}>
+                <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', marginTop:2 }}>
                   {slot.time}
                 </div>
               </div>
               {isOffered ? (
                 <div style={{
-                  background:'rgba(99,211,120,0.2)', color:'var(--green)',
+                  background:'rgba(0,0,0,0.2)', color:'#fff',
                   borderRadius:8, padding:'4px 10px',
                   fontSize:11, fontWeight:700,
                 }}>Запрошено</div>
               ) : (
                 <div style={{
-                  background:'rgba(255,255,255,0.06)', color:'var(--dim)',
+                  background:'rgba(0,0,0,0.2)', color:'#fff',
                   borderRadius:8, padding:'4px 10px',
                   fontSize:11, fontWeight:700,
                 }}>Очікую</div>
@@ -109,7 +106,7 @@ export default function QueueTab({ user }) {
               style={{
                 width:'100%', padding:'10px',
                 borderRadius:10, border:'none', cursor:'pointer',
-                background:'rgba(239,68,68,0.1)', color:'#f87171',
+                background:'rgba(0,0,0,0.22)', color:'#f87171',
                 fontSize:13, fontWeight:700,
                 opacity: isLeaving ? 0.5 : 1,
                 transition:'opacity .15s',
