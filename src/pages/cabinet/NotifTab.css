@@ -131,9 +131,13 @@
 .notif-dismiss:hover { opacity: 1; }
 .notif-accent-dim .notif-dismiss { color: var(--dim); }
 
-/* ─── LIGHT THEME ──────────────────────────────────────────────── */
-[data-theme="light"] .notif-accent-green { background: linear-gradient(155deg, rgba(90,184,58,0.92), rgba(90,184,58,0.5));  box-shadow: -1px 4px 12px rgba(90,184,58,0.25); }
-[data-theme="light"] .notif-accent-red   { background: linear-gradient(155deg, rgba(220,38,38,0.92), rgba(220,38,38,0.5));  box-shadow: -1px 4px 12px rgba(220,38,38,0.25); }
-[data-theme="light"] .notif-accent-gold  { background: linear-gradient(155deg, rgba(212,160,16,0.92), rgba(212,160,16,0.5)); box-shadow: -1px 4px 12px rgba(212,160,16,0.25); }
-[data-theme="light"] .notif-accent-blue  { background: linear-gradient(155deg, rgba(37,99,235,0.92), rgba(37,99,235,0.5));  box-shadow: -1px 4px 12px rgba(37,99,235,0.25); }
-[data-theme="light"] .notif-accent-dim   { background: linear-gradient(155deg, rgba(0,0,0,0.06), rgba(0,0,0,0.02)); box-shadow: none; border: 1px solid rgba(0,0,0,0.06); }
+/* ─── LIGHT THEME — dark-gray tiles instead of color, so they don't clash with the white page ─── */
+[data-theme="light"] .notif-accent-green,
+[data-theme="light"] .notif-accent-red,
+[data-theme="light"] .notif-accent-gold,
+[data-theme="light"] .notif-accent-blue,
+[data-theme="light"] .notif-accent-dim {
+  background: linear-gradient(155deg, #4a4c52, #2c2d31);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+  border: none;
+}
