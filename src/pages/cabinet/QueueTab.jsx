@@ -69,7 +69,7 @@ export default function QueueTab({ user }) {
         const isOffered = slot.status === 'offered'
         const isLeaving = leaving === slot.slotKey
         return (
-          <div key={slot.slotKey} className={`notif-card notif-accent-${isOffered ? 'green' : 'gold'}`} style={{
+          <div key={slot.slotKey} className="notif-card" style={{
             borderRadius:14,
             padding:'14px 14px 12px',
             display:'flex', flexDirection:'column', alignItems:'stretch', gap:10,
@@ -77,22 +77,22 @@ export default function QueueTab({ user }) {
             {/* Date + time row */}
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div>
-                <div style={{ fontSize:15, fontWeight:800, color:'#fff', textShadow:'0 1px 2px rgba(0,0,0,0.35)' }}>
+                <div style={{ fontSize:15, fontWeight:800, color:'var(--text)' }}>
                   {formatSlotDate(slot.date)}
                 </div>
-                <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', marginTop:2 }}>
+                <div style={{ fontSize:13, color:'var(--dim)', marginTop:2 }}>
                   {slot.time}
                 </div>
               </div>
               {isOffered ? (
                 <div style={{
-                  background:'rgba(0,0,0,0.2)', color:'#fff',
+                  background:'rgba(126,217,87,0.15)', color:'#7ed957',
                   borderRadius:8, padding:'4px 10px',
                   fontSize:11, fontWeight:700,
                 }}>Запрошено</div>
               ) : (
                 <div style={{
-                  background:'rgba(0,0,0,0.2)', color:'#fff',
+                  background:'rgba(247,201,72,0.15)', color:'var(--gold)',
                   borderRadius:8, padding:'4px 10px',
                   fontSize:11, fontWeight:700,
                 }}>Очікую</div>
@@ -106,7 +106,7 @@ export default function QueueTab({ user }) {
               style={{
                 width:'100%', padding:'10px',
                 borderRadius:10, border:'none', cursor:'pointer',
-                background:'rgba(0,0,0,0.22)', color:'#f87171',
+                background:'rgba(239,68,68,0.1)', color:'#f87171',
                 fontSize:13, fontWeight:700,
                 opacity: isLeaving ? 0.5 : 1,
                 transition:'opacity .15s',
