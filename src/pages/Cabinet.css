@@ -118,7 +118,7 @@
   border-radius: 26px;
   border: 1px solid rgba(255,255,255,0.12);
   box-shadow: 0 12px 40px rgba(0,0,0,0.65), 0 4px 16px rgba(0,0,0,0.4), 0 -1px 0 rgba(255,255,255,0.05);
-  display: flex; overflow: hidden;
+  display: flex; overflow: visible;
   pointer-events: auto;
 }
 
@@ -164,4 +164,41 @@
   border-radius: 10px; padding: 1px 5px;
   font-size: 9px; font-weight: 800;
   box-shadow: 0 0 8px rgba(255,90,60,0.6);
+}
+
+/* CENTER FAB — "Запис" */
+.botnav-fab-slot {
+  flex: 1 1 0; min-width: 0;
+  display: flex; align-items: flex-start; justify-content: center;
+  position: relative;
+}
+
+.botnav-fab {
+  position: absolute; top: -24px;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: linear-gradient(155deg, var(--acc-hi), var(--accent));
+  border: 4px solid var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(255,90,60,0.5);
+  z-index: 2;
+  transition: transform .15s;
+}
+.botnav-fab:active { transform: scale(0.94); }
+
+.botnav-fab-glow {
+  position: absolute; inset: -14px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,90,60,0.35), transparent 70%);
+  animation: botnav-fab-pulse 2s ease-in-out infinite;
+  z-index: -1;
+  pointer-events: none;
+}
+
+@keyframes botnav-fab-pulse {
+  0%, 100% { transform: scale(0.85); opacity: 0.7; }
+  50% { transform: scale(1.15); opacity: 0.3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .botnav-fab-glow { animation: none; opacity: 0.5; }
 }

@@ -266,15 +266,6 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
       {/* BOTTOM NAV */}
       <nav className="botnav">
         <div className="botnav-inner">
-        <button className={`botnav-btn ${activeTab === 'book' ? 'active' : ''}`} onClick={() => switchTab('book')}>
-          <div className="botnav-ico">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-              <rect x="3" y="5" width="18" height="16" rx="2"/>
-              <path d="M8 3v4M16 3v4M3 10h18"/>
-            </svg>
-          </div>
-          <div className="botnav-lbl">Запис</div>
-        </button>
         <button className={`botnav-btn ${activeTab === 'bookings' ? 'active' : ''}`} onClick={() => switchTab('bookings')}>
           <div className="botnav-ico">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -301,6 +292,15 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
             <div className="botnav-badge">{userQueue.length}</div>
           )}
         </button>
+        <div className="botnav-fab-slot">
+          <button className="botnav-fab" onClick={() => switchTab('book')} aria-label="Записатись">
+            <span className="botnav-fab-glow" />
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round">
+              <rect x="3" y="5" width="18" height="16" rx="2"/>
+              <path d="M8 3v4M16 3v4M3 10h18"/>
+            </svg>
+          </button>
+        </div>
         <button className={`botnav-btn ${activeTab === 'chat' ? 'active' : ''}`} onClick={() => switchTab('chat')}>
           <div className="botnav-ico">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
