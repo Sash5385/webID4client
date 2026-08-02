@@ -390,13 +390,13 @@ export default function BookingsTab({ user, profile, bookingsData }) {
         <>
           {upcoming.length > 0 && (
             <>
-              <div className="section-title">Найближчі</div>
+              <div className="section-title" style={{ fontSize: 14, fontWeight: 800, color: '#fff', textAlign: 'center' }}>Найближчі</div>
               {upcoming.map(b => renderCard(b))}
             </>
           )}
           {completed.length > 0 && (
             <>
-              <div className="section-title">Завершені ({completed.length})</div>
+              <div className="section-title" style={{ fontSize: 14, fontWeight: 800, color: '#fff', textAlign: 'center' }}>Завершені ({completed.length})</div>
               {(showAllCompleted ? completed : completed.slice(0, 10)).map(b => renderCard(b, true))}
               {completed.length > 10 && (
                 <button
