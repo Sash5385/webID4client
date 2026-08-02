@@ -60,8 +60,8 @@ export default function QueueTab({ user }) {
 
   return (
     <div style={{ paddingTop:12, display:'flex', flexDirection:'column', gap:10 }}>
-      <div style={{ fontSize:12, color:'var(--dim)', marginBottom:2 }}>
-        Ти стоїш у черзі на {active.length} {active.length === 1 ? 'слот' : active.length < 5 ? 'слоти' : 'слотів'}
+      <div style={{ fontSize:13, fontWeight:800, color:'#fff', textAlign:'center', textTransform:'uppercase', letterSpacing:0.4, marginBottom:2 }}>
+        Ви стоїте у черзі на {active.length} {active.length === 1 ? 'слот' : active.length < 5 ? 'слоти' : 'слотів'}
       </div>
 
       {active.map(slot => {
