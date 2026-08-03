@@ -276,16 +276,18 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
         onTouchStart={handleContentTouchStart}
         onTouchEnd={handleContentTouchEnd}
       >
-        <Routes>
-          <Route path="/" element={<BookTab user={user} profile={profile} bookingsData={bookingsData} notifParams={notifParams} />} />
-          <Route path="/bookings" element={<BookingsTab user={user} profile={profile} bookingsData={bookingsData} />} />
-          <Route path="/progress" element={<ProgressTab user={user} profile={profile} bookingsData={bookingsData} />} />
-          <Route path="/queue" element={<QueueTab user={user} />} />
-          <Route path="/chat" element={<ChatTab user={user} profile={profile} />} />
-          <Route path="/notifications" element={<NotifTab user={user} onSeen={markNotifsSeen} />} />
-          <Route path="/profile" element={<ProfileTab user={user} profile={profile} bookingsData={bookingsData} onProfileUpdate={onProfileUpdate} />} />
-          <Route path="*" element={<Navigate to="/cabinet" />} />
-        </Routes>
+        <div className="fade-up" key={activeTab} style={{ display:'flex', flexDirection:'column', flex:1, minHeight:0 }}>
+          <Routes>
+            <Route path="/" element={<BookTab user={user} profile={profile} bookingsData={bookingsData} notifParams={notifParams} />} />
+            <Route path="/bookings" element={<BookingsTab user={user} profile={profile} bookingsData={bookingsData} />} />
+            <Route path="/progress" element={<ProgressTab user={user} profile={profile} bookingsData={bookingsData} />} />
+            <Route path="/queue" element={<QueueTab user={user} />} />
+            <Route path="/chat" element={<ChatTab user={user} profile={profile} />} />
+            <Route path="/notifications" element={<NotifTab user={user} onSeen={markNotifsSeen} />} />
+            <Route path="/profile" element={<ProfileTab user={user} profile={profile} bookingsData={bookingsData} onProfileUpdate={onProfileUpdate} />} />
+            <Route path="*" element={<Navigate to="/cabinet" />} />
+          </Routes>
+        </div>
       </div>
 
       {/* BOTTOM NAV */}
