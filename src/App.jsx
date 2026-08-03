@@ -9,6 +9,7 @@ import { requestNotificationPermission, onForegroundMessage, getFirebaseSwReg } 
 import { useAppUpdate } from './hooks/useAppUpdate'
 import { useToast } from './hooks/useToast'
 import { consumeBackHandler } from './hooks/useBackButton'
+import { APP_VERSION } from './version.js'
 
 import Auth from './pages/Auth'
 import Cabinet from './pages/Cabinet'
@@ -170,7 +171,7 @@ export default function App() {
       <div className={`update-banner${isUpdating ? ' update-banner--loading' : ''}`} onClick={updateServiceWorker}>
         {isUpdating
           ? <><span className="update-spinner" /> Оновлення...</>
-          : 'Доступне оновлення — натисніть щоб оновити'
+          : <>Доступне оновлення {APP_VERSION} — натисніть щоб оновити</>
         }
       </div>
     )}

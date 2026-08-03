@@ -60,6 +60,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   const [adminSettings, setAdminSettings] = useState({ lunchEnabled: true, lunchStart: 12, lunchEnd: 13 })
   const [monthAvail, setMonthAvail] = useState({})
   const timeSectionRef = useRef(null)
+  const ctaSectionRef = useRef(null)
 
   // Dialog state
   const [dialogSlot, setDialogSlot] = useState(null)
@@ -149,6 +150,14 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       timeSectionRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' })
     }, 100)
   }, [selectedDate])
+
+  // Авто-скрол до кнопки підтвердження після вибору часу
+  useEffect(() => {
+    if (!selectedTime || !ctaSectionRef.current) return
+    setTimeout(() => {
+      ctaSectionRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' })
+    }, 100)
+  }, [selectedTime])
 
   // Реальний-тайм підписка на слоти (щоб резервування оновлювалось одразу)
   useEffect(() => {
@@ -670,7 +679,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         const totalPrice = applyDiscount(baseP + surcharge)
         const dateLabel = formatDateYMD(selectedDate).slice(-5).split('-').reverse().join('.')
         return (
-          <>
+          <div ref={ctaSectionRef}>
             {surcharge > 0 ? (
               <div style={{
                 marginTop:12, padding:'12px 14px', borderRadius:12,
@@ -697,7 +706,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
             <button className="btn-primary" style={{marginTop:10}} onClick={handleBook} disabled={submitting}>
               {submitting ? 'Записуємо...' : `✓ Записатись ${dateLabel} о ${selectedTime}${totalPrice ? ` · ${totalPrice}₴` : ''}`}
             </button>
-          </>
+          </div>
         )
       })()}
 

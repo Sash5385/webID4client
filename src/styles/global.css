@@ -169,8 +169,7 @@ button { font-family: inherit; touch-action: manipulation; }
 .update-banner {
   position: fixed;
   bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 16px;
   background: #ff5a3c;
   color: #fff;
   padding: 12px 24px;
