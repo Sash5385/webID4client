@@ -177,6 +177,21 @@ export default function App() {
       <div className="jar-fab-lid" />
       <div className="jar-fab-body"><span>КАВА</span></div>
     </a>
+    <button
+      type="button"
+      className="card-fab"
+      aria-label="Скопіювати номер картки"
+      onClick={() => {
+        navigator.clipboard.writeText('4035200041312916').then(() => {
+          showToast('Номер картки скопійовано')
+        }).catch(() => {})
+      }}
+    >
+      <div className="card-fab-body">
+        <div className="card-fab-chip" />
+        <div className="card-fab-num">••2916</div>
+      </div>
+    </button>
     {needRefresh && (
       <div className={`update-banner${isUpdating ? ' update-banner--loading' : ''}`} onClick={updateServiceWorker}>
         {isUpdating

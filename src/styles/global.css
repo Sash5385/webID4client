@@ -238,3 +238,40 @@ button { font-family: inherit; touch-action: manipulation; }
   text-shadow: 0 0 3px #5ee6ff, 0 0 8px rgba(94,230,255,0.8);
   letter-spacing: 0.5px;
 }
+
+.card-fab {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 48px);
+  left: 12px;
+  z-index: 45;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.card-fab-body {
+  width: 46px;
+  height: 30px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #2a3a55, #131a26);
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: -1px 3px 8px rgba(0,0,0,0.5);
+  position: relative;
+  padding: 5px;
+}
+.card-fab-chip {
+  width: 8px;
+  height: 6px;
+  border-radius: 2px;
+  background: linear-gradient(145deg,#e8c96a,#b8944a);
+}
+.card-fab-num {
+  position: absolute;
+  bottom: 4px;
+  left: 5px;
+  right: 5px;
+  font-size: 6px;
+  font-weight: 700;
+  color: #cfe0f5;
+  letter-spacing: 0.3px;
+}
