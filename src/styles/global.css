@@ -204,9 +204,9 @@ button { font-family: inherit; touch-action: manipulation; }
 
 .jar-fab {
   position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  top: calc(env(safe-area-inset-top, 0px) + 48px);
   right: 12px;
-  z-index: 400;
+  z-index: 45;
   display: block;
   text-decoration: none;
   cursor: pointer;
