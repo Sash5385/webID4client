@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
 import { useToast } from '../hooks/useToast'
@@ -163,6 +163,27 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
     window.scrollTo(0, 0)
   }
 
+  // Свайп вліво/вправо для перемикання вкладок (той самий порядок, що й у нижній навігації)
+  const SWIPE_TABS = ['bookings', 'queue', 'book', 'chat', 'notifications']
+  const touchStartRef = useRef(null)
+  const handleContentTouchStart = (e) => {
+    const t = e.touches[0]
+    touchStartRef.current = { x: t.clientX, y: t.clientY }
+  }
+  const handleContentTouchEnd = (e) => {
+    const start = touchStartRef.current
+    touchStartRef.current = null
+    if (!start) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - start.x
+    const dy = t.clientY - start.y
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+    const idx = SWIPE_TABS.indexOf(activeTab)
+    if (idx === -1) return
+    if (dx < 0 && idx < SWIPE_TABS.length - 1) switchTab(SWIPE_TABS[idx + 1])
+    else if (dx > 0 && idx > 0) switchTab(SWIPE_TABS[idx - 1])
+  }
+
   const handleLogout = async () => {
     if (!window.confirm('Вийти з акаунту?')) return
     await signOut()
@@ -250,7 +271,11 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
       })}
 
       {/* CONTENT */}
-      <div className={`cab-content${activeTab === 'chat' ? ' cab-content--chat' : ''}`}>
+      <div
+        className={`cab-content${activeTab === 'chat' ? ' cab-content--chat' : ''}`}
+        onTouchStart={handleContentTouchStart}
+        onTouchEnd={handleContentTouchEnd}
+      >
         <Routes>
           <Route path="/" element={<BookTab user={user} profile={profile} bookingsData={bookingsData} notifParams={notifParams} />} />
           <Route path="/bookings" element={<BookingsTab user={user} profile={profile} bookingsData={bookingsData} />} />
