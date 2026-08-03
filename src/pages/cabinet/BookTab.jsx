@@ -666,6 +666,13 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                   в черзі
                 </div>
               </div>
+              <div style={{
+                marginTop:8, padding:'8px 12px', borderRadius:10,
+                background:'rgba(247,201,72,0.06)', border:'1px solid rgba(247,201,72,0.18)',
+                fontSize:11, color:'var(--dim)', textAlign:'center', lineHeight:1.4,
+              }}>
+                ⏳ Якщо ваш бажаний час зайнятий — ви можете стати на нього в чергу. Як тільки він звільниться, ви зможете записатися.
+              </div>
             </>
           )}
         </>
