@@ -12,6 +12,12 @@ const FALLBACK_SERVICES = [
   { id:'sv4', name:'Приватний 2 год',  type:'private', duration:120, price:1300, colorId:'purple' },
 ]
 
+// Прибираємо дублювання тривалості з назви на плитці ("Автошкола 1 год" → "Автошкола") —
+// тривалість вже показана окремим підписом нижче.
+function stripDurationSuffix(name) {
+  return (name || '').replace(/\s+\d+(?:[.,]\d+)?\s*год\S*\.?\s*$/iu, '').trim() || name
+}
+
 // Ціна послуги на дату уроку: якщо задано nextPrice/nextPriceFrom і дата
 // уроку вже досягла nextPriceFrom — використовуємо нову ціну (див. налаштування послуг в адмінці).
 function effectivePrice(svc, dateStr) {
@@ -512,7 +518,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                   {isLocked ? '🔒' : svc.type === 'school' ? '🎓' : '🚙'}
                 </div>
                 <div>
-                  <div style={{fontSize:10, fontWeight:800, lineHeight:1.3}}>{svc.name}</div>
+                  <div style={{fontSize:10, fontWeight:800, lineHeight:1.3}}>{stripDurationSuffix(svc.name)}</div>
                   {/* Тривалість окремим підписом — назва послуги (редагується в
                       адмінці) не завжди містить "1 год"/"2 год", і без цього
                       підпису дві плитки з однаковою назвою виглядають однаково. */}
