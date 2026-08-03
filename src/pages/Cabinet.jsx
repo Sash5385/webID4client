@@ -276,7 +276,7 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
         onTouchStart={handleContentTouchStart}
         onTouchEnd={handleContentTouchEnd}
       >
-        <div className="fade-up" key={activeTab} style={{ display:'flex', flexDirection:'column', flex:1, minHeight:0 }}>
+        <div className="fade-up" key={activeTab} style={activeTab === 'chat' ? { display:'flex', flexDirection:'column', flex:1, minHeight:0 } : undefined}>
           <Routes>
             <Route path="/" element={<BookTab user={user} profile={profile} bookingsData={bookingsData} notifParams={notifParams} />} />
             <Route path="/bookings" element={<BookingsTab user={user} profile={profile} bookingsData={bookingsData} />} />
