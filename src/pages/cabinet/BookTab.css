@@ -324,10 +324,10 @@
 }
 
 .slot {
-  background: rgba(34, 197, 94, 0.15);
+  background: rgba(34, 197, 94, 0.30);
   border-radius: 10px;
   padding: 6px 4px;
-  border: 1px solid rgba(34, 197, 94, 0.35);
+  border: 1px solid rgba(34, 197, 94, 0.45);
   text-align: center;
   font-size: 13px;
   font-weight: 700;
@@ -354,8 +354,8 @@
   pointer-events: none;
 }
 .slot:not(.taken):not(.selected):hover {
-  background: rgba(34, 197, 94, 0.25);
-  border-color: rgba(34, 197, 94, 0.55);
+  background: rgba(34, 197, 94, 0.40);
+  border-color: rgba(34, 197, 94, 0.65);
 }
 
 [data-theme="light"] .slot {
