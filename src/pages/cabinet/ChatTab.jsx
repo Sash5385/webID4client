@@ -43,6 +43,8 @@ function DirectChat({ user, profile }) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
   }
 
+  const handleBlur = () => { window.scrollTo(0, 0) }
+
   const initials = (profile?.name || 'У').split(' ').map(w => w[0]).slice(0, 2).join('')
 
   const [clearPending, setClearPending] = useState(false)
@@ -121,6 +123,7 @@ function DirectChat({ user, profile }) {
             value={text}
             onChange={e => setText(e.target.value)}
             onKeyDown={handleKey}
+            onBlur={handleBlur}
             placeholder="Напишіть повідомлення…"
             rows={1}
           />
@@ -175,6 +178,8 @@ function GeneralChat({ user, profile }) {
   const handleKey = e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
   }
+
+  const handleBlur = () => { window.scrollTo(0, 0) }
 
   const getInitials = name => (name || '?').split(' ').map(w => w[0]).slice(0, 2).join('')
   const getHue = uid => [160, 220, 30, 280, 340, 200, 40, 300][((uid || '').charCodeAt(0) || 0) % 8]
@@ -238,6 +243,7 @@ function GeneralChat({ user, profile }) {
             value={text}
             onChange={e => setText(e.target.value)}
             onKeyDown={handleKey}
+            onBlur={handleBlur}
             placeholder="Напишіть у загальний чат…"
             rows={1}
           />

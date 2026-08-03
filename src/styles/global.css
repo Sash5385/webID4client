@@ -12,6 +12,9 @@ html, body {
   transition: background .3s, color .3s;
   height: 100dvh;
   overflow: hidden;
+  position: fixed;
+  inset: 0;
+  width: 100%;
 }
 
 #root {
