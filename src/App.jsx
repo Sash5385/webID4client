@@ -174,8 +174,7 @@ export default function App() {
       className="jar-fab"
       aria-label="Банка на каву"
     >
-      <div className="jar-fab-lid" />
-      <div className="jar-fab-body"><span>КАВА</span></div>
+      <div className="jar-fab-body"><span>ПОДЯКА</span></div>
     </a>
     <button
       type="button"

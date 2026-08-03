@@ -211,32 +211,25 @@ button { font-family: inherit; touch-action: manipulation; }
   text-decoration: none;
   cursor: pointer;
 }
-.jar-fab-lid {
-  width: 22px;
-  height: 5px;
-  border: 1.5px solid #5ee6ff;
-  border-radius: 2px;
-  margin: 0 auto -2px;
-  box-shadow: 0 0 4px #5ee6ff, 0 0 8px rgba(94,230,255,0.6);
-  background: rgba(10,10,12,0.6);
-}
 .jar-fab-body {
-  width: 38px;
-  height: 42px;
-  border: 1.5px solid #f7c948;
-  border-radius: 7px 7px 14px 14px;
-  background: rgba(10,10,12,0.65);
-  box-shadow: 0 0 5px #f7c948, 0 0 12px rgba(247,201,72,0.6), inset 0 0 8px rgba(247,201,72,0.3);
+  width: 46px;
+  height: 30px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #2a3a55, #131a26);
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: -1px 3px 8px rgba(0,0,0,0.5);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .jar-fab-body span {
-  font-size: 8px;
+  font-size: 6px;
   font-weight: 900;
   color: #5ee6ff;
-  text-shadow: 0 0 3px #5ee6ff, 0 0 8px rgba(94,230,255,0.8);
-  letter-spacing: 0.5px;
+  text-shadow: 0 0 3px #5ee6ff, 0 0 6px rgba(94,230,255,0.7);
+  letter-spacing: 0.3px;
+  text-align: center;
+  line-height: 1.1;
 }
 
 .card-fab {
