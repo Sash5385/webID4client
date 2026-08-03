@@ -157,11 +157,12 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     }, 100)
   }, [selectedDate])
 
-  // Авто-скрол до кнопки підтвердження після вибору часу
+  // Авто-скрол вікна в самий низ після вибору часу
   useEffect(() => {
-    if (!selectedTime || !ctaSectionRef.current) return
+    if (!selectedTime) return
     setTimeout(() => {
-      ctaSectionRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' })
+      const container = document.querySelector('.cab-content')
+      if (container) container.scrollTop = container.scrollHeight
     }, 100)
   }, [selectedTime])
 
