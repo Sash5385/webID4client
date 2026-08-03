@@ -167,6 +167,16 @@ export default function App() {
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    <a
+      href="https://send.monobank.ua/jar/Ad2XWyvEWB"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="jar-fab"
+      aria-label="Банка на каву"
+    >
+      <div className="jar-fab-lid" />
+      <div className="jar-fab-body"><span>КАВА</span></div>
+    </a>
     {needRefresh && (
       <div className={`update-banner${isUpdating ? ' update-banner--loading' : ''}`} onClick={updateServiceWorker}>
         {isUpdating
