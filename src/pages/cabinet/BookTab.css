@@ -7,6 +7,7 @@
   border: 1px solid var(--border);
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 }
 
@@ -37,7 +38,7 @@
   background: radial-gradient(ellipse at top right, rgba(255,255,255,0.7), transparent 75%);
 }
 
-.banner-info { flex: 1; display: flex; align-items: center; gap: 6px; }
+.banner-info { display: flex; align-items: center; gap: 6px; }
 .banner-greet { display: none; }
 .banner-name { font-size: 12px; font-weight: 800; }
 
