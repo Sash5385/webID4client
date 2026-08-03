@@ -24,6 +24,8 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const pendingBookingRef = useRef(null)
   const { needRefresh, updateServiceWorker, isUpdating } = useAppUpdate()
+  const [cardCopied, setCardCopied] = useState(false)
+  const copyingCardRef = useRef(false)
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
@@ -181,9 +183,14 @@ export default function App() {
       className="card-fab"
       aria-label="Скопіювати номер картки"
       onClick={() => {
+        if (copyingCardRef.current) return
+        copyingCardRef.current = true
         navigator.clipboard.writeText('4035200041312916').then(() => {
-          showToast('Номер картки скопійовано')
-        }).catch(() => {})
+          setCardCopied(true)
+          setTimeout(() => setCardCopied(false), 1800)
+        }).catch(() => {}).finally(() => {
+          setTimeout(() => { copyingCardRef.current = false }, 500)
+        })
       }}
     >
       <div className="card-fab-body">
@@ -191,6 +198,9 @@ export default function App() {
         <div className="card-fab-num">••2916</div>
       </div>
     </button>
+    {cardCopied && (
+      <div className="card-copied-toast">Номер картки скопійовано</div>
+    )}
     {needRefresh && (
       <div className={`update-banner${isUpdating ? ' update-banner--loading' : ''}`} onClick={updateServiceWorker}>
         {isUpdating
