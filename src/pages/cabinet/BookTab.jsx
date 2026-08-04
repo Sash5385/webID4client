@@ -67,6 +67,18 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   const [monthAvail, setMonthAvail] = useState({})
   const timeSectionRef = useRef(null)
   const ctaSectionRef = useRef(null)
+  const [cardCopied, setCardCopied] = useState(false)
+  const copyingCardRef = useRef(false)
+  const copyCard = () => {
+    if (copyingCardRef.current) return
+    copyingCardRef.current = true
+    navigator.clipboard.writeText('4035200041312916').then(() => {
+      setCardCopied(true)
+      setTimeout(() => setCardCopied(false), 1800)
+    }).catch(() => {}).finally(() => {
+      setTimeout(() => { copyingCardRef.current = false }, 500)
+    })
+  }
 
   // Dialog state
   const [dialogSlot, setDialogSlot] = useState(null)
@@ -472,15 +484,27 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
 
       {/* USER BANNER */}
       <div className="user-banner">
-        <div className="banner-avatar">{getInitials(profile?.name)}</div>
-        <div className="banner-info">
-          <div className="banner-greet">Привіт,</div>
-          <div className="banner-name">{profile?.name?.split(' ')[0] || 'Учень'}</div>
-          <div className="banner-tag">
-            {selectedService?.type === 'school' ? '🎓 Автошкола' : '🚙 Приватний'}
+        <button type="button" className="banner-card" aria-label="Скопіювати номер картки" onClick={copyCard}>
+          <div className="banner-card-chip" />
+          <div className="banner-card-num">••2916</div>
+        </button>
+        <div className="banner-center">
+          <div className="banner-avatar">{getInitials(profile?.name)}</div>
+          <div className="banner-info">
+            <div className="banner-greet">Привіт,</div>
+            <div className="banner-name">{profile?.name?.split(' ')[0] || 'Учень'}</div>
+            <div className="banner-tag">
+              {selectedService?.type === 'school' ? '🎓 Автошкола' : '🚙 Приватний'}
+            </div>
           </div>
         </div>
+        <a href="https://send.monobank.ua/jar/Ad2XWyvEWB" target="_blank" rel="noopener noreferrer" className="banner-jar" aria-label="Банка на каву">
+          <span>ПОДЯКА</span>
+        </a>
       </div>
+      {cardCopied && (
+        <div className="card-copied-toast">Номер картки скопійовано</div>
+      )}
 
       {/* 1. ПОСЛУГА */}
       <div className="section-title" style={{color:'#ffffff', fontSize:13, textAlign:'center'}}>1. Послуга</div>

@@ -1,14 +1,62 @@
 .user-banner {
   background: linear-gradient(155deg, var(--surf-hi), var(--surface));
   border-radius: 10px;
-  padding: 6px 10px;
+  padding: 6px 8px;
   box-shadow: var(--shadow);
   margin-top: 4px;
   border: 1px solid var(--border);
   display: flex;
   align-items: center;
+  gap: 6px;
+}
+
+.banner-center { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; }
+
+.banner-card, .banner-jar {
+  width: 36px;
+  height: 24px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #2a3a55, #131a26);
+  border: 1px solid rgba(255,255,255,0.15);
+  cursor: pointer;
+}
+
+.banner-card {
+  position: relative;
+  padding: 3px;
+}
+.banner-card-chip {
+  width: 6px;
+  height: 4px;
+  border-radius: 1px;
+  background: linear-gradient(145deg,#e8c96a,#b8944a);
+}
+.banner-card-num {
+  position: absolute;
+  bottom: 2px;
+  left: 3px;
+  right: 3px;
+  font-size: 5px;
+  font-weight: 700;
+  color: #cfe0f5;
+  letter-spacing: 0.2px;
+}
+
+.banner-jar {
+  display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 8px;
+  text-decoration: none;
+}
+.banner-jar span {
+  font-size: 5px;
+  font-weight: 900;
+  color: #5ee6ff;
+  text-shadow: 0 0 2px #5ee6ff;
+  letter-spacing: 0.2px;
+  text-align: center;
+  line-height: 1.1;
 }
 
 .banner-avatar {
