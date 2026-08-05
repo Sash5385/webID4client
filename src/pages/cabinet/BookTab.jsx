@@ -773,7 +773,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
               {successData.type === 'booking' ? 'Урок заброньовано!' : 'Ти в черзі!'}
             </div>
             {successData.type === 'queue' && (
-              <div className="dialog-sub">Як тільки слот звільниться — отримаєте push-сповіщення.</div>
+              <div className="dialog-sub">Як тільки слот звільниться — отримаєте сповіщення.</div>
             )}
             <div className="dialog-info-card">
               <div className="dialog-info-row">
@@ -822,7 +822,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
             <div className="dialog-sub">
               {dialogSlot.vipOnly
                 ? 'Коли адмін відкриє цей VIP слот — ти отримаєш сповіщення'
-                : 'Якщо учень скасує — отримаєте push-сповіщення, урок стане вашим'}
+                : 'Якщо учень скасує — отримаєте сповіщення, урок стане вашим'}
             </div>
             <div className="dialog-info-card">
               <div className="dialog-info-row">
