@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { subscribeSlotsForDate, getAdminSettings, subscribeMonthAvailability } from '../firebase/db'
 import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay, formatDateLabel } from '../utils/date'
+import { pluralize } from '../utils/format'
 import { useTheme } from '../hooks/useTheme'
 import './cabinet/BookTab.css'
 
@@ -253,7 +254,7 @@ export default function PublicSchedule({ onBook }) {
                       <div className="slot-time">{slot.time}</div>
                       {slot.isCustomDur && !isUnavailable && (
                         <div style={{fontSize:8, color:'#7ed957', fontWeight:700}}>
-                          {slot.slotDurMin % 60 === 0 ? `${slot.slotDurMin / 60} год` : `${slot.slotDurMin} хв`}
+                          {slot.slotDurMin % 60 === 0 ? `${slot.slotDurMin / 60} ${pluralize(slot.slotDurMin / 60, ['година', 'години', 'годин'])}` : `${slot.slotDurMin} хв`}
                         </div>
                       )}
                     </button>

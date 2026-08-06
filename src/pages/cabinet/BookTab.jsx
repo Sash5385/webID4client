@@ -663,7 +663,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                           <div style={{fontSize:8, opacity:0.7}}>зайнято</div>
                         ) : slot.isCustomDur ? (
                           <div style={{fontSize:8, color:'#7ed957', fontWeight:700}}>
-                            {slot.slotDurMin % 60 === 0 ? `${slot.slotDurMin / 60} год` : `${slot.slotDurMin} хв`}
+                            {slot.slotDurMin % 60 === 0 ? `${slot.slotDurMin / 60} ${pluralize(slot.slotDurMin / 60, ['година', 'години', 'годин'])}` : `${slot.slotDurMin} хв`}
                           </div>
                         ) : slot.totalSurcharge ? (
                           <div style={{fontSize:8, color:'#f7c948', fontWeight:700}}>{slot.totalPrice}₴</div>
