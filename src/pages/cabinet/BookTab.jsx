@@ -35,9 +35,7 @@ function slotPrice(baseService, dateStr, durationHours, surcharge = 0) {
 }
 
 function formatDur(durMin) {
-  return durMin % 60 === 0
-    ? `${durMin / 60} ${pluralize(durMin / 60, ['година', 'години', 'годин'])}`
-    : `${durMin} хв`
+  return `${durMin} ${pluralize(durMin, ['хвилина', 'хвилини', 'хвилин'])}`
 }
 
 export default function BookTab({ user, profile, bookingsData, notifParams }) {
@@ -628,12 +626,10 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                         ) : (
                           // Кроку "Послуга" більше немає — тривалість і ціна тепер
                           // властивості самого слота, тож показуємо їх прямо тут.
-                          <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:0}}>
-                            {slot.isCustomDur && (
-                              <div style={{fontSize:7, color:'#7ed957', fontWeight:700}}>{formatDur(slot.slotDurMin)}</div>
-                            )}
+                          <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:1}}>
+                            <div style={{fontSize:10, color:'#7ed957', fontWeight:700}}>{formatDur(slot.slotDurMin)}</div>
                             {slot.totalPrice > 0 && (
-                              <div style={{fontSize:8, color: slot.totalSurcharge ? '#f7c948' : 'var(--dim)', fontWeight:700}}>{slot.totalPrice}₴</div>
+                              <div style={{fontSize:10, color: slot.totalSurcharge ? '#f7c948' : 'var(--dim)', fontWeight:700}}>{slot.totalPrice}₴</div>
                             )}
                           </div>
                         )}
