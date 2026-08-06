@@ -419,10 +419,17 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           const bEnd = bStart + (b.durationHours || 1) * 60
           return slotMin >= bStart && slotMin < bEnd
         })
+        // Слот, розтягнутий адміном на нестандартну тривалість (durMin != 60) —
+        // атомарний блок під конкретну послугу: показуємо його лише коли обрана
+        // послуга має рівно таку тривалість, не як звичайний погодинний слот.
+        const slotDurMin = slot.durMin || 60
+        const isCustomDur = slotDurMin !== 60
         return {
           ...slot,
+          slotDurMin,
+          isCustomDur,
           lunchBlocked:   isBlockedByLunch(slot.time, durationHours),
-          overlapBlocked: slot.available !== false && wouldOverlapTaken(slot.time, durationHours),
+          overlapBlocked: slot.available !== false && (isCustomDur ? durationHours * 60 !== slotDurMin : wouldOverlapTaken(slot.time, durationHours)),
           isMyBooked:     overlapsMyBooking(dateStr, slot.time, durationHours),
           isExactlyMine,
           isPartOfMyBooking,
@@ -654,6 +661,10 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                           <div style={{fontSize:8, opacity:0.5}}>👑</div>
                         ) : isTakenByOthers || isOverlap ? (
                           <div style={{fontSize:8, opacity:0.7}}>зайнято</div>
+                        ) : slot.isCustomDur ? (
+                          <div style={{fontSize:8, color:'#7ed957', fontWeight:700}}>
+                            {slot.slotDurMin % 60 === 0 ? `${slot.slotDurMin / 60} год` : `${slot.slotDurMin} хв`}
+                          </div>
                         ) : slot.totalSurcharge ? (
                           <div style={{fontSize:8, color:'#f7c948', fontWeight:700}}>{slot.totalPrice}₴</div>
                         ) : isMyQueue ? (

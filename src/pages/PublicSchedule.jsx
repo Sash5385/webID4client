@@ -96,11 +96,20 @@ export default function PublicSchedule({ onBook }) {
       return (h * 60 + m - curMin) % 60 === 0
     })
     .sort((a, b) => (a.time||'').localeCompare(b.time||''))
-    .map(slot => ({
-      ...slot,
-      lunchBlocked:   isBlockedByLunch(slot.time, duration),
-      overlapBlocked: slot.available !== false && wouldOverlapTaken(slot.time, duration),
-    }))
+    .map(slot => {
+      // Слот, розтягнутий адміном на нестандартну тривалість (durMin != 60) —
+      // атомарний блок під конкретну послугу: показуємо лише коли обрана
+      // тривалість збігається рівно з durMin, не як звичайний погодинний слот.
+      const slotDurMin = slot.durMin || 60
+      const isCustomDur = slotDurMin !== 60
+      return {
+        ...slot,
+        slotDurMin,
+        isCustomDur,
+        lunchBlocked:   isBlockedByLunch(slot.time, duration),
+        overlapBlocked: slot.available !== false && (isCustomDur ? duration * 60 !== slotDurMin : wouldOverlapTaken(slot.time, duration)),
+      }
+    })
     .filter(slot => !slot.lunchBlocked && !slot.overlapBlocked)
     .filter(slot => {
       if (!selectedDate || !isSameDay(selectedDate, new Date())) return true
@@ -242,6 +251,11 @@ export default function PublicSchedule({ onBook }) {
                       disabled={isUnavailable}
                     >
                       <div className="slot-time">{slot.time}</div>
+                      {slot.isCustomDur && !isUnavailable && (
+                        <div style={{fontSize:8, color:'#7ed957', fontWeight:700}}>
+                          {slot.slotDurMin % 60 === 0 ? `${slot.slotDurMin / 60} год` : `${slot.slotDurMin} хв`}
+                        </div>
+                      )}
                     </button>
                   )
                 })}
