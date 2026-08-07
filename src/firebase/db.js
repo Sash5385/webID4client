@@ -241,6 +241,13 @@ export async function claimSlot(date, startTime) {
   return result.committed
 }
 
+// Відкат claimSlot — коли злиття двох годинних слотів в один запис не вдалося
+// завершити (другий слот перехопили), повертаємо перший назад у вільні.
+export async function unclaimSlot(date, startTime) {
+  const slotId = `slot${startTime.replace(':', '')}`
+  await update(ref(db, `timeslots/${date}/${slotId}`), { available: true })
+}
+
 export async function markSlotsUnavailable(date, startTime, durationHours, intervalMin = 30) {
   const daySnap = await get(ref(db, `timeslots/${date}`))
   const day = daySnap.val() || {}
