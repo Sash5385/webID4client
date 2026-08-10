@@ -43,9 +43,17 @@ function versionGuard() {
         '.then(function(){return window.caches?caches.keys().then(function(ks){' +
         'return Promise.all(ks.map(function(x){return caches.delete(x)}))}):null})' +
         '.then(done).catch(done)}else{done()}' +
+        '}else if("serviceWorker"in navigator){' +
+        // Версія збігається, але SW міг зачерствіти на старій сесії (PWA роками
+        // не закривалась) — активно проганяємо перевірку оновлення SW-файлу,
+        // а не чекаємо пасивного таймера браузера (до 24г).
+        'navigator.serviceWorker.getRegistration().then(function(r){r&&r.update()}).catch(function(){})' +
         '}}).catch(function(){})}catch(e){}}' +
         'check();setInterval(check,45000);' +
         'document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")check()});' +
+        // Якщо новий SW перехопив контроль (skipWaiting+clientsClaim) — перезавантажуємо,
+        // щоб одразу побачити свіжий контент замість застряглого старого бандла.
+        'if("serviceWorker"in navigator){navigator.serviceWorker.addEventListener("controllerchange",function(){location.reload()})}' +
         '})();</script>'
       return html.replace('</head>', guard + '</head>')
     },
@@ -96,6 +104,13 @@ export default defineConfig({
         ]
       },
       workbox: {
+        cleanupOutdatedCaches: true,
+        // Без цього новий SW чекає, поки ВСІ вкладки/сесії PWA закриються, перш
+        // ніж активуватись — а PWA на телефоні може роками не закриватись
+        // повністю (лише згортатись). skipWaiting+clientsClaim: новий SW бере
+        // контроль одразу, щойно браузер його завантажив.
+        skipWaiting: true,
+        clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
         runtimeCaching: [
           {
