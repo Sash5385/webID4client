@@ -88,8 +88,12 @@ export default function PublicSchedule({ onBook }) {
       // Логіка ідентична BookTab — знаходимо перший блок у ланцюжку зайнятих 30хв.
       const [h, m] = (slot.time || '0:0').split(':').map(Number)
       let curMin = h * 60 + m
-      while (curMin >= 30) {
-        const prevMin = curMin - 30
+      // Крок ланцюжка має збігатись з кроком, яким адмін реально пише маркери
+      // зайнятості (adminSettings.interval) — інакше при нестандартному кроці
+      // (напр. 10хв) ланцюжок "рветься" і кожен маркер показується окремо.
+      const step = adminSettings.interval || adminSettings.snapMin || 30
+      while (curMin >= step) {
+        const prevMin = curMin - step
         const prevKey = `slot${String(Math.floor(prevMin/60)).padStart(2,'0')}${String(prevMin%60).padStart(2,'0')}`
         if (!slots[prevKey] || slots[prevKey].available !== false) break
         curMin = prevMin
