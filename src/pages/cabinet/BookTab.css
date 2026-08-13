@@ -281,6 +281,18 @@
   gap: 4px;
 }
 
+/* Пружинна анімація гортання місяця (свайп/кнопки ‹ ›) */
+@keyframes cal-spring-from-right {
+  from { transform: translateX(30%); opacity: 0; }
+  to   { transform: translateX(0);   opacity: 1; }
+}
+@keyframes cal-spring-from-left {
+  from { transform: translateX(-30%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+.cal-days-spring-next { animation: cal-spring-from-right 480ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.cal-days-spring-prev { animation: cal-spring-from-left 480ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+
 .cal-day {
   aspect-ratio: 1;
   border-radius: 50%;

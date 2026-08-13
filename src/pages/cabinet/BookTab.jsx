@@ -403,8 +403,10 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     }
   }
 
-  const prevMonth = () => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))
-  const nextMonth = () => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))
+  // Напрям останньої зміни місяця — для пружинної анімації гортання календаря.
+  const [calSlideDir, setCalSlideDir] = useState(0) // 1 = вперед (в наступний), -1 = назад
+  const prevMonth = () => { setCalSlideDir(-1); setViewMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1)) }
+  const nextMonth = () => { setCalSlideDir(1); setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1)) }
 
   // Свайп вліво/вправо по календарю — зміна місяця. Зупиняємо спливання (stopPropagation),
   // інакше цей же свайп ловить обробник перемикання вкладок у Cabinet.jsx (на батьківському
@@ -603,7 +605,10 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         <div className="cal-weekdays">
           {['Пн','Вт','Ср','Чт','Пт','Сб','Нд'].map(d => <div key={d} className="cal-wd">{d}</div>)}
         </div>
-        <div className="cal-days">
+        <div
+          key={`${viewMonth.getFullYear()}-${viewMonth.getMonth()}`}
+          className={`cal-days ${calSlideDir === 1 ? 'cal-days-spring-next' : calSlideDir === -1 ? 'cal-days-spring-prev' : ''}`}
+        >
           {days.map((d, i) => {
             if (!d) return <div key={i} className="cal-day empty"></div>
             const maxDays = adminSettings.calendarOpenDays ?? 30
