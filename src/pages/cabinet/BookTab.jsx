@@ -406,6 +406,27 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   const prevMonth = () => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))
   const nextMonth = () => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))
 
+  // Свайп вліво/вправо по календарю — зміна місяця. Зупиняємо спливання (stopPropagation),
+  // інакше цей же свайп ловить обробник перемикання вкладок у Cabinet.jsx (на батьківському
+  // .cab-content) і замість зміни місяця перемикає всю сторінку на іншу вкладку.
+  const calTouchRef = useRef(null)
+  const handleCalTouchStart = (e) => {
+    const t = e.touches[0]
+    calTouchRef.current = { x: t.clientX, y: t.clientY }
+  }
+  const handleCalTouchEnd = (e) => {
+    const start = calTouchRef.current
+    calTouchRef.current = null
+    if (!start) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - start.x
+    const dy = t.clientY - start.y
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+    e.stopPropagation()
+    if (dx < 0) nextMonth()
+    else prevMonth()
+  }
+
   const slotsList = useMemo(() => {
     const isVip = profile?.isVip === true
     const dateStr = selectedDate ? formatDateYMD(selectedDate) : ''
@@ -570,7 +591,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
 
       {/* 1. ДАТА */}
       <div className="section-title" style={{color:'#ffffff', fontSize:13, textAlign:'center'}}>1. Дата</div>
-      <div className="cal-card">
+      <div className="cal-card" onTouchStart={handleCalTouchStart} onTouchEnd={handleCalTouchEnd}>
         <div className="cal-head">
           <button className="cal-nav-btn" onClick={prevMonth}>‹</button>
           <div className="cal-month">
