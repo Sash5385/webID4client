@@ -80,7 +80,17 @@ export default function PublicSchedule({ onBook }) {
   }, [selectedDate])
 
   const days = useMemo(() => getMonthGrid(viewMonth.getFullYear(), viewMonth.getMonth()), [viewMonth])
-  const slotsList = useMemo(() => Object.values(slots)
+  const slotsList = useMemo(() => {
+    // Відсортовані часи всіх зайнятих маркерів дня — потрібні, щоб визначати
+    // межі бронювання адаптивно (сусідній маркер у межах 60хв позаду), а не
+    // за фіксованим кроком: крок запису міг змінюватись з часу створення
+    // старих бронювань, тож старі маркери можуть йти з іншим інтервалом,
+    // ніж поточний adminSettings.interval.
+    const occupiedTimes = Object.values(slots)
+      .filter(s => s.available === false && s.time)
+      .map(s => { const [oh, om] = s.time.split(':').map(Number); return oh * 60 + om })
+      .sort((a, b) => a - b)
+    return Object.values(slots)
     .filter(slot => {
       // Вільні слоти — тільки цілогодинні (саме такі генерує адмін).
       if (slot.available !== false) return (slot.time || '').endsWith(':00')
@@ -88,15 +98,10 @@ export default function PublicSchedule({ onBook }) {
       // на все бронювання, а не окрему позначку на кожну годину всередині нього.
       const [h, m] = (slot.time || '0:0').split(':').map(Number)
       let curMin = h * 60 + m
-      // Крок ланцюжка має збігатись з кроком, яким адмін реально пише маркери
-      // зайнятості (adminSettings.interval) — інакше при нестандартному кроці
-      // (напр. 10хв) ланцюжок "рветься" і кожен маркер показується окремо.
-      const step = adminSettings.interval || adminSettings.snapMin || 30
-      while (curMin >= step) {
-        const prevMin = curMin - step
-        const prevKey = `slot${String(Math.floor(prevMin/60)).padStart(2,'0')}${String(prevMin%60).padStart(2,'0')}`
-        if (!slots[prevKey] || slots[prevKey].available !== false) break
-        curMin = prevMin
+      let idx = occupiedTimes.indexOf(curMin)
+      while (idx > 0 && curMin - occupiedTimes[idx - 1] <= 60) {
+        curMin = occupiedTimes[idx - 1]
+        idx--
       }
       return h * 60 + m === curMin
     })
@@ -123,6 +128,7 @@ export default function PublicSchedule({ onBook }) {
       slotDt.setHours(h, m, 0, 0)
       return slotDt > new Date()
     })
+  }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   , [slots, duration, adminSettings, selectedDate])
 
