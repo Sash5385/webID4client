@@ -456,6 +456,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     return Object.values(slots)
       .filter(slot => !!(slot.time))
       .filter(slot => !slot.vipOnly || isVipStudent)
+      .filter(slot => !slot.privateOnly || isPrivateStudent)
       .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
       .map(slot => {
         let vipBlocked = false
