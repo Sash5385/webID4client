@@ -430,16 +430,6 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       b.date === dateStr && b.status !== 'cancelled'
     )
 
-    // Відсортовані часи всіх зайнятих маркерів дня — потрібні, щоб визначати
-    // межі бронювання адаптивно (сусідній маркер у межах 60хв позаду), а не
-    // за фіксованим кроком: крок запису міг змінюватись з часу створення
-    // старих бронювань, тож старі маркери можуть йти з іншим інтервалом,
-    // ніж поточний adminSettings.interval.
-    const occupiedTimes = Object.values(slots)
-      .filter(s => s.available === false && s.time)
-      .map(s => { const [oh, om] = s.time.split(':').map(Number); return oh * 60 + om })
-      .sort((a, b) => a - b)
-
     return Object.values(slots)
       .filter(slot => !!(slot.time))
       .filter(slot => !slot.vipOnly || isVipStudent)
@@ -514,17 +504,16 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       .filter(slot => {
         // Для заблокованих слотів: показуємо лише реальний старт бронювання —
         // один запис на все бронювання, а не окрему позначку на кожну годину
-        // всередині нього. Сусідній маркер шукається адаптивно (в межах 60хв
-        // позаду через відсортований occupiedTimes), а не за фіксованим кроком.
+        // всередині нього. Адмінка проставляє явний прапорець bookingStart на
+        // момент створення запису (і дозаповнює його заднім числом для старих
+        // записів) — довіряємо йому напряму, а не вгадуємо межі по відстані
+        // між маркерами: записи впритул один до одного (без проміжку) робили
+        // будь-яку евристику-по-відстані принципово ненадійною.
         if (slot.available !== false) return true
-        const [h, m] = (slot.time || '0:0').split(':').map(Number)
-        let curMin = h * 60 + m
-        let idx = occupiedTimes.indexOf(curMin)
-        while (idx > 0 && curMin - occupiedTimes[idx - 1] <= 60) {
-          curMin = occupiedTimes[idx - 1]
-          idx--
-        }
-        return h * 60 + m === curMin
+        if (slot.bookingStart === false) return false
+        // slot.bookingStart === true АБО прапорець ще не проставлений (зовсім
+        // стара позначка) — показуємо, щоб точно не сховати реальний запис.
+        return true
       })
       .filter(slot => {
         if (!selectedDate || !isSameDay(selectedDate, new Date())) return true

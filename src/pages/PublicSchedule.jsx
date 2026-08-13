@@ -81,29 +81,18 @@ export default function PublicSchedule({ onBook }) {
 
   const days = useMemo(() => getMonthGrid(viewMonth.getFullYear(), viewMonth.getMonth()), [viewMonth])
   const slotsList = useMemo(() => {
-    // Відсортовані часи всіх зайнятих маркерів дня — потрібні, щоб визначати
-    // межі бронювання адаптивно (сусідній маркер у межах 60хв позаду), а не
-    // за фіксованим кроком: крок запису міг змінюватись з часу створення
-    // старих бронювань, тож старі маркери можуть йти з іншим інтервалом,
-    // ніж поточний adminSettings.interval.
-    const occupiedTimes = Object.values(slots)
-      .filter(s => s.available === false && s.time)
-      .map(s => { const [oh, om] = s.time.split(':').map(Number); return oh * 60 + om })
-      .sort((a, b) => a - b)
     return Object.values(slots)
     .filter(slot => {
       // Вільні слоти — тільки цілогодинні (саме такі генерує адмін).
       if (slot.available !== false) return (slot.time || '').endsWith(':00')
       // Зайнятий слот: показуємо лише реальний старт бронювання — один запис
       // на все бронювання, а не окрему позначку на кожну годину всередині нього.
-      const [h, m] = (slot.time || '0:0').split(':').map(Number)
-      let curMin = h * 60 + m
-      let idx = occupiedTimes.indexOf(curMin)
-      while (idx > 0 && curMin - occupiedTimes[idx - 1] <= 60) {
-        curMin = occupiedTimes[idx - 1]
-        idx--
-      }
-      return h * 60 + m === curMin
+      // Адмінка проставляє явний прапорець bookingStart на момент створення
+      // запису (і дозаповнює заднім числом старі записи) — довіряємо йому,
+      // а не вгадуємо межі по відстані між маркерами: записи впритул один до
+      // одного роблять будь-яку евристику-по-відстані ненадійною.
+      if (slot.bookingStart === false) return false
+      return true
     })
     .sort((a, b) => (a.time||'').localeCompare(b.time||''))
     .map(slot => {

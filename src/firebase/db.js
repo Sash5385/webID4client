@@ -161,6 +161,7 @@ export async function cancelBooking(uid, bookingId, { isReschedule = false } = {
       if (!node || node.phantom) { updates[path] = null; continue }
       updates[`${path}/available`] = true
       updates[`${path}/time`] = `${slotH}:${slotM}`
+      updates[`${path}/bookingStart`] = null
     }
   }
   await update(ref(db, '/'), updates)
@@ -236,7 +237,7 @@ export async function claimSlot(date, startTime) {
     if (current && current.available === false) {
       return undefined // вже зайнятий — скасувати транзакцію
     }
-    return { ...(current || {}), available: false, time: startTime }
+    return { ...(current || {}), available: false, time: startTime, bookingStart: true }
   })
   return result.committed
 }
@@ -245,7 +246,7 @@ export async function claimSlot(date, startTime) {
 // завершити (другий слот перехопили), повертаємо перший назад у вільні.
 export async function unclaimSlot(date, startTime) {
   const slotId = `slot${startTime.replace(':', '')}`
-  await update(ref(db, `timeslots/${date}/${slotId}`), { available: true })
+  await update(ref(db, `timeslots/${date}/${slotId}`), { available: true, bookingStart: null })
 }
 
 export async function markSlotsUnavailable(date, startTime, durationHours, intervalMin = 30) {
@@ -264,6 +265,9 @@ export async function markSlotsUnavailable(date, startTime, durationHours, inter
     if (!day[slotId]) updates[`timeslots/${date}/${slotId}/phantom`] = true
     updates[`timeslots/${date}/${slotId}/available`] = false
     updates[`timeslots/${date}/${slotId}/time`] = `${slotH}:${slotM}`
+    // Явний прапорець реального старту бронювання — адмінка/клієнт показують
+    // лише його, а не кожен проміжний блок (важливо, коли записи йдуть впритул).
+    updates[`timeslots/${date}/${slotId}/bookingStart`] = min === startMin
   }
   await update(ref(db, '/'), updates)
 }
