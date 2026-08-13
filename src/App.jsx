@@ -14,7 +14,6 @@ import { APP_VERSION } from './version.js'
 import Auth from './pages/Auth'
 import Cabinet from './pages/Cabinet'
 import Landing from './pages/Landing'
-import PublicSchedule from './pages/PublicSchedule'
 
 export default function App() {
   const navigate = useNavigate()
@@ -141,11 +140,11 @@ export default function App() {
           : <Landing user={user} profile={profile} />
       } />
 
-      {/* Публічний розклад — перед авторизацією */}
+      {/* Публічний розклад без реєстрації прибрано — спершу реєстрація/вхід */}
       <Route path="/schedule" element={
         user && profile
           ? <Navigate to="/cabinet" replace />
-          : <PublicSchedule onBook={handleBook} />
+          : <Navigate to="/auth" replace />
       } />
 
       {/* Авторизація */}
