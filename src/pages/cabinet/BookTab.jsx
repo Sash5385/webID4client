@@ -502,8 +502,9 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       .filter(slot => !slot.lunchBlocked && !slot.overlapBlocked)
       .filter(slot => slot.isSticky || slot.isMyBooked)
       .filter(slot => {
-        // Для заблокованих слотів: показуємо тільки кожен годинний блок від старту бронювання.
-        // Наприклад, бронювання 17:30 (2г) → показуємо 17:30 і 18:30, ховаємо 18:00 і 19:00.
+        // Для заблокованих слотів: показуємо лише реальний старт бронювання —
+        // один запис на все бронювання, а не окрему позначку на кожну годину
+        // всередині нього.
         if (slot.available !== false) return true
         const [h, m] = (slot.time || '0:0').split(':').map(Number)
         let curMin = h * 60 + m
@@ -517,7 +518,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           if (!slots[prevKey] || slots[prevKey].available !== false) break
           curMin = prevMin
         }
-        return (h * 60 + m - curMin) % 60 === 0
+        return h * 60 + m === curMin
       })
       .filter(slot => {
         if (!selectedDate || !isSameDay(selectedDate, new Date())) return true

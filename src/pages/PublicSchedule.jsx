@@ -84,8 +84,8 @@ export default function PublicSchedule({ onBook }) {
     .filter(slot => {
       // Вільні слоти — тільки цілогодинні (саме такі генерує адмін).
       if (slot.available !== false) return (slot.time || '').endsWith(':00')
-      // Зайнятий слот: показуємо лише старт бронювання, а не кожні 30хв.
-      // Логіка ідентична BookTab — знаходимо перший блок у ланцюжку зайнятих 30хв.
+      // Зайнятий слот: показуємо лише реальний старт бронювання — один запис
+      // на все бронювання, а не окрему позначку на кожну годину всередині нього.
       const [h, m] = (slot.time || '0:0').split(':').map(Number)
       let curMin = h * 60 + m
       // Крок ланцюжка має збігатись з кроком, яким адмін реально пише маркери
@@ -98,7 +98,7 @@ export default function PublicSchedule({ onBook }) {
         if (!slots[prevKey] || slots[prevKey].available !== false) break
         curMin = prevMin
       }
-      return (h * 60 + m - curMin) % 60 === 0
+      return h * 60 + m === curMin
     })
     .sort((a, b) => (a.time||'').localeCompare(b.time||''))
     .map(slot => {
