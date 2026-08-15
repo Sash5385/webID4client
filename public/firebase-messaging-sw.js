@@ -31,7 +31,7 @@ messaging.onBackgroundMessage(async (payload) => {
   const options = {
     body: payload.data?.body || '',
     icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    badge: '/badge-96.png',
     tag: 'id4drive-notif',
     requireInteraction: true,
     vibrate: [200, 100, 200],
