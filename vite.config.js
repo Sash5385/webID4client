@@ -73,7 +73,7 @@ export default defineConfig({
     versionGuard(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.svg', 'icon-512-maskable.png'],
       manifest: {
         name: 'ID4Drive — Школа водіння',
         short_name: 'ID4Drive',
@@ -95,11 +95,15 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png'
           },
+          // Окрема іконка з відступом (safe zone) для purpose:maskable — логотип
+          // без полів "виступав" за межі після обрізки під Android adaptive icon
+          // (кругла/квадратна маска обрізає до ~66-80% центру, а суцільний
+          // "монетний" дизайн торкався країв і його зрізало на APK-збірці).
           {
-            src: '/icon-512.png',
+            src: '/icon-512-maskable.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'maskable'
           }
         ]
       },
