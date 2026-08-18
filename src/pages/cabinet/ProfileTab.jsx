@@ -18,7 +18,7 @@ const EXPERIENCE_LABELS = {
 };
 
 export default function ProfileTab({ user, profile, onProfileUpdate }) {
-  const { theme, setTheme } = useTheme();
+  useTheme();
   const { showToast, ToastEl } = useToast();
 
   const forceUpdate = async () => {

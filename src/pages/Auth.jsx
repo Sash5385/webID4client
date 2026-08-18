@@ -43,7 +43,7 @@ const TERMS_TEXT = `Умови відвідування уроків водін�
 Запис на заняття означає повну згоду з даними умовами.`
 
 export default function Auth({ user, profile, onProfileSaved }) {
-  const { theme, toggle } = useTheme()
+  useTheme()
   const { showToast, ToastEl } = useToast()
   const nav = useNavigate()
 
@@ -384,9 +384,6 @@ export default function Auth({ user, profile, onProfileSaved }) {
               <polyline points="23 4 23 10 17 10"/>
               <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
             </svg>
-          </button>
-          <button className="back-btn" onClick={toggle} style={{border:'none',cursor:'pointer',fontSize:16}}>
-            {theme==='dark'?'🌙':'☀️'}
           </button>
         </div>
       </div>

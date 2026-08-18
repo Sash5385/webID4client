@@ -31,7 +31,7 @@ function starsStr(rating) {
 }
 
 export default function Landing({ user, profile }) {
-  const { theme, toggle } = useTheme()
+  useTheme()
   const nav = useNavigate()
   const [reviews, setReviews] = useState([])
   const [termsOpen, setTermsOpen] = useState(false)
