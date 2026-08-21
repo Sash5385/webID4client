@@ -53,8 +53,8 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   // приватний учень — завжди приватний; учень автошколи — автошкола, поки не набере 40 год.
   const effectiveType = (isPrivateStudent || schoolLimitReached) ? 'private' : 'school'
   const isVipStudent = profile?.isVip === true
-  const discountPct = profile?.discount || 0
-  const applyDiscount = (price) => discountPct > 0 ? Math.round(price * (1 - discountPct / 100)) : price
+  const discountAmt = profile?.discount || 0
+  const applyDiscount = (price) => discountAmt > 0 ? Math.max(0, price - discountAmt) : price
   const [services, setServices] = useState([])
   // Базова погодинна ставка — це ціна вже наявної в адмінці 1-годинної послуги
   // цього типу. Кроку "Послуга" більше немає: тривалість і ціну конкретного
@@ -354,7 +354,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         serviceName: bookedService.name,
         price: totalPrice || undefined,
         surcharge: surcharge || undefined,
-        discountPct: discountPct || undefined,
+        discountAmt: discountAmt || undefined,
         durationHours,
         studentName: profile.name,
         phone: profile.phone || user.phoneNumber,
@@ -781,7 +781,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                   ⚠️ Ціна за цей час: <strong>{totalPrice}₴</strong>
                 </div>
                 <div style={{fontSize:11, color:'rgba(247,201,72,0.7)'}}>
-                  Стандартна {baseP}₴ + надбавка +{surcharge}₴{discountPct > 0 ? ` − знижка ${discountPct}%` : ''}
+                  Стандартна {baseP}₴ + надбавка +{surcharge}₴{discountAmt > 0 ? ` − знижка ${discountAmt}₴` : ''}
                 </div>
               </div>
             ) : totalPrice > 0 ? (
@@ -791,7 +791,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                 fontSize:12, color:'var(--dim)', textAlign:'center',
               }}>
                 Вартість уроку: <strong style={{color:'var(--text)'}}>{totalPrice}₴</strong>
-                {discountPct > 0 && <span style={{marginLeft:6, color:'#4ade80', fontSize:11}}>−{discountPct}%</span>}
+                {discountAmt > 0 && <span style={{marginLeft:6, color:'#4ade80', fontSize:11}}>−{discountAmt}₴</span>}
               </div>
             ) : null}
             <button className="btn-primary" style={{marginTop:10}} onClick={handleBook} disabled={submitting}>
@@ -857,7 +857,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                   <span className="val" style={{color:'var(--gold)'}}>
                     {applyDiscount(Math.round(effectivePrice(successData.service, successData.date) * successData.durationHours) + (successData.surcharge || 0))} ₴
                     {successData.surcharge > 0 && <span style={{fontSize:10, color:'var(--gold)', opacity:0.7}}> (+{successData.surcharge}₴)</span>}
-                    {discountPct > 0 && <span style={{fontSize:10, color:'#4ade80', marginLeft:4}}>−{discountPct}%</span>}
+                    {discountAmt > 0 && <span style={{fontSize:10, color:'#4ade80', marginLeft:4}}>−{discountAmt}₴</span>}
                   </span>
                 </div>
               )}
@@ -903,10 +903,10 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                       <span className="lbl" style={{color:'var(--gold)'}}>⚡ Надбавка</span>
                       <span className="val" style={{color:'var(--gold)'}}>+{dialogSlot.surcharge}₴</span>
                     </div>
-                    {discountPct > 0 && (
+                    {discountAmt > 0 && (
                       <div className="dialog-info-row">
                         <span className="lbl" style={{color:'#4ade80'}}>Знижка</span>
-                        <span className="val" style={{color:'#4ade80'}}>−{discountPct}%</span>
+                        <span className="val" style={{color:'#4ade80'}}>−{discountAmt}₴</span>
                       </div>
                     )}
                     <div className="dialog-info-row" style={{borderTop:'1px solid rgba(255,255,255,0.07)', marginTop:4, paddingTop:4}}>

@@ -125,16 +125,18 @@ function RescheduleModal({ booking, user, profile, onClose, onDone }) {
       }
       // Ціна: якщо є послуга — перераховуємо за її ціною на НОВУ дату (враховує
       // заплановану зміну ціни, напр. з 1 серпня); інакше — стара ціна + різниця надбавки.
-      const discountFactor = 1 - (booking.discountPct || 0) / 100
+      const discountAmt = booking.discountAmt || 0
       const oldSurcharge = booking.surcharge || 0
       const svc = services.find(s => s.id === booking.serviceId)
       let newPrice = booking.price
       if (svc) {
-        newPrice = Math.round((effectivePrice(svc, newDate) + newSurcharge) * discountFactor)
+        newPrice = Math.max(0, effectivePrice(svc, newDate) + newSurcharge - discountAmt)
       } else if (booking.price != null) {
-        newPrice = booking.price + Math.round((newSurcharge - oldSurcharge) * discountFactor)
+        // Фіксована знижка вже врахована в booking.price раніше — тут лише
+        // додаємо/віднімаємо різницю надбавки, без повторного застосування знижки.
+        newPrice = Math.max(0, booking.price + (newSurcharge - oldSurcharge))
       } else if (newSurcharge > 0) {
-        newPrice = Math.round(newSurcharge * discountFactor)
+        newPrice = Math.max(0, newSurcharge - discountAmt)
       }
 
       // 1. Атомарно займаємо новий слот ДО скасування старого
@@ -155,7 +157,7 @@ function RescheduleModal({ booking, user, profile, onClose, onDone }) {
         serviceName: booking.serviceName,
         price: newPrice,
         surcharge: newSurcharge || undefined,
-        discountPct: booking.discountPct || undefined,
+        discountAmt: booking.discountAmt || undefined,
         durationHours,
         studentName: booking.studentName,
         phone: booking.phone,
