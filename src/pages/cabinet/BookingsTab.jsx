@@ -125,7 +125,8 @@ function RescheduleModal({ booking, user, profile, onClose, onDone }) {
       }
       // Ціна: якщо є послуга — перераховуємо за її ціною на НОВУ дату (враховує
       // заплановану зміну ціни, напр. з 1 серпня); інакше — стара ціна + різниця надбавки.
-      const discountAmt = booking.discountAmt || 0
+      // Знижка діє на годину — при 2-годинному записі подвоюється тощо.
+      const discountAmt = (booking.discountAmt || 0) * durationHours
       const oldSurcharge = booking.surcharge || 0
       const svc = services.find(s => s.id === booking.serviceId)
       let newPrice = booking.price
