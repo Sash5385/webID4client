@@ -9,6 +9,12 @@ const STUDENT_TYPE_LABELS = {
   private: "Приватний урок",
 };
 
+const MANEUVER_LABELS = {
+  rozvorot: "Розворот",
+  parking90: "Паркування 90",
+  parking45: "Паркування 45",
+};
+
 const EXPERIENCE_LABELS = {
   no_license: "Не маю посвідчення, збираюсь складати іспит",
   has_license: "Маю посвідчення, не маю досвіду водіння",
@@ -75,6 +81,48 @@ export default function ProfileTab({ user, profile, onProfileUpdate }) {
         </div>
       </div>
 
+
+      {Object.keys(profile.maneuverCounts || {}).length > 0 && (
+        <div className="profile-section">
+          <div className="section-head">
+            <div className="section-title">🚗 Маневри</div>
+          </div>
+          {Object.entries(MANEUVER_LABELS).filter(([key]) => profile.maneuverCounts[key]).map(([key, label]) => {
+            const attempts = profile.maneuverCounts[key] || 0;
+            const success = profile.maneuverSuccessCounts?.[key] || 0;
+            const pct = attempts ? Math.round((success / attempts) * 100) : 0;
+            return (
+              <div key={key} className="profile-row">
+                <span className="key">{label}</span>
+                <span className="val">{success}/{attempts} ({pct}%)</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="profile-section">
+        <div className="section-head">
+          <div className="section-title">🏅 Медалі</div>
+        </div>
+        {Object.keys(profile.badges || {}).length === 0 ? (
+          <div className="profile-row">
+            <span className="val" style={{ color: "var(--dim)" }}>Ще немає медалей</span>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "4px 0" }}>
+            {Object.entries(profile.badges).sort((a, b) => (b[1].awardedAt || 0) - (a[1].awardedAt || 0)).map(([bid, b]) => (
+              <div key={bid} style={{
+                display: "flex", alignItems: "center", gap: 6, padding: "6px 11px", borderRadius: 20,
+                background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)",
+              }}>
+                <span style={{ fontSize: 15 }}>{b.icon}</span>
+                <span style={{ fontSize: 12, fontWeight: 700 }}>{b.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="profile-section">
         <div className="section-title">Контакти інструктора</div>

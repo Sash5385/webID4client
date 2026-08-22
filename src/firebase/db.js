@@ -8,7 +8,8 @@ export async function getUserProfile(uid) {
   const snap = await get(ref(db, `users/${uid}`))
   if (!snap.exists()) return null
   const data = snap.val()
-  return { ...(data.profile || {}), isVip: data.isVip || false, discount: data.discount || 0, hoursOffset: data.hoursOffset || 0 }
+  return { ...(data.profile || {}), isVip: data.isVip || false, discount: data.discount || 0, hoursOffset: data.hoursOffset || 0,
+    maneuverCounts: data.maneuverCounts || {}, maneuverSuccessCounts: data.maneuverSuccessCounts || {}, badges: data.badges || {} }
 }
 
 export async function saveUserProfile(uid, profile) {
