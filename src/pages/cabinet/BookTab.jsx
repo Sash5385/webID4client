@@ -250,7 +250,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   const days = useMemo(() => getMonthGrid(viewMonth.getFullYear(), viewMonth.getMonth()), [viewMonth])
 
   const handleSlotClick = (slot) => {
-    if (slot.lunchBlocked || slot.overlapBlocked) return
+    if (slot.lunchBlocked || slot.overlapBlocked || (slot.cutoffBlocked && slot.available !== false)) return
     if (slot.offeredTo?.[user?.uid]) {
       // Слот зарезервований для мене → одразу до бронювання
       setSelectedTime(slot.time)
@@ -516,6 +516,14 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           // бо поглинуті документи проміжних годин видалені навмисно.
           lunchBlocked:   isBlockedByLunch(slot.time, durHoursForSlot),
           overlapBlocked: slot.available !== false && (isCustomDur ? false : wouldOverlapTaken(slot.time, durHoursForSlot)),
+          cutoffBlocked:  (() => {
+            const hrs = adminSettings.bookCutoffHours || 0
+            if (!hrs || !selectedDate) return false
+            const [ch, cm] = (slot.time || '0:0').split(':').map(Number)
+            const slotDt = new Date(selectedDate)
+            slotDt.setHours(ch, cm, 0, 0)
+            return Date.now() + hrs * 60 * 60 * 1000 > slotDt.getTime()
+          })(),
           isMyBooked:     overlapsMyBooking(dateStr, slot.time, durHoursForSlot),
           isExactlyMine,
           isPartOfMyBooking,
@@ -524,7 +532,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           totalPrice: slotPrice(baseService, dateStr, durHoursForSlot, totalSurcharge),
         }
       })
-      .filter(slot => !slot.lunchBlocked && !slot.overlapBlocked)
+      .filter(slot => !slot.lunchBlocked && !slot.overlapBlocked && !(slot.cutoffBlocked && slot.available !== false))
       .filter(slot => slot.isSticky || slot.isMyBooked)
       .filter(slot => {
         // Для заблокованих слотів: показуємо лише реальний старт бронювання —
