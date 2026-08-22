@@ -164,7 +164,7 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
   }
 
   // Свайп вліво/вправо для перемикання вкладок (той самий порядок, що й у нижній навігації)
-  const SWIPE_TABS = ['bookings', 'queue', 'book', 'chat', 'notifications']
+  const SWIPE_TABS = ['bookings', 'queue', 'book', 'chat', 'notifications', 'progress']
   const touchStartRef = useRef(null)
   const handleContentTouchStart = (e) => {
     const t = e.touches[0]
@@ -334,6 +334,15 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
           {unreadNotifs > 0 && (
             <div className="botnav-badge">{unreadNotifs}</div>
           )}
+        </button>
+        <button className={`botnav-btn ${activeTab === 'progress' ? 'active' : ''}`} onClick={() => switchTab('progress')}>
+          <div className="botnav-ico">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="8" r="6"/>
+              <path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12"/>
+            </svg>
+          </div>
+          <div className="botnav-lbl">Прогрес</div>
         </button>
         </div>
       </nav>

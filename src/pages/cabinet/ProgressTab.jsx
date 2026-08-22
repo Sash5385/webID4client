@@ -3,6 +3,12 @@ import { ref, onValue } from "firebase/database";
 import { db } from "../../firebase/config";
 import "./ProgressTab.css";
 
+const MANEUVER_LABELS = {
+  rozvorot: "Розворот",
+  parking90: "Паркування 90",
+  parking45: "Паркування 45",
+};
+
 export default function ProgressTab({ user, profile, bookingsData }) {
   const { bookings, schoolHours, manualHours, canBookPrivate } = bookingsData || { bookings: [], schoolHours: 0, manualHours: 0, canBookPrivate: false };
 
@@ -137,6 +143,46 @@ export default function ProgressTab({ user, profile, bookingsData }) {
           </div>
         </div>
       )}
+
+      {Object.keys(profile?.maneuverCounts || {}).length > 0 && (
+        <div className="progress-hero" style={{ marginTop: 14 }}>
+          <div className="progress-title" style={{ marginBottom: 14 }}>🚗 Маневри</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {Object.entries(MANEUVER_LABELS).filter(([key]) => profile.maneuverCounts[key]).map(([key, label]) => {
+              const attempts = profile.maneuverCounts[key] || 0;
+              const success = profile.maneuverSuccessCounts?.[key] || 0;
+              const pct = attempts ? Math.round((success / attempts) * 100) : 0;
+              return (
+                <div key={key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 13, fontWeight: 700 }}>{label}</span>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: pct >= 70 ? "#4ade80" : pct >= 40 ? "#facc15" : "#f87171" }}>
+                    {success}/{attempts} ({pct}%)
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="progress-hero" style={{ marginTop: 14 }}>
+        <div className="progress-title" style={{ marginBottom: 14 }}>🏅 Медалі</div>
+        {Object.keys(profile?.badges || {}).length === 0 ? (
+          <div className="progress-subtitle">Ще немає медалей</div>
+        ) : (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {Object.entries(profile.badges).sort((a, b) => (b[1].awardedAt || 0) - (a[1].awardedAt || 0)).map(([bid, b]) => (
+              <div key={bid} style={{
+                display: "flex", alignItems: "center", gap: 6, padding: "6px 11px", borderRadius: 20,
+                background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)",
+              }}>
+                <span style={{ fontSize: 15 }}>{b.icon}</span>
+                <span style={{ fontSize: 12, fontWeight: 700 }}>{b.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
     </div>
   );
