@@ -384,6 +384,17 @@ export default function BookingsTab({ user, profile, bookingsData }) {
             )}
           </div>
         )}
+        {isPast && (() => {
+          const lessonBadges = Object.values(profile?.badges || {}).filter(bd => bd.bookingId === b.id)
+          if (!lessonBadges.length) return null
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flexShrink: 0, alignItems: 'center' }}>
+              {lessonBadges.map((bd, i) => (
+                <span key={i} title={bd.label} style={{ fontSize: 18, lineHeight: 1 }}>{bd.icon}</span>
+              ))}
+            </div>
+          )
+        })()}
       </div>
     )
   }
