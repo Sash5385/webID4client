@@ -152,18 +152,27 @@
   background-position: center;
   opacity: 0;
   filter: blur(16px);
-  animation-name: hp-blur-dissolve;
-  animation-duration: 44.8s;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
 }
 
-@keyframes hp-blur-dissolve {
-  0%    { opacity: 0; filter: blur(16px); }
-  1.1%  { opacity: 1; filter: blur(0); }
-  6.1%  { opacity: 1; filter: blur(0); }
-  7.14% { opacity: 0; filter: blur(16px); }
-  100%  { opacity: 0; filter: blur(16px); }
+/* Вікно "показано" трохи ШИРШЕ за 1/N слоту (напускається на територію
+   наступного фото на 3%) — це навмисно: поки попереднє фото ще дотухає,
+   наступне вже починає проявлятись, тож завжди є хоч одне видиме фото
+   (без "порожньої" картки на стику двох кадрів). */
+@keyframes hp-blur-dissolve-5 {
+  0%   { opacity: 0; filter: blur(16px); }
+  3%   { opacity: 1; filter: blur(0); }
+  17%  { opacity: 1; filter: blur(0); }
+  23%  { opacity: 0; filter: blur(16px); }
+  100% { opacity: 0; filter: blur(16px); }
+}
+@keyframes hp-blur-dissolve-4 {
+  0%   { opacity: 0; filter: blur(16px); }
+  3%   { opacity: 1; filter: blur(0); }
+  22%  { opacity: 1; filter: blur(0); }
+  28%  { opacity: 0; filter: blur(16px); }
+  100% { opacity: 0; filter: blur(16px); }
 }
 
 @media (prefers-reduced-motion: reduce) {

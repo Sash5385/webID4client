@@ -30,15 +30,20 @@ function starsStr(rating) {
   return '★'.repeat(rating) + '☆'.repeat(5 - rating)
 }
 
-// 14 фото автошколи, кожен слот колажу показує їх у власному перемішаному
-// порядку (і з власним зсувом фази), щоб три картки ніколи не мінялись
-// синхронно.
-const HERO_PHOTO_ORDER_A = [11, 6, 1, 2, 10, 5, 7, 3, 4, 13, 12, 14, 9, 8]
-const HERO_PHOTO_ORDER_B = [8, 11, 6, 12, 3, 9, 4, 7, 14, 10, 1, 2, 5, 13]
-const HERO_PHOTO_ORDER_C = [8, 12, 3, 7, 14, 5, 4, 6, 1, 9, 13, 2, 10, 11]
-const HERO_LOOP_SECONDS = 44.8 // 14 фото × ~3.2с показу кожного
+// 14 фото автошколи поділені на 3 НЕПЕРЕТИННІ набори — по одному на слот.
+// Це гарантує, що те саме фото фізично не може з'явитись у двох картках
+// одночасно (набори не перетинаються), а не просто малоймовірно.
+const HERO_PHOTO_ORDER_A = [6, 9, 2, 4, 7]
+const HERO_PHOTO_ORDER_B = [13, 5, 3, 14, 11]
+const HERO_PHOTO_ORDER_C = [8, 1, 10, 12]
+const HERO_PHOTO_SECONDS = 3.4 // тривалість показу одного фото в слоті
 
 function PhotoCollageSlot({ order, phase, className }) {
+  const duration = order.length * HERO_PHOTO_SECONDS
+  // Вікно "показано" має дорівнювати рівно 1/N слоту (гарантована суцільна
+  // естафета без пропусків і без напливу одне на одне) — тому клас із
+  // ключовими кадрами обирається саме під кількість фото в цьому слоті.
+  const animName = `hp-blur-dissolve-${order.length}`
   return (
     <div className={`hp-slot ${className}`}>
       {order.map((num, i) => (
@@ -47,7 +52,9 @@ function PhotoCollageSlot({ order, phase, className }) {
           className="hp-layer"
           style={{
             backgroundImage: `url(/hero/hero-${String(num).padStart(2, '0')}.jpg)`,
-            animationDelay: `${-(i / order.length) * HERO_LOOP_SECONDS + phase}s`,
+            animationName: animName,
+            animationDuration: `${duration}s`,
+            animationDelay: `${-(i * HERO_PHOTO_SECONDS) + phase}s`,
           }}
         />
       ))}
@@ -102,9 +109,9 @@ export default function Landing({ user, profile }) {
         {/* HERO */}
         <section className="hero">
           <div className="photo-collage">
-            <PhotoCollageSlot order={HERO_PHOTO_ORDER_A} phase={0}   className="hp-slot-a" />
-            <PhotoCollageSlot order={HERO_PHOTO_ORDER_B} phase={-6}  className="hp-slot-b" />
-            <PhotoCollageSlot order={HERO_PHOTO_ORDER_C} phase={-12} className="hp-slot-c" />
+            <PhotoCollageSlot order={HERO_PHOTO_ORDER_A} phase={0}  className="hp-slot-a" />
+            <PhotoCollageSlot order={HERO_PHOTO_ORDER_B} phase={-4} className="hp-slot-b" />
+            <PhotoCollageSlot order={HERO_PHOTO_ORDER_C} phase={-8} className="hp-slot-c" />
           </div>
           <h1>Уроки водіння</h1>
           <p>Онлайн-запис на уроки водіння в Києві.<br/>Автошкола та приватні уроки.</p>
