@@ -23,6 +23,14 @@ export async function updateUserProfile(uid, patch) {
   await update(ref(db, `users/${uid}/profile`), patch)
 }
 
+// Позначає перший вхід ще НЕ зареєстрованої людини (профіль ще не заповнено).
+// Якщо профіль вже є — це не новий відвідувач, нічого не пишемо.
+export async function markFirstLoginIfNew(uid) {
+  const profileSnap = await get(ref(db, `users/${uid}/profile`))
+  if (profileSnap.exists()) return
+  await runTransaction(ref(db, `users/${uid}/firstLoginAt`), current => current === null ? Date.now() : current)
+}
+
 // в”Ђв”Ђв”Ђ TIMESLOTS в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 export async function getSlotsForDate(date) {
   // date Сѓ С„РѕСЂРјР°С‚С– YYYY-MM-DD

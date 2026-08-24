@@ -4,7 +4,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { Capacitor } from '@capacitor/core'
 import { App as CapacitorApp } from '@capacitor/app'
 import { auth } from './firebase/config'
-import { getUserProfile, createBooking, markSlotsUnavailable, claimSlot } from './firebase/db'
+import { getUserProfile, createBooking, markSlotsUnavailable, claimSlot, markFirstLoginIfNew } from './firebase/db'
 import { requestNotificationPermission, onForegroundMessage, getFirebaseSwReg } from './firebase/push'
 import { useAppUpdate } from './hooks/useAppUpdate'
 import { useToast } from './hooks/useToast'
@@ -31,6 +31,7 @@ export default function App() {
         const p = await getUserProfile(u.uid)
         setProfile(p)
         requestNotificationPermission(u.uid).catch(() => {})
+        markFirstLoginIfNew(u.uid).catch(() => {})
       } else {
         setProfile(null)
       }
