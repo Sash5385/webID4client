@@ -272,21 +272,10 @@ export default function BookingsTab({ user, profile, bookingsData }) {
   const [cancelConfirmId, setCancelConfirmId] = useState(null)
   const [toast, setToast] = useState(null)
   const [showAllCompleted, setShowAllCompleted] = useState(false)
-  const [paymentCard, setPaymentCard] = useState('')
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type })
     setTimeout(() => setToast(null), 3200)
-  }
-
-  useEffect(() => {
-    getAdminSettings().then(s => setPaymentCard(s.paymentCard || '')).catch(() => {})
-  }, [])
-
-  const copyCard = () => {
-    navigator.clipboard.writeText(paymentCard.replace(/\s+/g, '')).then(() => {
-      showToast('Номер картки скопійовано')
-    }).catch(() => {})
   }
 
   const handleCancel = async (booking) => {
@@ -416,24 +405,6 @@ export default function BookingsTab({ user, profile, bookingsData }) {
           {upcoming.length > 0 && (
             <>
               <div className="section-title" style={{ fontSize: 14, fontWeight: 800, color: '#fff', textAlign: 'center' }}>Найближчі</div>
-              {paymentCard && (
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  background: 'rgba(0,0,0,0.52)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14,
-                  padding: '10px 12px', marginBottom: 8,
-                }}>
-                  <span style={{ fontSize: 18, flexShrink: 0 }}>💳</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 10, color: 'var(--dim)', fontWeight: 700 }}>Оплата на картку</div>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: '#fff', letterSpacing: 0.5 }}>{paymentCard}</div>
-                  </div>
-                  <button onClick={copyCard} style={{
-                    flexShrink: 0, padding: '7px 12px', borderRadius: 9, border: 'none', cursor: 'pointer',
-                    background: 'var(--accent)', color: '#fff', fontSize: 12, fontWeight: 700, fontFamily: 'inherit',
-                  }}>Копіювати</button>
-                </div>
-              )}
               {upcoming.map(b => renderCard(b))}
             </>
           )}
