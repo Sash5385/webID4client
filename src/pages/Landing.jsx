@@ -30,6 +30,31 @@ function starsStr(rating) {
   return '★'.repeat(rating) + '☆'.repeat(5 - rating)
 }
 
+// 14 фото автошколи, кожен слот колажу показує їх у власному перемішаному
+// порядку (і з власним зсувом фази), щоб три картки ніколи не мінялись
+// синхронно.
+const HERO_PHOTO_ORDER_A = [11, 6, 1, 2, 10, 5, 7, 3, 4, 13, 12, 14, 9, 8]
+const HERO_PHOTO_ORDER_B = [8, 11, 6, 12, 3, 9, 4, 7, 14, 10, 1, 2, 5, 13]
+const HERO_PHOTO_ORDER_C = [8, 12, 3, 7, 14, 5, 4, 6, 1, 9, 13, 2, 10, 11]
+const HERO_LOOP_SECONDS = 44.8 // 14 фото × ~3.2с показу кожного
+
+function PhotoCollageSlot({ order, phase, className }) {
+  return (
+    <div className={`hp-slot ${className}`}>
+      {order.map((num, i) => (
+        <div
+          key={num}
+          className="hp-layer"
+          style={{
+            backgroundImage: `url(/hero/hero-${String(num).padStart(2, '0')}.jpg)`,
+            animationDelay: `${-(i / order.length) * HERO_LOOP_SECONDS + phase}s`,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
 export default function Landing({ user, profile }) {
   useTheme()
   const nav = useNavigate()
@@ -76,6 +101,11 @@ export default function Landing({ user, profile }) {
 
         {/* HERO */}
         <section className="hero">
+          <div className="photo-collage">
+            <PhotoCollageSlot order={HERO_PHOTO_ORDER_A} phase={0}   className="hp-slot-a" />
+            <PhotoCollageSlot order={HERO_PHOTO_ORDER_B} phase={-6}  className="hp-slot-b" />
+            <PhotoCollageSlot order={HERO_PHOTO_ORDER_C} phase={-12} className="hp-slot-c" />
+          </div>
           <h1>Уроки водіння</h1>
           <p>Онлайн-запис на уроки водіння в Києві.<br/>Автошкола та приватні уроки.</p>
           <button className="hero-cta" onClick={goAuth}>📅 Записатись на урок</button>

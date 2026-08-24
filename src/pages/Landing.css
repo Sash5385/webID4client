@@ -123,6 +123,53 @@
   position: relative;
 }
 
+/* PHOTO COLLAGE — три фото внахлест, кожне саме по собі перебирає кадри
+   розмитим розчиненням (blur-dissolve), кожен слот у власному порядку. */
+.photo-collage {
+  position: relative;
+  height: 220px;
+  max-width: 340px;
+  margin: 0 auto 22px;
+}
+
+.hp-slot {
+  position: absolute;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 3px solid var(--surface);
+  background: var(--bg-deep);
+  box-shadow: var(--shadow);
+}
+
+.hp-slot-a { width: 58%; height: 82%; left: 0; top: 8%; z-index: 3; }
+.hp-slot-b { width: 42%; height: 56%; right: 0; top: 0; z-index: 2; transform: rotate(4deg); }
+.hp-slot-c { width: 38%; height: 48%; right: 8%; bottom: 0; z-index: 1; transform: rotate(-3deg); }
+
+.hp-layer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  filter: blur(16px);
+  animation-name: hp-blur-dissolve;
+  animation-duration: 44.8s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes hp-blur-dissolve {
+  0%    { opacity: 0; filter: blur(16px); }
+  1.1%  { opacity: 1; filter: blur(0); }
+  6.1%  { opacity: 1; filter: blur(0); }
+  7.14% { opacity: 0; filter: blur(16px); }
+  100%  { opacity: 0; filter: blur(16px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hp-layer { animation-play-state: paused; opacity: 1; filter: blur(0); animation-delay: 0s !important; }
+}
+
 
 .hero h1 {
   font-size: 30px;
