@@ -10,6 +10,15 @@
   touch-action: pan-y;
 }
 
+@media (min-width: 600px) {
+  .landing-page {
+    max-width: 430px;
+    margin: 0 auto;
+    background: var(--bg);
+    box-shadow: 0 0 80px rgba(0,0,0,0.6);
+  }
+}
+
 .landing-topbar {
   position: sticky;
   top: 0;
