@@ -69,6 +69,15 @@ html, body {
   }
 }
 
+/* На широких екранах фон (1440×1080) впирається шириною у в'юпорт без
+   запасу — зсув -173px, підібраний під вузький мобільний кадр, обрізає
+   праву частину фото. На ПК центруємо, мобільний вигляд не чіпаємо. */
+@media (min-width: 1024px) {
+  #root::before {
+    background-position: center top;
+  }
+}
+
 ::-webkit-scrollbar { width: 0; height: 0; display: none; }
 * { scrollbar-width: none; -ms-overflow-style: none; }
 
