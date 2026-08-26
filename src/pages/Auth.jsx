@@ -695,7 +695,8 @@ export default function Auth({ user, profile, onProfileSaved }) {
           <div className="toggle-row" onClick={()=>setFilmingConsent(v=>!v)}>
             <div className="toggle-ico">🎬</div>
             <div className="toggle-info">
-              <div className="toggle-title">Зйомка відео/аудіо для реклами автошколи</div>
+              <div className="toggle-title">Зйомка (відео/фото/прямий ефір) під час занять</div>
+              <div className="toggle-desc">Матеріали можуть використовуватись для реклами школи, перевірки роботи інструктора та покращення сервісу, а також публікуватись в інтернеті — без образ і приниження гідності.</div>
             </div>
             <button className={`switch${filmingConsent?' on':''}`} onClick={e=>{e.stopPropagation();setFilmingConsent(v=>!v)}}>
               <div className="switch-knob"/>
