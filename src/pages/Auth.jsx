@@ -663,13 +663,14 @@ export default function Auth({ user, profile, onProfileSaved }) {
             <div className="field-label">Тип навчання</div>
             <div className="choice-grid">
               {[
-                {id:'school', icon:'🎓', title:'Автошкола', desc:'40 годин', bg:'linear-gradient(165deg,#5b9bff,#2563eb)'},
+                {id:'school', icon:'🎓', title:'Автошкола', desc:'40 годин', hint:'Тільки для учнів автошколи «Жайворонок»', bg:'linear-gradient(165deg,#5b9bff,#2563eb)'},
                 {id:'private', icon:'🚗', title:'Приватний урок', desc:'Індивідуальне навчання', bg:'linear-gradient(165deg,#fb923c,#ea580c)'},
               ].map(t=>(
                 <div key={t.id} className={`tile-pick${studentType===t.id?' selected':''}`} onClick={()=>setStudentType(t.id)}>
                   <div className="ico" style={{background:t.bg}}>{t.icon}</div>
                   <div className="tile-title">{t.title}</div>
                   <div className="tile-desc">{t.desc}</div>
+                  {t.hint && <div className="tile-desc" style={{marginTop:3,opacity:0.75}}>{t.hint}</div>}
                 </div>
               ))}
             </div>
