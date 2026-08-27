@@ -333,11 +333,16 @@ export default function BookingsTab({ user, profile, bookingsData }) {
           </div>
           <div className="booking-type">
             {b.serviceType === 'school' ? '🎓' : '🚙'} {b.serviceName} · {b.durationHours || 1} год
-            {(b.price > 0) && (
-              <span style={{marginLeft:6, color:'var(--gold)', fontWeight:700}}>
-                {(b.price + (b.surcharge || 0))} ₴{b.surcharge > 0 ? ` (+${b.surcharge}₴)` : ''}
-              </span>
-            )}
+            {(() => {
+              // manualPrice — свідомий override адміна (кнопка "Редагувати ціну і
+              // час"), замінює весь розрахунок цілком, без додавання надбавки.
+              const total = b.manualPrice != null ? b.manualPrice : (b.price || 0) + (b.surcharge || 0)
+              return total > 0 && (
+                <span style={{marginLeft:6, color:'var(--gold)', fontWeight:700}}>
+                  {total} ₴{(b.manualPrice == null && b.surcharge > 0) ? ` (+${b.surcharge}₴)` : ''}
+                </span>
+              )
+            })()}
           </div>
           <div className="booking-meta">📍 Верховинна, 44</div>
           {(b.status === 'confirmed' || b.status === 'cancelled') && (
