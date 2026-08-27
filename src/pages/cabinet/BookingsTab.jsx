@@ -88,6 +88,15 @@ function RescheduleModal({ booking, user, profile, onClose, onDone }) {
     })
   }
 
+  function isCutoffBlocked(time) {
+    const hrs = adminSettings.bookCutoffHours || 0
+    if (!hrs || !selectedDate) return false
+    const [ch, cm] = (time || '0:0').split(':').map(Number)
+    const slotDt = new Date(selectedDate)
+    slotDt.setHours(ch, cm, 0, 0)
+    return Date.now() + hrs * 60 * 60 * 1000 > slotDt.getTime()
+  }
+
   const slotsList = useMemo(() => Object.values(slots)
     .filter(s => (s.time || '').endsWith(':00'))
     .filter(s => !s.vipOnly || isVipStudent)
@@ -96,10 +105,11 @@ function RescheduleModal({ booking, user, profile, onClose, onDone }) {
       ...s,
       lunchBlocked: isBlockedByLunch(s.time),
       overlapBlocked: s.available !== false && wouldOverlap(s.time),
+      cutoffBlocked: s.available !== false && isCutoffBlocked(s.time),
     }))
-    .filter(s => !s.lunchBlocked)
+    .filter(s => !s.lunchBlocked && !s.cutoffBlocked)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  , [slots, adminSettings, durationHours, isVipStudent])
+  , [slots, adminSettings, durationHours, isVipStudent, selectedDate])
 
   const days = useMemo(() => getMonthGrid(viewMonth.getFullYear(), viewMonth.getMonth()), [viewMonth])
 
