@@ -621,14 +621,13 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         >
           {days.map((d, i) => {
             if (!d) return <div key={i} className="cal-day empty"></div>
-            // Приватні уроки — без обмеження, скільки вперед видно календар.
-            // Автошкола — обмежена окремою (коротшою) настройкою адміна.
-            let disabled = isPast(d)
-            if (!disabled && effectiveType === 'school') {
-              const maxDays = adminSettings.schoolCalendarOpenDays ?? 14
-              const maxDate = new Date(today); maxDate.setDate(maxDate.getDate() + maxDays)
-              disabled = d > maxDate
-            }
+            // Приватні й автошкільні учні мають окремі, незалежно налаштовані
+            // горизонти видимості календаря (Налаштування → Обмеження).
+            const maxDays = effectiveType === 'school'
+              ? (adminSettings.schoolCalendarOpenDays ?? 14)
+              : (adminSettings.calendarOpenDays ?? 30)
+            const maxDate = new Date(today); maxDate.setDate(maxDate.getDate() + maxDays)
+            const disabled = isPast(d) || d > maxDate
             const isToday = isSameDay(d, today)
             const selected = selectedDate && isSameDay(d, selectedDate)
             const dateStr = formatDateYMD(d)
