@@ -450,9 +450,19 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     // сусідство індивідуально для кожного слота, а не через єдиний зсув наперед.
     const stickyEnabled = adminSettings.stickyTimeEnabled !== false
     const stickyMode = adminSettings.stickyTime || 'both'
-    const bookingsOnDate = bookingsData.upcoming.filter(b =>
-      b.date === dateStr && b.status !== 'cancelled'
-    )
+    // Сусідство для sticky перевірялось лише по bookingsData.upcoming — а це
+    // ЛИШЕ власні записи поточного учня (useBookings(uid) читає bookings/{uid}).
+    // Запис ІНШОГО учня о 9:00 цей масив не бачить взагалі, тож вільний слот
+    // 8:00 вважався "самотнім" і ховався, навіть коли о 9:00 реально є чужий
+    // запис впритул. Джерело істини — сам `slots` (адмін позначає зайняті
+    // слоти available:false для будь-кого, хто забронював).
+    const takenIntervals = Object.values(slots)
+      .filter(s => s.available === false && s.time)
+      .map(s => {
+        const [h, m] = s.time.split(':').map(Number)
+        const start = h * 60 + m
+        return { start, end: start + (s.durMin || 60) }
+      })
     // Перший слот дня не може мати "сусіда перед собою" — на цю умову
     // sticky-перевірки принципово ніколи не спрацює (немає слота, який би
     // закінчувався саме тоді, коли починається день). Без цього виключення
@@ -505,15 +515,12 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           const bEnd = bStart + (b.durationHours || 1) * 60
           return slotMin >= bStart && slotMin < bEnd
         })
-        const isSticky = !stickyEnabled || bookingsOnDate.length === 0 || slot.available === false || slotStartMin === dayStartMin
+        const isSticky = !stickyEnabled || takenIntervals.length === 0 || slot.available === false || slotStartMin === dayStartMin
           ? true
-          : bookingsOnDate.some(b => {
-              const [bh, bm] = (b.time || '0:0').split(':').map(Number)
-              const bStart = bh * 60 + bm
-              const bEnd = bStart + (b.durationHours || 1) * 60
-              return (stickyMode !== 'after'  && slotStartMin + slotDurMin === bStart) ||
-                     (stickyMode !== 'before' && slotStartMin === bEnd)
-            })
+          : takenIntervals.some(iv =>
+              (stickyMode !== 'after'  && slotStartMin + slotDurMin === iv.start) ||
+              (stickyMode !== 'before' && slotStartMin === iv.end)
+            )
         return {
           ...slot,
           slotDurMin,
