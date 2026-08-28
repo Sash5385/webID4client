@@ -453,6 +453,15 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     const bookingsOnDate = bookingsData.upcoming.filter(b =>
       b.date === dateStr && b.status !== 'cancelled'
     )
+    // Перший слот дня не може мати "сусіда перед собою" — на цю умову
+    // sticky-перевірки принципово ніколи не спрацює (немає слота, який би
+    // закінчувався саме тоді, коли починається день). Без цього виключення
+    // найперший вільний слот дня ставав практично непомітним учню щоразу,
+    // коли того дня вже є хоч один запис, який не починається одразу
+    // впритул за ним.
+    const dayStartTimes = Object.values(slots)
+      .map(s => { const [h, m] = (s.time || '0:0').split(':').map(Number); return h * 60 + m })
+    const dayStartMin = dayStartTimes.length ? Math.min(...dayStartTimes) : null
 
     return Object.values(slots)
       .filter(slot => !!(slot.time))
@@ -496,7 +505,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           const bEnd = bStart + (b.durationHours || 1) * 60
           return slotMin >= bStart && slotMin < bEnd
         })
-        const isSticky = !stickyEnabled || bookingsOnDate.length === 0 || slot.available === false
+        const isSticky = !stickyEnabled || bookingsOnDate.length === 0 || slot.available === false || slotStartMin === dayStartMin
           ? true
           : bookingsOnDate.some(b => {
               const [bh, bm] = (b.time || '0:0').split(':').map(Number)
