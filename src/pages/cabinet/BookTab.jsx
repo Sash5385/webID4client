@@ -609,9 +609,6 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
             </div>
           </div>
         </div>
-        <a href="https://send.monobank.ua/jar/Ad2XWyvEWB" target="_blank" rel="noopener noreferrer" className="banner-jar" aria-label="Банка на каву">
-          <span>ПОДЯКА</span>
-        </a>
       </div>
       {cardCopied && (
         <div className="card-copied-toast">Номер картки скопійовано</div>
