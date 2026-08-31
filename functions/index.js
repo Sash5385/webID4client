@@ -232,6 +232,10 @@ exports.onNewBooking = onValueCreated(
     const booking = event.data.val();
     console.log("onNewBooking triggered:", booking?.date, booking?.time, booking?.studentName);
     if (!booking) return;
+    if (booking.createdBy === "queue_auto") {
+      // Пуш адміну вже надіслано напряму з autoBookFromQueue (текст специфічний для черги) — не дублюємо.
+      return;
+    }
     const name = booking.studentName || "Учень";
     const date = booking.date || "";
     const time = booking.time || "";
@@ -391,6 +395,10 @@ const { onValueUpdated } = require("firebase-functions/v2/database");
 const OFFER_WINDOW_MS = 30 * 60 * 1000;
 
 // ─── HELPER: запросити наступного в черзі ────────────────────────
+// Якщо в налаштуваннях увімкнено FIFO (admin_settings/queueAutoFifo, за
+// замовчуванням true) — записуємо студента одразу, без очікування, що він
+// сам підтвердить; інакше лишаємо стару поведінку "запропонувати" (onQueueInvite
+// зарезервує слот на 30 хв і відправить push, студент бронює сам).
 async function inviteNextInQueue(slotKey, excludeUids = []) {
   const entriesSnap = await db.ref(`queue/${slotKey}/entries`).get();
   if (!entriesSnap.exists()) return;
@@ -399,7 +407,114 @@ async function inviteNextInQueue(slotKey, excludeUids = []) {
     .filter(e => e.status === "waiting" && !excludeUids.includes(e.uid))
     .sort((a, b) => (a.addedAt || 0) - (b.addedAt || 0));
   if (!entries.length) return;
-  await db.ref(`queue/${slotKey}/entries/${entries[0].uid}`).update({ status: "offered" });
+  const next = entries[0];
+
+  const sep = slotKey.lastIndexOf("_");
+  const date = slotKey.slice(0, sep);
+  const time = slotKey.slice(sep + 1);
+
+  const fifoSnap = await db.ref("admin_settings/queueAutoFifo").get();
+  const autoFifo = fifoSnap.exists() ? fifoSnap.val() !== false : true;
+
+  if (!autoFifo) {
+    await db.ref(`queue/${slotKey}/entries/${next.uid}`).update({ status: "offered" });
+    return;
+  }
+
+  try {
+    await autoBookFromQueue(next, date, time, slotKey);
+  } catch (e) {
+    console.error(`inviteNextInQueue: auto-book failed for uid=${next.uid} slotKey=${slotKey}`, e.message);
+    // Фолбек — принаймні запропонувати слот звичайним способом.
+    await db.ref(`queue/${slotKey}/entries/${next.uid}`).update({ status: "offered" }).catch(() => {});
+  }
+}
+
+// ─── HELPER: створити бронювання напряму з запису черги (режим FIFO) і
+// сповістити і учня, і адміна. Формула ціни/тривалості повторює клієнтський
+// handleBook у webID4client/src/pages/cabinet/BookTab.jsx (baseService за
+// типом+60хв, надбавка по слотах, знижка учня) — тримати синхронізовано.
+async function autoBookFromQueue(next, date, time, slotKey) {
+  const [profileSnap, servicesSnap, daySnap] = await Promise.all([
+    db.ref(`users/${next.uid}/profile`).get(),
+    db.ref("admin_data/services").get(),
+    db.ref(`timeslots/${date}`).get(),
+  ]);
+  const profile = profileSnap.val() || {};
+  const servicesVal = servicesSnap.val();
+  const services = Array.isArray(servicesVal) ? servicesVal : Object.values(servicesVal || {});
+  const durationHours = next.durationHours || 1;
+  const svcType = next.studentType || "school";
+  const baseService =
+    services.find(s => s && s.active !== false && s.type === svcType && Number(s.duration) === 60) ||
+    services.find(s => s && s.type === svcType && Number(s.duration) === 60);
+
+  if (!baseService) {
+    // Немає підхожої послуги — не можемо коректно порахувати ціну, лишаємо звичайне запрошення.
+    await db.ref(`queue/${slotKey}/entries/${next.uid}`).update({ status: "offered" });
+    return;
+  }
+
+  const day = daySnap.val() || {};
+  const [bh, bm] = time.split(":").map(Number);
+  const bookStartMin = bh * 60 + bm;
+  let surcharge = 0;
+  for (let slotMin = bookStartMin; slotMin < bookStartMin + durationHours * 60; slotMin += 60) {
+    const key = `slot${String(Math.floor(slotMin / 60)).padStart(2, "0")}${String(slotMin % 60).padStart(2, "0")}`;
+    surcharge += day[key]?.surcharge || 0;
+  }
+
+  const effPrice = (baseService.nextPrice != null && baseService.nextPriceFrom && date >= baseService.nextPriceFrom)
+    ? baseService.nextPrice : (baseService.price || 0);
+  let price = Math.round(effPrice * durationHours) + surcharge;
+  const discountAmt = profile.discount || 0;
+  if (discountAmt > 0) price = Math.max(0, price - discountAmt * durationHours);
+
+  const svcName = (baseService.name || "").replace(/\s+\d+(?:[.,]\d+)?\s*год\S*\.?\s*$/iu, "").trim() || baseService.name;
+
+  const bookingRef = db.ref(`bookings/${next.uid}`).push();
+  const bookingData = {
+    id: bookingRef.key,
+    date, time,
+    serviceType: baseService.type,
+    serviceId: baseService.id,
+    serviceName: `${svcName} ${durationHours * 60} хвилин`.trim(),
+    price: price || undefined,
+    surcharge: surcharge || undefined,
+    discountAmt: discountAmt || undefined,
+    durationHours,
+    studentName: next.name || profile.name || "Учень",
+    phone: next.phone || profile.phone || "",
+    status: "pending",
+    createdAt: Date.now(),
+    createdBy: "queue_auto",
+  };
+  const clean = Object.fromEntries(Object.entries(bookingData).filter(([, v]) => v !== undefined));
+  await bookingRef.set(clean);
+
+  // Позначаємо слоти зайнятими (як markSlotsUnavailable на клієнті) + чергу — booked.
+  const slotUpd = {};
+  for (let min = bookStartMin; min < bookStartMin + durationHours * 60; min += 30) {
+    const slotH = String(Math.floor(min / 60)).padStart(2, "0");
+    const slotM = String(min % 60).padStart(2, "0");
+    const sid = `slot${slotH}${slotM}`;
+    if (!day[sid]) slotUpd[`timeslots/${date}/${sid}/phantom`] = true;
+    slotUpd[`timeslots/${date}/${sid}/available`] = false;
+    slotUpd[`timeslots/${date}/${sid}/time`] = `${slotH}:${slotM}`;
+    slotUpd[`timeslots/${date}/${sid}/bookingStart`] = min === bookStartMin;
+  }
+  slotUpd[`queue/${slotKey}/entries/${next.uid}/status`] = "booked";
+  await db.ref("/").update(slotUpd);
+
+  await sendPush(
+    next.uid,
+    "🎉 Вас записано з черги!",
+    `${date} о ${time} — місце звільнилось, бронювання оформлено автоматично`,
+    "/cabinet/bookings",
+    "queue_auto_booked"
+  );
+
+  await sendAdminPush("📋 Автозапис з черги", `${bookingData.studentName} · ${date} о ${time}`);
 }
 
 // ─── 5. onQueueInvite ─────────────────────────────────────────────
@@ -430,6 +545,8 @@ exports.onQueueInvite = onValueUpdated(
       url,
       "queue_offer"
     );
+
+    await sendAdminPush("⏳ Слот запропоновано з черги", `${after.name || "Учень"} · ${date} о ${time}`);
   }
 );
 
@@ -489,16 +606,7 @@ exports.onAdminSlotOpened = onValueWritten(
     }
 
     const slotKey = `${date}_${time}`;
-    const qSnap = await db.ref(`queue/${slotKey}/entries`).get();
-    if (!qSnap.exists()) return;
-
-    const entries = Object.entries(qSnap.val())
-      .map(([uid, e]) => ({ uid, ...e }))
-      .filter(e => e.status === "waiting")
-      .sort((a, b) => (a.addedAt || 0) - (b.addedAt || 0));
-    if (!entries.length) return;
-
-    await db.ref(`queue/${slotKey}/entries/${entries[0].uid}`).update({ status: "offered" });
+    await inviteNextInQueue(slotKey);
   }
 );
 
