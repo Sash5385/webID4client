@@ -159,32 +159,56 @@ export default function Landing({ user, profile }) {
 
       <div className="container">
 
-        {/* HERO */}
-        <section className="hero">
-          <div className="hero-media">
-            <div className="photo-collage">
-              <PhotoCollageSlot order={HERO_PHOTO_ORDER_A} phase={0}  className="hp-slot-a" />
-              <PhotoCollageSlot order={HERO_PHOTO_ORDER_B} phase={-4} className="hp-slot-b" />
-              <PhotoCollageSlot order={HERO_PHOTO_ORDER_C} phase={-8} className="hp-slot-c" />
+        {/* HERO + MAP */}
+        <div className="hero-row">
+          <section className="hero">
+            <div className="hero-media">
+              <div className="photo-collage">
+                <PhotoCollageSlot order={HERO_PHOTO_ORDER_A} phase={0}  className="hp-slot-a" />
+                <PhotoCollageSlot order={HERO_PHOTO_ORDER_B} phase={-4} className="hp-slot-b" />
+                <PhotoCollageSlot order={HERO_PHOTO_ORDER_C} phase={-8} className="hp-slot-c" />
+              </div>
             </div>
-          </div>
-          <div className="hero-body">
-            <h1>Уроки водіння</h1>
-            <p>Онлайн-запис на уроки водіння в Києві.<br/>Автошкола та приватні уроки.</p>
-            <button className="hero-cta" onClick={goAuth}>📅 Записатись на урок</button>
+            <div className="hero-body">
+              <h1>Уроки водіння</h1>
+              <p>Онлайн-запис на уроки водіння в Києві.<br/>Автошкола та приватні уроки.</p>
+              <button className="hero-cta" onClick={goAuth}>📅 Записатись на урок</button>
 
-            <div className="hero-stats">
-              <div className="stat-card">
-                <div className="stat-num">20+</div>
-                <div className="stat-lbl">років досвіду</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-num">2000+</div>
-                <div className="stat-lbl">учнів</div>
+              <div className="hero-stats">
+                <div className="stat-card">
+                  <div className="stat-num">20+</div>
+                  <div className="stat-lbl">років досвіду</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-num">2000+</div>
+                  <div className="stat-lbl">учнів</div>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+
+          <section className="lsection hero-map-section">
+            <div className="lsection-title">Як доїхати</div>
+            <h2>Місце зустрічі</h2>
+            <div className="map-card">
+              <iframe
+                className="map-iframe"
+                src="https://www.google.com/maps?q=Верховинна+44,+Київ&output=embed"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Карта"
+              ></iframe>
+              <div className="map-overlay">
+                <div className="map-pin">📍</div>
+                <div>
+                  <div className="contact-label">Адреса</div>
+                  <div className="contact-val">Верховинна, 44</div>
+                </div>
+                <a href="https://www.google.com/maps/dir/?api=1&destination=Верховинна+44,+Київ" target="_blank" rel="noreferrer" className="map-route-btn">Маршрут</a>
+              </div>
+            </div>
+          </section>
+        </div>
 
         {/* SERVICES */}
         <section className="lsection">
@@ -389,29 +413,6 @@ export default function Landing({ user, profile }) {
                 <div className="contact-val">Київ, вул. Верховинна, 44</div>
               </div>
             </a>
-          </div>
-        </section>
-
-        {/* MAP */}
-        <section className="lsection">
-          <div className="lsection-title">Як доїхати</div>
-          <h2>Місце зустрічі</h2>
-          <div className="map-card">
-            <iframe
-              className="map-iframe"
-              src="https://www.google.com/maps?q=Верховинна+44,+Київ&output=embed"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title="Карта"
-            ></iframe>
-            <div className="map-overlay">
-              <div className="map-pin">📍</div>
-              <div>
-                <div className="contact-label">Адреса</div>
-                <div className="contact-val">Верховинна, 44</div>
-              </div>
-              <a href="https://www.google.com/maps/dir/?api=1&destination=Верховинна+44,+Київ" target="_blank" rel="noreferrer" className="map-route-btn">Маршрут</a>
-            </div>
           </div>
         </section>
 
