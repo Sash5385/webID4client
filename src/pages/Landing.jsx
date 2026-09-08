@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
+import { APP_VERSION } from '../version.js'
 import './Landing.css'
 
 const REVIEWS_URL = 'https://europe-west1-id4drive-booking-44182.cloudfunctions.net/getGoogleReviews'
@@ -359,6 +360,7 @@ export default function Landing({ user, profile }) {
         <div className="footer">
           <button className="footer-cta" onClick={goAuth}>🚗 Записатись зараз</button>
           <div>© 2026 ID4Drive. Школа водіння в Києві.</div>
+          <div style={{marginTop:8,fontSize:13,fontWeight:600,letterSpacing:0.5,opacity:0.6}}>{APP_VERSION}</div>
         </div>
 
       </div>
