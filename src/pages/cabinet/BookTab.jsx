@@ -3,6 +3,7 @@ import { subscribeSlotsForDate, createBooking, joinQueue, leaveQueue, subscribeQ
 import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay } from '../../utils/date'
 import { getInitials, pluralize } from '../../utils/format'
 import { useToast } from '../../hooks/useToast'
+import { APP_VERSION } from '../../version.js'
 import './BookTab.css'
 
 const FALLBACK_SERVICES = [
@@ -964,6 +965,10 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           </div>
         </div>
       )}
+
+      <div style={{textAlign:"center",padding:"12px 0 4px",color:"#5a5c62",fontSize:13,fontWeight:600,letterSpacing:0.5}}>
+        {APP_VERSION}
+      </div>
 
     </div>
   )
