@@ -1102,14 +1102,20 @@
   .hero {
     display: flex;
     align-items: center;
-    gap: 56px;
+    gap: 72px;
     text-align: left;
-    padding: 48px 0 40px;
+    padding: 56px 0 48px;
   }
-  .hero-media { flex: 0 0 340px; }
-  .hero-body { flex: 1; min-width: 0; }
-  .hero .photo-collage { width: 100%; margin: 0; }
-  .hero-stats { justify-content: flex-start; }
+  .hero-media { flex: 0 0 460px; }
+  .hero-body { flex: 1; min-width: 0; max-width: 560px; }
+  .hero .photo-collage { width: 100%; height: 300px; margin: 0; }
+  .hero h1 { font-size: 46px; }
+  .hero p { font-size: 17px; max-width: 480px; }
+  .hero-cta { padding: 18px 40px; font-size: 16px; }
+  .hero-stats { justify-content: flex-start; gap: 14px; }
+  .hero-stats .stat-card { padding: 14px 28px; }
+  .hero-stats .stat-num { font-size: 26px; }
+  .hero-stats .stat-lbl { font-size: 11px; }
 
   .services {
     flex-direction: row;
