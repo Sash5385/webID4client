@@ -71,6 +71,37 @@ export function subscribeMonthAvailability(year, month, callback) {
   return () => off(r, 'value', handler)
 }
 
+// Найближчі вільні слоти (для тизера на лендингу) — одноразова вибірка
+// перших `limit` вільних слотів, починаючи з поточного моменту.
+export async function getUpcomingFreeSlots(limit = 6) {
+  const snap = await get(ref(db, 'timeslots'))
+  if (!snap.exists()) return []
+  const all = snap.val()
+  const now = new Date()
+  const todayYMD = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const nowMin = now.getHours() * 60 + now.getMinutes()
+
+  const result = []
+  for (const date of Object.keys(all).filter(d => d >= todayYMD).sort()) {
+    const slotsObj = all[date]
+    if (!slotsObj) continue
+    const times = Object.entries(slotsObj)
+      .filter(([key, s]) => /^slot\d{4}$/.test(key) && s && s.available !== false && !s.adminBlocked)
+      .map(([key]) => `${key.slice(4, 6)}:${key.slice(6, 8)}`)
+      .filter(time => {
+        if (date !== todayYMD) return true
+        const [h, m] = time.split(':').map(Number)
+        return h * 60 + m > nowMin
+      })
+      .sort()
+    for (const time of times) {
+      result.push({ date, time })
+      if (result.length >= limit) return result
+    }
+  }
+  return result
+}
+
 export function subscribeSlotsForDate(date, callback) {
   const r = ref(db, `timeslots/${date}`)
   const handler = onValue(r, snap => {

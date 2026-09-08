@@ -404,6 +404,55 @@
 .pricing-bubble-sub { font-size: 10.5px; color: var(--dim); margin-top: 8px; }
 .pricing-bubble-sub b { color: var(--text); font-weight: 700; }
 
+/* NEAREST SLOTS */
+.next-slot-card {
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  background: linear-gradient(165deg, rgba(34,197,94,0.16), rgba(0,0,0,0.5));
+  border: 1px solid rgba(34,197,94,0.4);
+  border-radius: 24px;
+  padding: 26px 20px 22px;
+  box-shadow: 0 8px 30px rgba(34,197,94,0.22), 0 6px 30px rgba(0,0,0,0.6);
+  margin-bottom: 14px;
+}
+.next-slot-lbl { font-size: 12px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+.next-slot-big { font-size: 30px; font-weight: 900; letter-spacing: -0.5px; margin: 8px 0 4px; color: #22c55e; }
+.next-slot-sub { font-size: 13px; color: var(--dim); margin-bottom: 18px; }
+.next-slot-cta {
+  display: inline-block;
+  padding: 12px 26px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(165deg, var(--acc-hi), var(--accent));
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(255,90,60,0.45);
+}
+
+.slot-chips-lbl { font-size: 11px; font-weight: 700; color: var(--faint); text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 8px 2px; }
+.slot-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.slot-chip {
+  flex-shrink: 0;
+  min-width: 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: rgba(0,0,0,0.52);
+  border: 1px solid rgba(34,197,94,0.35);
+  border-radius: 16px;
+  padding: 10px 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+  cursor: pointer;
+}
+.slot-chip.active { border-color: rgba(255,90,60,0.5); box-shadow: 0 6px 20px rgba(255,90,60,0.25); }
+.slot-chip-day { font-size: 10px; font-weight: 700; color: var(--dim); text-transform: uppercase; }
+.slot-chip-time { font-size: 16px; font-weight: 900; color: #22c55e; }
+.slot-chip.active .slot-chip-time { color: var(--acc-hi); }
+
 /* FLOW (як працює) */
 .flow-card {
   background: rgba(0,0,0,0.52);
