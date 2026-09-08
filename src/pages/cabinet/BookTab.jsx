@@ -823,6 +823,8 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
             <button className="btn-primary" style={{marginTop:10}} onClick={handleBook} disabled={submitting}>
               {submitting ? 'Записуємо...' : `✓ Записатись ${dateLabel} о ${timeLabel}${totalPrice ? ` · ${totalPrice}₴` : ''}`}
             </button>
+            {/* Запас скролу, щоб кнопку можна було прокрутити вище нижнього navbar */}
+            <div style={{height:32}} />
           </div>
         )
       })()}
