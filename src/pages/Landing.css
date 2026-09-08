@@ -1078,6 +1078,20 @@
   pointer-events: none;
 }
 
+.footer-install-btn {
+  display: block;
+  margin: 0 auto 18px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: var(--text);
+  cursor: pointer;
+  padding: 12px 28px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.footer-install-btn:active { background: rgba(255,255,255,0.09); }
+
 /* DESKTOP — лендинг використовує ширину екрана, розділи стають у ряд.
    Мобільний вигляд (нижче 1024px) лишається повністю незмінним. */
 @media (min-width: 1024px) {
