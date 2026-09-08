@@ -2,9 +2,19 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
 import { APP_VERSION } from '../version.js'
+import { getAdminServices } from '../firebase/db'
 import './Landing.css'
 
 const REVIEWS_URL = 'https://europe-west1-id4drive-booking-44182.cloudfunctions.net/getGoogleReviews'
+
+// Та сама палітра, що й у виборі кольору послуги в адмінці (colorId) —
+// бабл ціни на лендингу тонується в колір, обраний для послуги там.
+const SERVICE_COLORS = {
+  green: '#7ed957', yellow: '#f7c948', blue: '#5b9bff', purple: '#c084fc',
+  red: '#ff5a3c', teal: '#2dd4bf', pink: '#f472b6', orange: '#fb923c',
+  indigo: '#818cf8', lime: '#a3e635',
+}
+const colorOfService = (colorId) => SERVICE_COLORS[colorId] || SERVICE_COLORS.green
 
 const STATIC_REVIEWS = [
   { name: 'Пшик Вероніка', initials: 'ПВ', color: 'linear-gradient(165deg,#c084fc,#7c3aed)', date: '21 січня 2026', text: 'Дякую дуже Олександру за професіоналізм, холодний розум, спокій та супер класне навчання! Навчалась з нуля, здала практику з другого разу. Завдячую вам! ☺️' },
@@ -68,6 +78,7 @@ export default function Landing({ user, profile }) {
   const nav = useNavigate()
   const [reviews, setReviews] = useState([])
   const [termsOpen, setTermsOpen] = useState(false)
+  const [services, setServices] = useState([])
 
   useEffect(() => {
     fetch(REVIEWS_URL)
@@ -75,6 +86,16 @@ export default function Landing({ user, profile }) {
       .then(data => { if (Array.isArray(data) && data.length) setReviews(data.filter(r => r.author_name !== 'Ольга Войцещук').slice(0, 5)) })
       .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    getAdminServices().then(setServices).catch(() => {})
+  }, [])
+
+  // Ціна за годину для кожного напрямку — перша активна 1-годинна послуга цього типу.
+  const schoolService = services.find(s => s.type === 'school' && Number(s.duration) === 60)
+  const privateService = services.find(s => s.type === 'private' && Number(s.duration) === 60)
+  const schoolService2h = services.find(s => s.type === 'school' && Number(s.duration) === 120)
+  const privateService2h = services.find(s => s.type === 'private' && Number(s.duration) === 120)
 
   const goAuth = () => nav(user && profile ? '/cabinet' : '/auth')
   const goRegister = () => nav(user && profile ? '/cabinet' : '/auth')
@@ -165,6 +186,32 @@ export default function Landing({ user, profile }) {
             </div>
           </div>
         </section>
+
+        {/* PRICING */}
+        {(schoolService || privateService) && (
+          <section className="lsection">
+            <div className="lsection-title">Ціни</div>
+            <h2>Скільки коштує урок</h2>
+            <div className="pricing-bubbles">
+              {schoolService && (
+                <div className="pricing-bubble" style={{ '--c': colorOfService(schoolService.colorId) }}>
+                  <div className="pricing-bubble-icon">🎓</div>
+                  <div className="pricing-bubble-lbl">Автошкола</div>
+                  <div className="pricing-bubble-num">{schoolService.price}<span>₴/год</span></div>
+                  {schoolService2h && <div className="pricing-bubble-sub">2 год — <b>{schoolService2h.price}₴</b></div>}
+                </div>
+              )}
+              {privateService && (
+                <div className="pricing-bubble" style={{ '--c': colorOfService(privateService.colorId) }}>
+                  <div className="pricing-bubble-icon">🚙</div>
+                  <div className="pricing-bubble-lbl">Приватні</div>
+                  <div className="pricing-bubble-num">{privateService.price}<span>₴/год</span></div>
+                  {privateService2h && <div className="pricing-bubble-sub">2 год — <b>{privateService2h.price}₴</b></div>}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* FEATURES */}
         <section className="lsection">
