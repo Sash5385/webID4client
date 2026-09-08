@@ -130,7 +130,6 @@ export default function Landing({ user, profile }) {
         {/* SERVICES */}
         <section className="lsection">
           <div className="lsection-title">Послуги</div>
-          <h2>Обери свій формат</h2>
           <div className="services">
             <div className="service-card" onClick={goRegister}>
               <div className="service-icon ico-school">🎓</div>
@@ -151,70 +150,9 @@ export default function Landing({ user, profile }) {
           </div>
         </section>
 
-        {/* FLOW */}
-        <section className="lsection">
-          <div className="lsection-title">Як це працює</div>
-          <h2>Один вибір — твій шлях</h2>
-          <div className="flow-card">
-
-            <div className="flow-step">
-              <div className="flow-num">1</div>
-              <div className="flow-body">
-                <div className="flow-title">Реєстрація по SMS або Email</div>
-                <div className="flow-desc">Один раз вводиш номер телефону або email</div>
-              </div>
-            </div>
-
-            <div className="flow-step">
-              <div className="flow-num">2</div>
-              <div className="flow-body">
-                <div className="flow-title">Анкета — обери тип</div>
-                <div className="flow-desc">В анкеті один раз вибираєш формат. Змінити не можна.</div>
-                <div className="flow-choice">
-                  <div className="choice-tile active">
-                    <div className="ico">🎓</div>
-                    Автошкола
-                  </div>
-                  <div className="choice-tile">
-                    <div className="ico">🚙</div>
-                    Приватний
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flow-step">
-              <div className="flow-num">3</div>
-              <div className="flow-body">
-                <div className="flow-title">Автошкола: 40 уроків</div>
-                <div className="flow-desc">Проходиш повний курс з документами</div>
-                <div className="flow-progress">
-                  <div className="flow-progress-bar"></div>
-                </div>
-                <div className="flow-progress-label">
-                  <span>26 / 40 годин</span>
-                  <span style={{color:'var(--green)'}}>65%</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flow-arrow">↓</div>
-
-            <div className="flow-step">
-              <div className="flow-num">4</div>
-              <div className="flow-body">
-                <div className="flow-title">Авто-перехід на приватні</div>
-                <div className="flow-desc">Після 40 уроків автошколи відкриваються приватні уроки — для шліфування навичок</div>
-              </div>
-            </div>
-
-          </div>
-        </section>
-
         {/* FEATURES */}
         <section className="lsection">
           <div className="lsection-title">Переваги</div>
-          <h2>Чому обирають мене</h2>
           <div className="features">
             <div className="feature-card">
               <div className="feature-icon fi-1">📱</div>
