@@ -161,23 +161,27 @@ export default function Landing({ user, profile }) {
 
         {/* HERO */}
         <section className="hero">
-          <div className="photo-collage">
-            <PhotoCollageSlot order={HERO_PHOTO_ORDER_A} phase={0}  className="hp-slot-a" />
-            <PhotoCollageSlot order={HERO_PHOTO_ORDER_B} phase={-4} className="hp-slot-b" />
-            <PhotoCollageSlot order={HERO_PHOTO_ORDER_C} phase={-8} className="hp-slot-c" />
-          </div>
-          <h1>Уроки водіння</h1>
-          <p>Онлайн-запис на уроки водіння в Києві.<br/>Автошкола та приватні уроки.</p>
-          <button className="hero-cta" onClick={goAuth}>📅 Записатись на урок</button>
-
-          <div className="hero-stats">
-            <div className="stat-card">
-              <div className="stat-num">20+</div>
-              <div className="stat-lbl">років досвіду</div>
+          <div className="hero-media">
+            <div className="photo-collage">
+              <PhotoCollageSlot order={HERO_PHOTO_ORDER_A} phase={0}  className="hp-slot-a" />
+              <PhotoCollageSlot order={HERO_PHOTO_ORDER_B} phase={-4} className="hp-slot-b" />
+              <PhotoCollageSlot order={HERO_PHOTO_ORDER_C} phase={-8} className="hp-slot-c" />
             </div>
-            <div className="stat-card">
-              <div className="stat-num">2000+</div>
-              <div className="stat-lbl">учнів</div>
+          </div>
+          <div className="hero-body">
+            <h1>Уроки водіння</h1>
+            <p>Онлайн-запис на уроки водіння в Києві.<br/>Автошкола та приватні уроки.</p>
+            <button className="hero-cta" onClick={goAuth}>📅 Записатись на урок</button>
+
+            <div className="hero-stats">
+              <div className="stat-card">
+                <div className="stat-num">20+</div>
+                <div className="stat-lbl">років досвіду</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-num">2000+</div>
+                <div className="stat-lbl">учнів</div>
+              </div>
             </div>
           </div>
         </section>

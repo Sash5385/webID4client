@@ -1085,7 +1085,6 @@
     padding: 0 40px;
   }
 
-  .hero,
   .lsection-title,
   .lsection h2,
   .flow-card,
@@ -1099,6 +1098,18 @@
     margin-left: auto;
     margin-right: auto;
   }
+
+  .hero {
+    display: flex;
+    align-items: center;
+    gap: 56px;
+    text-align: left;
+    padding: 48px 0 40px;
+  }
+  .hero-media { flex: 0 0 340px; }
+  .hero-body { flex: 1; min-width: 0; }
+  .hero .photo-collage { width: 100%; margin: 0; }
+  .hero-stats { justify-content: flex-start; }
 
   .services {
     flex-direction: row;
