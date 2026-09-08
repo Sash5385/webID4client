@@ -79,6 +79,21 @@ export default function Landing({ user, profile }) {
   const goAuth = () => nav(user && profile ? '/cabinet' : '/auth')
   const goRegister = () => nav(user && profile ? '/cabinet' : '/auth')
 
+  // Примусове оновлення — скидає service worker і кеш перед перезавантаженням,
+  // щоб гарантовано підтягнути нову версію (тап на лого в топбарі лендингу).
+  const forceUpdate = async () => {
+    try {
+      const regs = await navigator.serviceWorker?.getRegistrations?.() || []
+      await Promise.all(regs.map(r => r.unregister()))
+      if (window.caches) {
+        const keys = await caches.keys()
+        await Promise.all(keys.map(k => caches.delete(k)))
+      }
+    } finally {
+      window.location.reload()
+    }
+  }
+
   return (
     <div className="landing-page">
 
@@ -93,7 +108,7 @@ export default function Landing({ user, profile }) {
           >
             АВТОШКОЛА
           </a>
-          <div className="logo">
+          <div className="logo" onClick={forceUpdate} style={{cursor:'pointer'}}>
             <div className="logo-icon"><img src="/icon-192.png" alt="ID4Drive"/></div>
             ID4Drive
           </div>
