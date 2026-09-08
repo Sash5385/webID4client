@@ -448,6 +448,7 @@
 }
 .slot-chip.active { border-color: rgba(255,90,60,0.5); box-shadow: 0 6px 20px rgba(255,90,60,0.25); }
 .slot-chip-day { font-size: 10px; font-weight: 700; color: var(--dim); text-transform: uppercase; }
+.slot-chip-date { font-size: 9px; font-weight: 600; color: var(--faint); }
 .slot-chip-time { font-size: 16px; font-weight: 900; color: #22c55e; }
 .slot-chip.active .slot-chip-time { color: var(--acc-hi); }
 
