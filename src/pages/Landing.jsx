@@ -109,7 +109,7 @@ export default function Landing({ user, profile }) {
   }, [])
 
   useEffect(() => {
-    getUpcomingFreeSlots(6).then(setUpcomingSlots).catch(() => {})
+    getUpcomingFreeSlots(12).then(setUpcomingSlots).catch(() => {})
   }, [])
 
   // Ціна за годину для кожного напрямку — перша активна 1-годинна послуга цього типу.
