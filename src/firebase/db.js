@@ -3,11 +3,25 @@
 } from 'firebase/database'
 import { db } from './config'
 
+// в”Ђв”Ђв”Ђ ACCESS CONTROL в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+// Заблокований адміном учень не бачить явного повідомлення про блок —
+// замість цього розклад виглядає повністю зайнятим, а приєднання до черги
+// мовчки нічого не записує. Прапорець виставляється в getUserProfile()
+// (викликається завжди тільки для поточного залогіненого користувача).
+let _blocked = false
+function maskSlotsIfBlocked(slotsObj) {
+  if (!_blocked || !slotsObj) return slotsObj
+  const out = {}
+  Object.entries(slotsObj).forEach(([k, s]) => { out[k] = { ...s, available: false } })
+  return out
+}
+
 // в”Ђв”Ђв”Ђ USERS в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 export async function getUserProfile(uid) {
   const snap = await get(ref(db, `users/${uid}`))
-  if (!snap.exists()) return null
+  if (!snap.exists()) { _blocked = false; return null }
   const data = snap.val()
+  _blocked = !!data.blocked
   return { ...(data.profile || {}), isVip: data.isVip || false, discount: data.discount || 0, hoursOffset: data.hoursOffset || 0,
     maneuverCounts: data.maneuverCounts || {}, maneuverSuccessCounts: data.maneuverSuccessCounts || {}, badges: data.badges || {} }
 }
@@ -35,7 +49,7 @@ export async function markFirstLoginIfNew(uid) {
 export async function getSlotsForDate(date) {
   // date Сѓ С„РѕСЂРјР°С‚С– YYYY-MM-DD
   const snap = await get(ref(db, `timeslots/${date}`))
-  return snap.exists() ? snap.val() : {}
+  return maskSlotsIfBlocked(snap.exists() ? snap.val() : {})
 }
 
 function classifyDay(slotsObj) {
@@ -64,7 +78,7 @@ export function subscribeMonthAvailability(year, month, callback) {
     const all = snap.val() || {}
     const result = {}
     Object.entries(all).forEach(([date, slotsObj]) => {
-      if (date.startsWith(prefix)) result[date] = classifyDay(slotsObj)
+      if (date.startsWith(prefix)) result[date] = classifyDay(maskSlotsIfBlocked(slotsObj))
     })
     callback(result)
   })
@@ -105,7 +119,7 @@ export async function getUpcomingFreeSlots(limit = 6) {
 export function subscribeSlotsForDate(date, callback) {
   const r = ref(db, `timeslots/${date}`)
   const handler = onValue(r, snap => {
-    callback(snap.exists() ? snap.val() : {})
+    callback(maskSlotsIfBlocked(snap.exists() ? snap.val() : {}))
   })
   return () => off(r, 'value', handler)
 }
@@ -155,6 +169,7 @@ export function subscribeMyBookings(uid, phone, callback) {
 }
 
 export async function createBooking(uid, booking) {
+  if (_blocked) throw new Error('Не вдалося виконати запис, спробуйте пізніше')
   const r = push(ref(db, `bookings/${uid}`))
   const clean = Object.fromEntries(Object.entries(booking).filter(([,v]) => v !== undefined))
   await set(r, {
@@ -209,6 +224,7 @@ export async function cancelBooking(uid, bookingId, { isReschedule = false } = {
 
 // в”Ђв”Ђв”Ђ QUEUE (Р»РёСЃС‚ РѕС‡С–РєСѓРІР°РЅРЅСЏ) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 export async function joinQueue(uid, date, time, studentType, durationHours = 1, name = '', phone = '') {
+  if (_blocked) throw new Error('Не вдалося приєднатись до черги, спробуйте пізніше')
   const slotKey = `${date}_${time}`
   await set(ref(db, `queue/${slotKey}/entries/${uid}`), {
     uid,
@@ -271,6 +287,7 @@ export function getCompletedHours(bookings) {
 // Атомарно займає початковий слот через транзакцію.
 // Повертає true якщо вдалось зайняти, false якщо слот уже зайнятий іншим.
 export async function claimSlot(date, startTime) {
+  if (_blocked) return false
   const slotId = `slot${startTime.replace(':', '')}`
   const slotRef = ref(db, `timeslots/${date}/${slotId}`)
   const result = await runTransaction(slotRef, current => {
