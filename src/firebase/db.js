@@ -357,7 +357,11 @@ export async function claimQueueOffer(uid, slotKey, offer, profile) {
   const entrySnap = await get(ref(db, `queue/${slotKey}/entries/${uid}`))
   const entry = entrySnap.val()
   if (!entry) throw new Error('Queue entry not found')
-  const durationHours = entry.durationHours || 1
+  // Якщо запрошення прийшло від скасування конкретного уроку, offer.durationHours
+  // несе його реальну тривалість — саме на неї треба бронювати, а не на власний
+  // вибір учня при вступі в чергу (інакше 2-годинний урок звільниться, а
+  // забронюється лише 1 год).
+  const durationHours = offer.durationHours || entry.durationHours || 1
   await createBooking(uid, {
     date: offer.date,
     time: offer.time,
