@@ -76,6 +76,12 @@ jobs:
           java-version: '21'
 
       - uses: android-actions/setup-android@v4
+        with:
+          # Google прибрав легасі-пакет SDK "tools" (заміна — cmdline-tools) з
+          # репозиторію пакетів, тож дефолтне встановлення "tools platform-tools"
+          # завжди падає з "Failed to find package 'tools'". Потрібні platforms/
+          # build-tools і так ставить наступний крок нижче.
+          packages: ''
 
       - name: Install Android SDK platform & build-tools
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
