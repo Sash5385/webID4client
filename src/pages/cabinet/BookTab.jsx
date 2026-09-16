@@ -449,7 +449,9 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     // Sticky slots: show only free slots adjacent to existing bookings on this day.
     // Тривалість слота тепер своя в кожного (durMin), тому перевіряємо
     // сусідство індивідуально для кожного слота, а не через єдиний зсув наперед.
-    const stickyEnabled = adminSettings.stickyTimeEnabled !== false
+    // Функцію "прилипання вільного часу" вимкнено повністю на прохання —
+    // вільні слоти більше не ховаються через відсутність сусіднього запису.
+    const stickyEnabled = false
     const stickyMode = adminSettings.stickyTime || 'both'
     // Сусідство для sticky перевірялось лише по bookingsData.upcoming — а це
     // ЛИШЕ власні записи поточного учня (useBookings(uid) читає bookings/{uid}).
