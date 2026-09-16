@@ -22,7 +22,11 @@ export async function getUserProfile(uid) {
   if (!snap.exists()) { _blocked = false; return null }
   const data = snap.val()
   _blocked = !!data.blocked
-  return { ...(data.profile || {}), isVip: data.isVip || false, discount: data.discount || 0, hoursOffset: data.hoursOffset || 0,
+  // Вузол users/{uid} може існувати лише через markFirstLoginIfNew (firstLoginAt),
+  // без завершеної анкети — це НЕ реєстрація, інакше повторний вхід (особливо
+  // Google в один клік) пропускає анкету з іменем/телефоном.
+  if (!data.profile) return null
+  return { ...data.profile, isVip: data.isVip || false, discount: data.discount || 0, hoursOffset: data.hoursOffset || 0,
     maneuverCounts: data.maneuverCounts || {}, maneuverSuccessCounts: data.maneuverSuccessCounts || {}, badges: data.badges || {} }
 }
 
