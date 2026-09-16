@@ -551,7 +551,9 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           isPartOfMyBooking,
           vipBlocked,
           totalSurcharge,
-          totalPrice: slotPrice(baseService, dateStr, durHoursForSlot, totalSurcharge),
+          // Фіксована ціна слота повністю замінює тарифну — інакше кнопка й далі
+          // показує стару розрахункову ціну, хоча підсумок нижче вже фіксований.
+          totalPrice: slot.fixedPrice != null ? slot.fixedPrice : slotPrice(baseService, dateStr, durHoursForSlot, totalSurcharge),
         }
       })
       .filter(slot => !slot.lunchBlocked && !slot.overlapBlocked && !(slot.cutoffBlocked && slot.available !== false))
