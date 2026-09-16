@@ -59,7 +59,9 @@ function classifyDay(slotsObj) {
   // Раніше :30 ігнорувались повністю — і день із вільними :30-слотами
   // не підсвічувався ні зеленим, ні оранжевим.
   const slots = Object.entries(slotsObj).filter(([key, s]) => {
-    if (!s || s.adminBlocked) return false
+    // personal — час зайнятий особистою подією адміна, а не уроком; такий
+    // слот не має рахуватись і "підсвічувати" день учню як зайнятий.
+    if (!s || s.adminBlocked || s.personal) return false
     return /^slot\d{4}$/.test(key)
   })
   if (slots.length === 0) return null
