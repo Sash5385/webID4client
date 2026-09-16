@@ -807,10 +807,11 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
               </div>
             )}
             {fixedPrice != null ? (
-              <div style={{
+              <div className="fixed-price-banner" style={{
                 marginTop:12, padding:'12px 14px', borderRadius:12,
-                background:'rgba(74,222,128,0.08)', border:'1px solid rgba(74,222,128,0.35)',
+                background:'rgba(74,222,128,0.08)', border:'1.5px solid rgba(74,222,128,0.35)',
                 fontSize:13, color:'#4ade80', fontWeight:700, textAlign:'center',
+                position:'relative', overflow:'hidden',
               }}>
                 💰 Фіксована ціна: <strong>{totalPrice}₴</strong>
               </div>
