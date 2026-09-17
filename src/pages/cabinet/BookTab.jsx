@@ -711,7 +711,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                       >
                         <div className="slot-time">{slot.time}</div>
                         {isExactlyMine ? (
-                          <div style={{fontSize:8, color:'#4ade80', fontWeight:700}}>ваш</div>
+                          <div style={{fontSize:8, color:'#4ade80', fontWeight:700}}>Заброньовано Вами</div>
                         ) : isPartOfMyBooking ? null
                         : isMyReserved ? (
                           <div style={{fontSize:8, color:'white', fontWeight:700}}>ваш!</div>
