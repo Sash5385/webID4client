@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { sendSmsCode, verifySmsCode, resetRecaptcha, getSmsErrorMessage, renderRecaptcha, isIOSDevice, isInAppBrowser } from '../firebase/auth'
+import { sendSmsCode, verifySmsCode, resetRecaptcha, getSmsErrorMessage, renderRecaptcha, isIOSDevice, isInAppBrowser, signOut } from '../firebase/auth'
 import { signInWithEmail, signUpWithEmail, sendPasswordReset, signInWithGoogle } from '../firebase/auth-email'
 import { saveUserProfile, getUserProfile } from '../firebase/db'
 import { useTheme } from '../hooks/useTheme'
@@ -255,6 +255,16 @@ export default function Auth({ user, profile, onProfileSaved }) {
     }
   }
 
+  // ─── SURVEY: назад ───────────────────────────────────
+  // Анкета показується вже ПІСЛЯ входу (Google/Email/SMS) — без виходу з
+  // акаунту кнопка "назад" нікуди не веде, бо App.jsx одразу знову покаже
+  // цей самий крок survey, поки є user без profile. Виходимо з акаунту,
+  // щоб людина могла обрати інший спосіб входу чи інший Google-акаунт.
+  const handleBackFromSurvey = async () => {
+    try { await signOut() } catch (e) { console.error(e) }
+    setStep('phone')
+  }
+
   // ─── GOOGLE ──────────────────────────────────────────
   const handleGoogleSignIn = async () => {
     setGoogleError('')
@@ -361,11 +371,13 @@ export default function Auth({ user, profile, onProfileSaved }) {
             ? <button className="back-btn" onClick={()=>{setStep('phone');resetRecaptcha()}}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
               </button>
-            : step !== 'survey'
-              ? <button className="back-btn" onClick={() => nav(-1)}>
+            : step === 'survey'
+              ? <button className="back-btn" onClick={handleBackFromSurvey}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
                 </button>
-              : <div style={{width:36}}/>
+              : <button className="back-btn" onClick={() => nav(-1)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
           }
           {step !== 'survey' && (
             <button className="back-btn" onClick={() => nav(1)}>
