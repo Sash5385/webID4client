@@ -47,6 +47,7 @@ export default function App() {
       const title = payload.data?.title || 'ID4Drive'
       const body = payload.data?.body || ''
       const url = payload.data?.url || '/'
+      new Audio('/notification-sound.wav').play().catch(() => {})
       if (Notification.permission !== 'granted') return
       if ('serviceWorker' in navigator) {
         getFirebaseSwReg().then(reg => {
