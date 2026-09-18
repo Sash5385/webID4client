@@ -5,7 +5,7 @@ import { Capacitor } from '@capacitor/core'
 import { App as CapacitorApp } from '@capacitor/app'
 import { auth } from './firebase/config'
 import { getUserProfile, createBooking, markSlotsUnavailable, claimSlot, markFirstLoginIfNew } from './firebase/db'
-import { requestNotificationPermission, onForegroundMessage, getFirebaseSwReg } from './firebase/push'
+import { requestNotificationPermission, onForegroundMessage, getFirebaseSwReg, requestNativeNotificationPermission, onNativePushReceived, onNativeNotificationTap } from './firebase/push'
 import { useAppUpdate } from './hooks/useAppUpdate'
 import { useToast } from './hooks/useToast'
 import { consumeBackHandler } from './hooks/useBackButton'
@@ -30,7 +30,11 @@ export default function App() {
       if (u) {
         const p = await getUserProfile(u.uid)
         setProfile(p)
-        requestNotificationPermission(u.uid).catch(() => {})
+        if (Capacitor.isNativePlatform()) {
+          requestNativeNotificationPermission(u.uid).catch(() => {})
+        } else {
+          requestNotificationPermission(u.uid).catch(() => {})
+        }
         markFirstLoginIfNew(u.uid).catch(() => {})
       } else {
         setProfile(null)
@@ -41,7 +45,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    if (!user) return
+    if (!user || Capacitor.isNativePlatform()) return
     return onForegroundMessage((payload) => {
       // Data-only push — див. firebase-messaging-sw.js чому без "notification"
       const title = payload.data?.title || 'ID4Drive'
@@ -68,6 +72,23 @@ export default function App() {
       }
     })
   }, [user])
+
+  // Нативний push (Android/iOS): фонові/закриті сповіщення система показує сама
+  // (звук з каналу booking_alerts_v1), тут лише звук поки застосунок відкритий + перехід по тапу.
+  useEffect(() => {
+    if (!user || !Capacitor.isNativePlatform()) return
+    return onNativePushReceived(() => {
+      new Audio('/notification-sound.wav').play().catch(() => {})
+    })
+  }, [user])
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+    return onNativeNotificationTap((data) => {
+      const url = data?.url || '/cabinet'
+      navigate(url.startsWith('http') ? url.replace(/^https?:\/\/[^/]+/, '') : url)
+    })
+  }, [navigate])
 
   // Апаратна кнопка "назад" (Android): спершу закриває відкриту модалку/шторку,
   // потім робить крок назад по історії застосунку, і лише як останній варіант
