@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { subscribeNotifications, clearNotification, clearAllNotifications } from '../../firebase/db'
-import { sendTestPush } from '../../firebase/push'
 import './NotifTab.css'
 
 const TYPE_META = {
@@ -14,17 +13,6 @@ const TYPE_META = {
 
 export default function NotifTab({ user, onSeen }) {
   const [notifications, setNotifications] = useState([])
-  const [testPushMsg, setTestPushMsg] = useState('')
-
-  const handleTestPush = async () => {
-    setTestPushMsg('Надсилаю…')
-    try {
-      const res = await sendTestPush()
-      setTestPushMsg(res.ok ? '✅ Пуш надіслано' : '⚠️ Токен не знайдено — онови сторінку й дозволь сповіщення')
-    } catch (e) {
-      setTestPushMsg('❌ ' + (e.message || 'помилка'))
-    }
-  }
 
   useEffect(() => {
     if (!user?.uid) return
@@ -39,23 +27,6 @@ export default function NotifTab({ user, onSeen }) {
 
   return (
     <div className="notif-tab fade-up">
-      <div style={{ padding: '10px 14px 0' }}>
-        <button
-          onClick={handleTestPush}
-          style={{
-            width: '100%', borderRadius: 12, padding: '10px 16px', fontWeight: 700,
-            fontSize: 14, border: '1px solid var(--border)', background: 'var(--surf-lo)',
-            color: 'var(--text)', cursor: 'pointer',
-          }}
-        >
-          🧪 Тест пуш
-        </button>
-        {testPushMsg && (
-          <div style={{ textAlign: 'center', padding: '8px 0 0', fontSize: 12, fontWeight: 600, color: 'var(--dim)' }}>
-            {testPushMsg}
-          </div>
-        )}
-      </div>
       {notifications.length === 0 && (
         <div className="notif-empty">
           <div className="notif-empty-icon">🔔</div>

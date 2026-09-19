@@ -2,7 +2,6 @@ import { getMessaging, getToken, onMessage } from 'firebase/messaging'
 import { app } from './config'
 import { ref, set } from 'firebase/database'
 import { db } from './config'
-import { getFunctions, httpsCallable } from 'firebase/functions'
 
 // ⚠️ ЗГЕНЕРУЙ VAPID KEY В Firebase Console:
 // Project Settings → Cloud Messaging → Web Push certificates → Generate key pair
@@ -73,12 +72,4 @@ export function onForegroundMessage(callback) {
   const msg = initMessaging()
   if (!msg) return () => {}
   return onMessage(msg, callback)
-}
-
-// Тестовий пуш (кнопка в Профілі) — перевірити канал доставки push окремо
-// від бізнес-логіки (без реального запису/переносу).
-export async function sendTestPush() {
-  const call = httpsCallable(getFunctions(app, 'europe-west1'), 'testPush')
-  const res = await call()
-  return res.data
 }
