@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { ref, onValue } from "firebase/database";
 import { db } from "../../firebase/config";
+import { isBookingPast } from "../../firebase/db";
 import "./ProgressTab.css";
 
 const MANEUVER_LABELS = {
@@ -27,7 +28,7 @@ export default function ProgressTab({ user, profile, bookingsData }) {
   const percent = (current / target) * 100;
 
   const completed = useMemo(
-    () => bookings.filter(b => b.status === "confirmed" && new Date(b.date) < new Date()),
+    () => bookings.filter(b => b.status === "confirmed" && isBookingPast(b)),
     [bookings]
   );
 

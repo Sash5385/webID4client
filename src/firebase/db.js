@@ -277,15 +277,27 @@ export function subscribeQueueForSlot(date, time, callback) {
 }
 
 // в”Ђв”Ђв”Ђ HELPERS в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+// Урок вважається таким, що відбувся, лише після його фактичного закінчення
+// (дата+час старту+тривалість), а не одразу з початку дня — інакше урок,
+// запланований на сьогодні пізніше, зараховувався б у "завершені" години
+// відразу після півночі.
+export function isBookingPast(b) {
+  const [y, m, d] = b.date.split('-').map(Number)
+  const [hh, mm] = (b.time || '00:00').split(':').map(Number)
+  const durationHours = b.durationHours || (b.durMin ? b.durMin / 60 : 1)
+  const endMs = new Date(y, m - 1, d, hh, mm).getTime() + durationHours * 3600000
+  return endMs < Date.now()
+}
+
 export function getConfirmedSchoolHours(bookings) {
   return bookings
-    .filter(b => b.serviceType === 'school' && (b.status === 'confirmed' || b.status === 'completed') && new Date(b.date) < new Date())
+    .filter(b => b.serviceType === 'school' && (b.status === 'confirmed' || b.status === 'completed') && isBookingPast(b))
     .reduce((sum, b) => sum + (b.durationHours || (b.durMin ? b.durMin / 60 : 1)), 0)
 }
 
 export function getCompletedHours(bookings) {
   return bookings
-    .filter(b => b.status === 'confirmed' && new Date(b.date) < new Date())
+    .filter(b => b.status === 'confirmed' && isBookingPast(b))
     .reduce((sum, b) => sum + (b.durationHours || (b.durMin ? b.durMin / 60 : 1)), 0)
 }
 

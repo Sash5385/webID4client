@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useToast } from '../../hooks/useToast'
 import { useBackClose } from '../../hooks/useBackButton'
-import { cancelBooking, createBooking, markSlotsUnavailable, claimSlot, subscribeSlotsForDate, getAdminSettings, getAdminServices, subscribeMonthAvailability } from '../../firebase/db'
+import { cancelBooking, createBooking, markSlotsUnavailable, claimSlot, unclaimSlot, subscribeSlotsForDate, getAdminSettings, getAdminServices, subscribeMonthAvailability } from '../../firebase/db'
 import { parseYMD, getMonthShort, getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay, formatDateLabel } from '../../utils/date'
 import { googleCalendarLink, downloadICS } from '../../utils/calendar'
 import './BookingsTab.css'
@@ -157,23 +157,30 @@ function RescheduleModal({ booking, user, profile, onClose, onDone }) {
         setSaving(false)
         return
       }
-      // 2. Скасовуємо старий запис (відновлює старі слоти)
+      // 2. Спочатку створюємо новий запис і лише ПОТІМ скасовуємо старий —
+      // якщо створення не вдасться (обрив мережі тощо), учень не лишиться
+      // без обох записів, а щойно зайнятий слот звільняємо назад.
+      try {
+        await createBooking(user.uid, {
+          date: newDate,
+          time: selectedTime,
+          serviceType: booking.serviceType,
+          serviceId: booking.serviceId,
+          serviceName: booking.serviceName,
+          price: newPrice,
+          surcharge: newSurcharge || undefined,
+          discountAmt: booking.discountAmt || undefined,
+          durationHours,
+          studentName: booking.studentName,
+          phone: booking.phone,
+          rescheduledFrom: `${booking.date} ${booking.time}`,
+        })
+      } catch (createErr) {
+        await unclaimSlot(newDate, selectedTime).catch(() => {})
+        throw createErr
+      }
+      // 3. Скасовуємо старий запис (відновлює старі слоти)
       await cancelBooking(user.uid, booking.id, { isReschedule: true })
-      // 3. Створюємо новий
-      await createBooking(user.uid, {
-        date: newDate,
-        time: selectedTime,
-        serviceType: booking.serviceType,
-        serviceId: booking.serviceId,
-        serviceName: booking.serviceName,
-        price: newPrice,
-        surcharge: newSurcharge || undefined,
-        discountAmt: booking.discountAmt || undefined,
-        durationHours,
-        studentName: booking.studentName,
-        phone: booking.phone,
-        rescheduledFrom: `${booking.date} ${booking.time}`,
-      })
       // 4. Закриваємо слоти (фантомні 30-хв + повна тривалість)
       await markSlotsUnavailable(newDate, selectedTime, durationHours, adminSettings.interval || 30)
       onDone()

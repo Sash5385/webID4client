@@ -332,6 +332,8 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       const totalPrice = fixedPrice != null ? fixedPrice : applyDiscount(slotPrice(baseService, dateStr, durationHours, surcharge), durationHours)
       const isOfferedToMe = !!currentSlot?.offeredTo?.[user?.uid]
       // Атомарно займаємо слот(и) (крім випадку, коли його зарезервовано саме для мене)
+      let claimedStart = false
+      let claimedSecond = false
       if (!isOfferedToMe) {
         const claimed = await claimSlot(dateStr, startTime)
         if (!claimed) {
@@ -339,6 +341,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           setSubmitting(false)
           return
         }
+        claimedStart = true
         if (secondTime) {
           const claimed2 = await claimSlot(dateStr, secondTime)
           if (!claimed2) {
@@ -347,23 +350,32 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
             setSubmitting(false)
             return
           }
+          claimedSecond = true
         }
       }
       const bookedService = { ...baseService, name: `${stripDurationSuffix(baseService.name)} ${formatDur(durationHours * 60)}`.trim() }
-      await createBooking(user.uid, {
-        date: dateStr,
-        time: startTime,
-        serviceType: baseService.type,
-        serviceId: baseService.id,
-        serviceName: bookedService.name,
-        price: totalPrice || undefined,
-        manualPrice: fixedPrice != null ? fixedPrice : undefined,
-        surcharge: fixedPrice != null ? undefined : (surcharge || undefined),
-        discountAmt: fixedPrice != null ? undefined : (discountAmt || undefined),
-        durationHours,
-        studentName: profile.name,
-        phone: profile.phone || user.phoneNumber,
-      })
+      // Якщо запис не вдалося створити (обрив мережі тощо), звільняємо щойно
+      // зайняті слоти — інакше вони назавжди лишаться заблокованими без броні.
+      try {
+        await createBooking(user.uid, {
+          date: dateStr,
+          time: startTime,
+          serviceType: baseService.type,
+          serviceId: baseService.id,
+          serviceName: bookedService.name,
+          price: totalPrice || undefined,
+          manualPrice: fixedPrice != null ? fixedPrice : undefined,
+          surcharge: fixedPrice != null ? undefined : (surcharge || undefined),
+          discountAmt: fixedPrice != null ? undefined : (discountAmt || undefined),
+          durationHours,
+          studentName: profile.name,
+          phone: profile.phone || user.phoneNumber,
+        })
+      } catch (createErr) {
+        if (claimedStart) await unclaimSlot(dateStr, startTime).catch(() => {})
+        if (claimedSecond) await unclaimSlot(dateStr, secondTime).catch(() => {})
+        throw createErr
+      }
       await markSlotsUnavailable(dateStr, startTime, durationHours, adminSettings.interval || 30)
       if (isOfferedToMe) {
         await claimReservedSlot(dateStr, startTime, user.uid)

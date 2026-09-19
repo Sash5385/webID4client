@@ -4,7 +4,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { Capacitor } from '@capacitor/core'
 import { App as CapacitorApp } from '@capacitor/app'
 import { auth } from './firebase/config'
-import { getUserProfile, createBooking, markSlotsUnavailable, claimSlot, markFirstLoginIfNew } from './firebase/db'
+import { getUserProfile, createBooking, markSlotsUnavailable, claimSlot, unclaimSlot, markFirstLoginIfNew } from './firebase/db'
 import { requestNotificationPermission, onForegroundMessage, getFirebaseSwReg } from './firebase/push'
 import { useAppUpdate } from './hooks/useAppUpdate'
 import { useToast } from './hooks/useToast'
@@ -97,15 +97,20 @@ export default function App() {
         if (!claimed) {
           showToast('На жаль, цей слот вже зайняли поки ви авторизувались. Оберіть інший час.')
         } else {
-          await createBooking(auth.currentUser.uid, {
-            date: pb.date,
-            time: pb.time,
-            serviceType: p.studentType || pb.serviceType,
-            serviceName: (p.studentType || pb.serviceType) === 'school' ? 'Автошкола' : 'Приватний',
-            durationHours: pb.duration,
-            studentName: p.name,
-            phone: p.phone || auth.currentUser.phoneNumber,
-          })
+          try {
+            await createBooking(auth.currentUser.uid, {
+              date: pb.date,
+              time: pb.time,
+              serviceType: p.studentType || pb.serviceType,
+              serviceName: (p.studentType || pb.serviceType) === 'school' ? 'Автошкола' : 'Приватний',
+              durationHours: pb.duration,
+              studentName: p.name,
+              phone: p.phone || auth.currentUser.phoneNumber,
+            })
+          } catch (createErr) {
+            await unclaimSlot(pb.date, pb.time).catch(() => {})
+            throw createErr
+          }
           await markSlotsUnavailable(pb.date, pb.time, pb.duration, 30)
         }
       } catch (e) {
