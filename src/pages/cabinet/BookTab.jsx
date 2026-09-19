@@ -536,7 +536,10 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           // свою тривалість, адмін гарантував що там немає перетинів при
           // створенні: перевірку "чи вільна наступна година" пропускаємо,
           // бо поглинуті документи проміжних годин видалені навмисно.
-          lunchBlocked:   isBlockedByLunch(slot.time, durHoursForSlot),
+          // lunchOverride — адмін вручну відкрив саме цей слот під час обіду
+          // (webid4: довгий тап → "Вільний слот"); такий слот не ховаємо,
+          // навіть якщо його час формально потрапляє у вікно обіду.
+          lunchBlocked:   !slot.lunchOverride && isBlockedByLunch(slot.time, durHoursForSlot),
           overlapBlocked: slot.available !== false && (isCustomDur ? false : wouldOverlapTaken(slot.time, durHoursForSlot)),
           cutoffBlocked:  (() => {
             const hrs = adminSettings.bookCutoffHours || 0
