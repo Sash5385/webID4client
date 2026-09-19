@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useTheme } from "../../hooks/useTheme";
 import { useToast } from "../../hooks/useToast";
 import { getInitials, formatPhone } from "../../utils/format";
+import { sendTestPush } from "../../firebase/push";
 import "./ProfileTab.css";
 
 const STUDENT_TYPE_LABELS = {
@@ -19,6 +21,17 @@ const EXPERIENCE_LABELS = {
 export default function ProfileTab({ user, profile, onProfileUpdate }) {
   useTheme();
   const { showToast, ToastEl } = useToast();
+  const [testPushMsg, setTestPushMsg] = useState("");
+
+  const handleTestPush = async () => {
+    setTestPushMsg("Надсилаю…");
+    try {
+      const res = await sendTestPush();
+      setTestPushMsg(res.ok ? "✅ Пуш надіслано" : "⚠️ Токен не знайдено — онови сторінку й дозволь сповіщення");
+    } catch (e) {
+      setTestPushMsg("❌ " + (e.message || "помилка"));
+    }
+  };
 
   if (!profile) {
     return (
@@ -92,6 +105,25 @@ export default function ProfileTab({ user, profile, onProfileUpdate }) {
             <div className="val">Київ, Верховинна 44</div>
           </div>
         </a>
+      </div>
+
+      <div className="profile-section">
+        <div className="section-title">Діагностика</div>
+        <button
+          onClick={handleTestPush}
+          style={{
+            width: "100%", borderRadius: 12, padding: "10px 16px", fontWeight: 700,
+            fontSize: 14, border: "1px solid var(--border)", background: "var(--surf-lo)",
+            color: "var(--text)", cursor: "pointer",
+          }}
+        >
+          🧪 Тест пуш
+        </button>
+        {testPushMsg && (
+          <div style={{ textAlign: "center", padding: "8px 0 0", fontSize: 12, fontWeight: 600, color: "var(--dim)" }}>
+            {testPushMsg}
+          </div>
+        )}
       </div>
 
       {ToastEl}
