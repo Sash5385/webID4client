@@ -9,6 +9,22 @@ const VAPID_KEY = 'BFT1t7hXhEcSsHdotLlG5xoIFNrdS11vU_jsHiD1UUMsskVINBW2het8ogOKi
 
 let messaging = null
 
+// Стабільний id цього браузера/пристрою — щоб токени з різних пристроїв
+// (ПК і телефон одного учня) не перезаписували один одного в БД.
+function getDeviceId() {
+  const KEY = 'id4_device_id'
+  try {
+    let id = localStorage.getItem(KEY)
+    if (!id) {
+      id = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10)
+      localStorage.setItem(KEY, id)
+    }
+    return id
+  } catch {
+    return 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10)
+  }
+}
+
 export async function getFirebaseSwReg() {
   if (!('serviceWorker' in navigator)) return undefined
   const regs = await navigator.serviceWorker.getRegistrations()
@@ -41,8 +57,9 @@ export async function requestNotificationPermission(uid) {
     const swReg = await getFirebaseSwReg()
     const token = await getToken(msg, { vapidKey: VAPID_KEY, ...(swReg ? { serviceWorkerRegistration: swReg } : {}) })
     if (token && uid) {
-      await set(ref(db, `users/${uid}/fcmTokens/web/token`), token)
-      await set(ref(db, `studentTokens/${uid}`), token)
+      const deviceId = getDeviceId()
+      await set(ref(db, `users/${uid}/fcmTokens/${deviceId}`), token)
+      await set(ref(db, `studentTokens/${uid}/${deviceId}`), token)
     }
     return token
   } catch (e) {
