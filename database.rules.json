@@ -6,7 +6,18 @@
     },
     "timeslots": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": "auth != null",
+      "$date": {
+        "$slotId": {
+          "vipOnly":       { ".validate": "root.child('admins').child(auth.uid).exists() || newData.val() === data.val()" },
+          "adminBlocked":  { ".validate": "root.child('admins').child(auth.uid).exists() || newData.val() === data.val()" },
+          "privateOnly":   { ".validate": "root.child('admins').child(auth.uid).exists() || newData.val() === data.val()" },
+          "surcharge":     { ".validate": "root.child('admins').child(auth.uid).exists() || newData.val() === data.val()" },
+          "fixedPrice":    { ".validate": "root.child('admins').child(auth.uid).exists() || newData.val() === data.val()" },
+          "lunchOverride": { ".validate": "root.child('admins').child(auth.uid).exists() || newData.val() === data.val()" },
+          "durMin":        { ".validate": "root.child('admins').child(auth.uid).exists() || newData.val() === data.val()" }
+        }
+      }
     },
     "bookings": {
       ".read": "auth != null",
@@ -16,7 +27,6 @@
       }
     },
     "queue": {
-      ".read": "auth != null",
       "$slotKey": {
         "entries": {
           ".read": "auth != null",
@@ -24,6 +34,12 @@
             ".write": "auth != null && auth.uid === $uid"
           }
         }
+      }
+    },
+    "userQueue": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).exists())",
+        ".write": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).exists())"
       }
     },
     "users": {
