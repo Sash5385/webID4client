@@ -232,14 +232,20 @@ export async function cancelBooking(uid, bookingId, { isReschedule = false } = {
 export async function joinQueue(uid, date, time, studentType, durationHours = 1, name = '', phone = '') {
   if (_blocked) throw new Error('Не вдалося приєднатись до черги, спробуйте пізніше')
   const slotKey = `${date}_${time}`
-  await set(ref(db, `queue/${slotKey}/entries/${uid}`), {
-    uid,
-    studentType,
-    durationHours,
-    name,
-    phone,
-    addedAt: Date.now(),
-    status: 'waiting'
+  // Паралельно пишемо userQueue/{uid}/{slotKey} — легкий індекс, за яким
+  // subscribeUserQueue() дізнається, в яких чергах бере участь цей uid,
+  // без повного читання дерева queue (там ПІБ/телефони всіх інших).
+  await update(ref(db, '/'), {
+    [`queue/${slotKey}/entries/${uid}`]: {
+      uid,
+      studentType,
+      durationHours,
+      name,
+      phone,
+      addedAt: Date.now(),
+      status: 'waiting'
+    },
+    [`userQueue/${uid}/${slotKey}`]: true,
   })
 }
 
@@ -256,7 +262,10 @@ export async function claimReservedSlot(date, time, uid) {
 
 export async function leaveQueue(uid, date, time) {
   const slotKey = `${date}_${time}`
-  await remove(ref(db, `queue/${slotKey}/entries/${uid}`))
+  await update(ref(db, '/'), {
+    [`queue/${slotKey}/entries/${uid}`]: null,
+    [`userQueue/${uid}/${slotKey}`]: null,
+  })
 }
 
 export async function getQueueForSlot(date, time) {
@@ -393,32 +402,64 @@ export async function claimQueueOffer(uid, slotKey, offer, profile) {
   await clearQueueOffer(uid, slotKey)
 }
 
+// Замість повного читання дерева queue (там ПІБ/телефони всіх користувачів
+// у всіх чергах — заборонено правилами RTDB) слухаємо легкий індекс
+// userQueue/{uid} (список slotKey) і для кожного — власний запис у
+// queue/{slotKey}/entries/{uid} (дозволено правилами).
 export function subscribeUserQueue(uid, callback) {
-  const r = ref(db, 'queue')
-  const handler = onValue(r, snap => {
-    const data = snap.val() || {}
-    const slots = []
-    Object.entries(data).forEach(([slotKey, slotData]) => {
-      const entry = slotData?.entries?.[uid]
-      if (!entry) return
-      const parts = slotKey.split('_')
-      const date = parts[0]
-      const time = parts.slice(1).join('_')
-      slots.push({ slotKey, date, time, ...entry })
-    })
+  const indexRef = ref(db, `userQueue/${uid}`)
+  const entryUnsubs = {}
+  const entryData = {}
+
+  const emit = () => {
+    const slots = Object.values(entryData)
     slots.sort((a, b) => {
       if (a.date !== b.date) return a.date.localeCompare(b.date)
       return a.time.localeCompare(b.time)
     })
     callback(slots)
+  }
+
+  const indexHandler = onValue(indexRef, snap => {
+    const slotKeys = Object.keys(snap.val() || {})
+    Object.keys(entryUnsubs).forEach(slotKey => {
+      if (slotKeys.includes(slotKey)) return
+      entryUnsubs[slotKey]()
+      delete entryUnsubs[slotKey]
+      delete entryData[slotKey]
+    })
+    slotKeys.forEach(slotKey => {
+      if (entryUnsubs[slotKey]) return
+      const entryRef = ref(db, `queue/${slotKey}/entries/${uid}`)
+      const entryHandler = onValue(entryRef, entrySnap => {
+        const entry = entrySnap.val()
+        if (!entry) {
+          delete entryData[slotKey]
+          emit()
+          return
+        }
+        const parts = slotKey.split('_')
+        const date = parts[0]
+        const time = parts.slice(1).join('_')
+        entryData[slotKey] = { slotKey, date, time, ...entry }
+        emit()
+      })
+      entryUnsubs[slotKey] = () => off(entryRef, 'value', entryHandler)
+    })
+    emit()
   })
-  return () => off(r, 'value', handler)
+
+  return () => {
+    off(indexRef, 'value', indexHandler)
+    Object.values(entryUnsubs).forEach(unsub => unsub())
+  }
 }
 
 export async function declineQueueOffer(uid, slotKey, date, time) {
   const slotId = `slot${time.replace(':', '')}`
   await update(ref(db, '/'), {
     [`queue/${slotKey}/entries/${uid}`]: null,
+    [`userQueue/${uid}/${slotKey}`]: null,
     [`timeslots/${date}/${slotId}/offeredTo/${uid}`]: null,
     [`users/${uid}/queueOffers/${slotKey}`]: null,
   })
