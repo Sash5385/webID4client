@@ -14,6 +14,7 @@ import ProfileTab from './cabinet/ProfileTab'
 import ChatTab from './cabinet/ChatTab'
 import NotifTab from './cabinet/NotifTab'
 import QueueTab from './cabinet/QueueTab'
+import ReviewModal from './cabinet/ReviewModal'
 import { formatDateLabel } from '../utils/date'
 import './Cabinet.css'
 
@@ -67,6 +68,19 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
   useBackClose(!!selectedOffer, () => setSelectedOffer(null))
   const [offerSubmitting, setOfferSubmitting] = useState(false)
   const [unreadChat, setUnreadChat] = useState(0)
+
+  // Автопропозиція відгуку — після завершеного підтвердженого уроку без
+  // відгуку. reviewDismissed скидається при перезавантаженні застосунку,
+  // тож пропозиція просто повернеться наступного разу, а не спамитиме зараз.
+  const [reviewBooking, setReviewBooking] = useState(null)
+  const [reviewDismissed, setReviewDismissed] = useState(() => new Set())
+  useEffect(() => {
+    if (reviewBooking) return
+    const candidate = bookingsData.completed.find(
+      b => b.status === 'confirmed' && !b.reviewed && !reviewDismissed.has(b.id)
+    )
+    if (candidate) setReviewBooking(candidate)
+  }, [bookingsData.completed, reviewDismissed, reviewBooking])
 
   const lsKey = user?.uid ? `lastSeenBookingsTs_${user.uid}` : null
   const [lastSeenTs, setLastSeenTs] = useState(() =>
@@ -432,6 +446,22 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
           </div>
         )
       })()}
+
+      {reviewBooking && (
+        <ReviewModal
+          user={user}
+          profile={profile}
+          booking={reviewBooking}
+          onClose={() => {
+            setReviewDismissed(prev => new Set(prev).add(reviewBooking.id))
+            setReviewBooking(null)
+          }}
+          onDone={() => {
+            setReviewBooking(null)
+            showToast('Дякуємо за відгук!')
+          }}
+        />
+      )}
 
       {ToastEl}
     </div>

@@ -286,6 +286,43 @@ export function subscribeQueueForSlot(date, time, callback) {
 }
 
 // в”Ђв”Ђв”Ђ HELPERS в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+// ─── REVIEWS ─────────────────────────────────────────────────────
+// Booking позначається reviewed:true одразу після відправки відгуку,
+// щоб один і той самий урок не пропонувалось оцінити повторно.
+export async function submitReview(uid, booking, { rating, text, studentName }) {
+  const r = push(ref(db, `reviews/${uid}`))
+  await update(ref(db, '/'), {
+    [`reviews/${uid}/${r.key}`]: {
+      studentName,
+      bookingId: booking.id,
+      rating,
+      text: text || '',
+      createdAt: Date.now(),
+      status: 'approved',
+    },
+    [`bookings/${uid}/${booking.id}/reviewed`]: true,
+  })
+  return r.key
+}
+
+// Публічні відгуки для лендінгу — читаються без авторизації (.read: true).
+export function subscribeApprovedReviews(callback) {
+  const r = ref(db, 'reviews')
+  const handler = onValue(r, snap => {
+    if (!snap.exists()) return callback([])
+    const list = []
+    snap.forEach(userSnap => {
+      userSnap.forEach(reviewSnap => {
+        const v = reviewSnap.val()
+        if (v.status !== 'hidden') list.push({ id: reviewSnap.key, ...v })
+      })
+    })
+    list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+    callback(list)
+  })
+  return () => off(r, 'value', handler)
+}
+
 // Урок вважається таким, що відбувся, лише після його фактичного закінчення
 // (дата+час старту+тривалість), а не одразу з початку дня — інакше урок,
 // запланований на сьогодні пізніше, зараховувався б у "завершені" години
