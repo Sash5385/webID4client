@@ -19,11 +19,14 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging()
 
-messaging.onBackgroundMessage(async (payload) => {
-  // Skip if any app window is visible — the foreground handler will show the notification
-  const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-  if (clientList.some(c => c.visibilityState === 'visible')) return
-
+messaging.onBackgroundMessage((payload) => {
+  // Раніше тут була перевірка "чи видима вкладка" (пропускали показ, якщо так,
+  // розраховуючи на foreground-хендлер в App.jsx). Прибрано: "видима" вкладка
+  // не гарантує, що foreground-хендлер реально спрацює (напр. приспаний таб
+  // на телефоні) — у такому разі сповіщення не показував ХТОСЬ взагалі.
+  // Дублю немає: і тут, і в App.jsx однаковий tag ('id4drive-notif'), тому
+  // другий showNotification() з тим самим tag просто ЗАМІНЮЄ перший.
+  //
   // Data-only push (no top-level/webpush "notification" — інакше браузер показав би
   // сповіщення сам ще раз ДОДАТКОВО до цього showNotification(), тобто дубль).
   const title = payload.data?.title || 'ID4Drive'
