@@ -26,7 +26,7 @@ export async function getUserProfile(uid) {
   // без завершеної анкети — це НЕ реєстрація, інакше повторний вхід (особливо
   // Google в один клік) пропускає анкету з іменем/телефоном.
   if (!data.profile) return null
-  return { ...data.profile, isVip: data.isVip || false, discount: data.discount || 0, hoursOffset: data.hoursOffset || 0,
+  return { ...data.profile, isVip: data.isVip || false, discount: data.discount || 0, customPrice: data.customPrice ?? null, hoursOffset: data.hoursOffset || 0,
     maneuverCounts: data.maneuverCounts || {}, maneuverSuccessCounts: data.maneuverSuccessCounts || {}, badges: data.badges || {} }
 }
 
