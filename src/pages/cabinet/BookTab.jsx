@@ -490,6 +490,11 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     const dayStartTimes = Object.values(slots)
       .map(s => { const [h, m] = (s.time || '0:0').split(':').map(Number); return h * 60 + m })
     const dayStartMin = dayStartTimes.length ? Math.min(...dayStartTimes) : null
+    // Обід не є записом (bookings), тому не потрапляє в takenIntervals — перший
+    // слот після обіду теж не має "сусіда перед собою" і ховався б за тією ж
+    // логікою, що й перший слот дня. Звільняємо його так само.
+    const { lunchEnabled: dayLunchEnabled, lunchEnd: dayLunchEnd } = getLunchForDate(selectedDate)
+    const lunchEndMin = dayLunchEnabled ? dayLunchEnd * 60 : null
 
     return Object.values(slots)
       .filter(slot => !!(slot.time))
@@ -533,7 +538,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           const bEnd = bStart + (b.durationHours || 1) * 60
           return slotMin >= bStart && slotMin < bEnd
         })
-        const isSticky = !stickyEnabled || takenIntervals.length === 0 || slot.available === false || slotStartMin === dayStartMin
+        const isSticky = !stickyEnabled || takenIntervals.length === 0 || slot.available === false || slotStartMin === dayStartMin || slotStartMin === lunchEndMin
           ? true
           : takenIntervals.some(iv =>
               (stickyMode !== 'after'  && slotStartMin + slotDurMin === iv.start) ||
