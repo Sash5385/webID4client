@@ -5,7 +5,7 @@ import { useToast } from '../hooks/useToast'
 import { useBookings } from '../hooks/useBookings'
 import { useBackClose } from '../hooks/useBackButton'
 import { signOut } from '../firebase/auth'
-import { subscribeQueueOffers, clearQueueOffer, claimQueueOffer, declineQueueOffer, subscribeDirectUnread, markDirectChatRead, subscribeNotifications, subscribeUserQueue } from '../firebase/db'
+import { subscribeQueueOffers, clearQueueOffer, claimQueueOffer, declineQueueOffer, subscribeDirectUnread, markDirectChatRead, subscribeNotifications, subscribeUserQueue, isBookingPast } from '../firebase/db'
 
 import BookTab from './cabinet/BookTab'
 import BookingsTab from './cabinet/BookingsTab'
@@ -69,18 +69,22 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
   const [offerSubmitting, setOfferSubmitting] = useState(false)
   const [unreadChat, setUnreadChat] = useState(0)
 
-  // Автопропозиція відгуку — після завершеного підтвердженого уроку без
-  // відгуку. reviewDismissed скидається при перезавантаженні застосунку,
-  // тож пропозиція просто повернеться наступного разу, а не спамитиме зараз.
+  // Автопропозиція відгуку — одразу як урок фактично закінчився (isBookingPast
+  // рахує за часом завершення, а не по календарній даті). bookingsData.completed
+  // тут навмисно НЕ використовуємо — той список вважає урок "минулим" лише
+  // з наступного календарного дня, тож відгук за сьогоднішній урок не
+  // пропонувався б аж до завтра. reviewDismissed скидається при
+  // перезавантаженні застосунку, тож пропозиція просто повернеться наступного
+  // разу, а не спамитиме зараз.
   const [reviewBooking, setReviewBooking] = useState(null)
   const [reviewDismissed, setReviewDismissed] = useState(() => new Set())
   useEffect(() => {
     if (reviewBooking) return
-    const candidate = bookingsData.completed.find(
-      b => b.status === 'confirmed' && !b.reviewed && !reviewDismissed.has(b.id)
-    )
+    const candidate = bookingsData.bookings
+      .filter(b => b.status === 'confirmed' && isBookingPast(b) && !b.reviewed && !reviewDismissed.has(b.id))
+      .sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`) - new Date(`${a.date}T${a.time || '00:00'}`))[0]
     if (candidate) setReviewBooking(candidate)
-  }, [bookingsData.completed, reviewDismissed, reviewBooking])
+  }, [bookingsData.bookings, reviewDismissed, reviewBooking])
 
   const lsKey = user?.uid ? `lastSeenBookingsTs_${user.uid}` : null
   const [lastSeenTs, setLastSeenTs] = useState(() =>
