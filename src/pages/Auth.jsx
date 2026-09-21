@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { sendSmsCode, verifySmsCode, resetRecaptcha, getSmsErrorMessage, renderRecaptcha, isIOSDevice, isInAppBrowser, signOut } from '../firebase/auth'
 import { signInWithEmail, signUpWithEmail, sendPasswordReset, signInWithGoogle } from '../firebase/auth-email'
 import { saveUserProfile, getUserProfile } from '../firebase/db'
@@ -46,6 +46,15 @@ export default function Auth({ user, profile, onProfileSaved }) {
   useTheme()
   const { showToast, ToastEl } = useToast()
   const nav = useNavigate()
+  const loc = useLocation()
+
+  // Токен запрошення від інструктора (?invite=...) — зберігаємо в
+  // sessionStorage, бо крок SMS/reCAPTCHA іноді перезавантажує сторінку
+  // і queryParam з першого рендеру був би втрачений.
+  useEffect(() => {
+    const t = new URLSearchParams(loc.search).get('invite')
+    if (t) sessionStorage.setItem('id4_invite_token', t)
+  }, [loc.search])
 
   // step: 'phone' | 'sms' | 'survey'
   const [step, setStep] = useState(user && !profile ? 'survey' : 'phone')
@@ -234,6 +243,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
       const uid = user?.uid
       if (!uid) throw new Error('Користувач не авторизований')
 
+      const inviteToken = sessionStorage.getItem('id4_invite_token') || ''
       const data = {
         name: `${name.trim()} ${surname.trim()}`,
         phone: user.phoneNumber || `+380${surveyPhone.trim()}`,
@@ -241,10 +251,12 @@ export default function Auth({ user, profile, onProfileSaved }) {
         experience,
         filmingConsent,
         termsAccepted: true,
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        ...(inviteToken && { inviteToken }),
       }
 
       await saveUserProfile(uid, data)
+      sessionStorage.removeItem('id4_invite_token')
       if (onProfileSaved) await onProfileSaved()
       nav('/cabinet')
     } catch (e) {
