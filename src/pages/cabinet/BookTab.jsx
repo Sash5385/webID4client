@@ -546,7 +546,9 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           const bEnd = bStart + (b.durationHours || 1) * 60
           return slotMin >= bStart && slotMin < bEnd
         })
-        const isSticky = !stickyEnabled || takenIntervals.length === 0 || slot.available === false || slotStartMin === dayStartMin || slotStartMin === lunchEndMin || slotStartMin + slotDurMin === lunchStartMin
+        const isSticky = !stickyEnabled || takenIntervals.length === 0 || slot.available === false || slotStartMin === dayStartMin
+          || (stickyMode !== 'before' && slotStartMin === lunchEndMin)
+          || (stickyMode !== 'after'  && slotStartMin + slotDurMin === lunchStartMin)
           ? true
           : takenIntervals.some(iv =>
               (stickyMode !== 'after'  && slotStartMin + slotDurMin === iv.start) ||
