@@ -101,6 +101,10 @@
       "$uid": {
         ".write": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).exists())"
       }
+    },
+    "license": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.email === 'sash5385@gmail.com'"
     }
   }
 }

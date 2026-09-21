@@ -7,6 +7,7 @@ import { auth } from './firebase/config'
 import { getUserProfile, createBooking, markSlotsUnavailable, claimSlot, unclaimSlot, markFirstLoginIfNew } from './firebase/db'
 import { requestNotificationPermission, onForegroundMessage, getFirebaseSwReg } from './firebase/push'
 import { useAppUpdate } from './hooks/useAppUpdate'
+import { useLicense, isLicenseBlocked } from './hooks/useLicense'
 import { useToast } from './hooks/useToast'
 import { consumeBackHandler } from './hooks/useBackButton'
 import { APP_VERSION } from './version.js'
@@ -21,6 +22,7 @@ export default function App() {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const license = useLicense()
   const pendingBookingRef = useRef(null)
   const { needRefresh, updateServiceWorker, isUpdating } = useAppUpdate()
 
@@ -132,6 +134,21 @@ export default function App() {
         minHeight:'100vh', background:'var(--bg)'
       }}>
         <div className="spinner" />
+      </div>
+    )
+  }
+
+  if (isLicenseBlocked(license)) {
+    return (
+      <div style={{
+        display:'flex', alignItems:'center', justifyContent:'center',
+        minHeight:'100vh', background:'var(--bg)', padding:20, textAlign:'center'
+      }}>
+        <div>
+          <div style={{ fontSize:40, marginBottom:12 }}>🔒</div>
+          <p>Сервіс тимчасово недоступний.</p>
+          <p>Зверніться до інструктора.</p>
+        </div>
       </div>
     )
   }
