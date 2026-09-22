@@ -69,12 +69,14 @@ function classifyDay(slotsObj) {
     return /^slot\d{4}$/.test(key)
   })
   if (slots.length === 0) return null
-  const free = slots.filter(([, s]) => s.available !== false).length
-  // Колір за кількістю ВІЛЬНИХ слотів:
-  // 0 — червоний (все зайнято), 1–2 — оранжевий (мало), 3+ — зелений.
+  const free  = slots.filter(([, s]) => s.available !== false).length
+  const taken = slots.filter(([, s]) => s.available === false).length
+  // Колір за станом зайнятості: якщо жодного зайнятого слота — день повністю
+  // вільний (зелений), навіть якщо це лише один слот. Жовтий — коли частина
+  // дня вже зайнята/заброньована. Червоний — коли вільних слотів не лишилось.
+  if (taken === 0) return 'free'
   if (free === 0) return 'full'
-  if (free <= 2) return 'partial'
-  return 'free'
+  return 'partial'
 }
 
 export function subscribeMonthAvailability(year, month, callback) {
