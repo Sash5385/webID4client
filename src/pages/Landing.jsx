@@ -62,9 +62,17 @@ function reviewDateShort(ts) {
   return `${d.getDate()} ${getMonthShort(d.getMonth())} ${d.getFullYear()}`
 }
 
-// Блоки лендингу з'являються знизу вгору по мірі прокрутки (замість того,
-// щоб бути одразу видимими) — IntersectionObserver ставить клас один раз,
-// коли блок вперше заходить у видиму область, і більше не знімає його.
+// Блоки лендингу "збираються" з дрібної мозаїчної плитки при прокрутці:
+// поверх контенту лежить сітка маленьких плиток кольору фону, які по черзі
+// (діагональною хвилею) ховаються, відкриваючи вже повністю відрендерений
+// контент під собою. IntersectionObserver вмикає це один раз.
+const REVEAL_COLS = 10
+const REVEAL_ROWS = 6
+const REVEAL_TILES = Array.from({ length: REVEAL_COLS * REVEAL_ROWS }, (_, i) => ({
+  key: i,
+  delay: (Math.floor(i / REVEAL_COLS) + (i % REVEAL_COLS)) * 28,
+}))
+
 function Reveal({ children }) {
   const ref = useRef(null)
   const [inView, setInView] = useState(false)
@@ -77,7 +85,16 @@ function Reveal({ children }) {
     io.observe(el)
     return () => io.disconnect()
   }, [])
-  return <div ref={ref} className={`reveal${inView ? ' reveal-in' : ''}`}>{children}</div>
+  return (
+    <div ref={ref} className="reveal">
+      {children}
+      <div className={`reveal-tiles${inView ? ' reveal-in' : ''}`} aria-hidden="true">
+        {REVEAL_TILES.map(t => (
+          <div key={t.key} className="reveal-tile" style={{ transitionDelay: `${t.delay}ms` }} />
+        ))}
+      </div>
+    </div>
+  )
 }
 
 // 14 фото автошколи поділені на 3 НЕПЕРЕТИННІ набори — по одному на слот.

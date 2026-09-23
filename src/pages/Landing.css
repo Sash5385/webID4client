@@ -10,19 +10,31 @@
   touch-action: pan-y;
 }
 
-/* Блоки з'являються знизу вгору при прокрутці (Reveal, Landing.jsx) */
+/* Блоки "збираються" з мозаїчної плитки при прокрутці (Reveal, Landing.jsx) */
 .reveal {
-  opacity: 0;
-  transform: translateY(28px);
-  transition: opacity .6s ease, transform .6s cubic-bezier(.16,.84,.44,1);
-  will-change: opacity, transform;
+  position: relative;
 }
-.reveal-in {
+.reveal-tiles {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  pointer-events: none;
+  z-index: 5;
+}
+.reveal-tile {
+  background: var(--bg);
+  transform: scale(1);
   opacity: 1;
-  transform: translateY(0);
+  transition: transform .35s ease, opacity .35s ease;
+}
+.reveal-in .reveal-tile {
+  transform: scale(0);
+  opacity: 0;
 }
 @media (prefers-reduced-motion: reduce) {
-  .reveal { transition: none; opacity: 1; transform: none; }
+  .reveal-tiles { display: none; }
 }
 
 
