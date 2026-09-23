@@ -10,6 +10,21 @@
   touch-action: pan-y;
 }
 
+/* Блоки з'являються знизу вгору при прокрутці (Reveal, Landing.jsx) */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity .6s ease, transform .6s cubic-bezier(.16,.84,.44,1);
+  will-change: opacity, transform;
+}
+.reveal-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal { transition: none; opacity: 1; transform: none; }
+}
+
 
 .landing-topbar {
   position: sticky;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTheme } from '../hooks/useTheme'
 import { APP_VERSION } from '../version.js'
@@ -60,6 +60,24 @@ function starsStr(rating) {
 function reviewDateShort(ts) {
   const d = new Date(ts)
   return `${d.getDate()} ${getMonthShort(d.getMonth())} ${d.getFullYear()}`
+}
+
+// Блоки лендингу з'являються знизу вгору по мірі прокрутки (замість того,
+// щоб бути одразу видимими) — IntersectionObserver ставить клас один раз,
+// коли блок вперше заходить у видиму область, і більше не знімає його.
+function Reveal({ children }) {
+  const ref = useRef(null)
+  const [inView, setInView] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setInView(true); io.disconnect() }
+    }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+  return <div ref={ref} className={`reveal${inView ? ' reveal-in' : ''}`}>{children}</div>
 }
 
 // 14 фото автошколи поділені на 3 НЕПЕРЕТИННІ набори — по одному на слот.
@@ -256,6 +274,7 @@ export default function Landing({ user, profile }) {
         </div>
 
         {/* SERVICES */}
+        <Reveal>
         <section className="lsection">
           <div className="lsection-title">Послуги</div>
           <div className="services">
@@ -277,9 +296,11 @@ export default function Landing({ user, profile }) {
             </div>
           </div>
         </section>
+        </Reveal>
 
         {/* PRICING */}
         {(schoolService || privateService) && (
+          <Reveal>
           <section className="lsection">
             <div className="lsection-title">Ціни</div>
             <h2>Скільки коштує урок</h2>
@@ -302,10 +323,12 @@ export default function Landing({ user, profile }) {
               )}
             </div>
           </section>
+          </Reveal>
         )}
 
         {/* NEAREST SLOTS */}
         {nearestSlot && (
+          <Reveal>
           <section className="lsection">
             <div className="lsection-title">Розклад</div>
             <h2>Найближчі вільні місця</h2>
@@ -340,9 +363,11 @@ export default function Landing({ user, profile }) {
               </>
             )}
           </section>
+          </Reveal>
         )}
 
         {/* FEATURES */}
+        <Reveal>
         <section className="lsection">
           <div className="lsection-title">Переваги</div>
           <div className="features">
@@ -378,8 +403,10 @@ export default function Landing({ user, profile }) {
             </div>
           </div>
         </section>
+        </Reveal>
 
         {/* INSTRUCTOR */}
+        <Reveal>
         <section className="lsection">
           <div className="lsection-title">Інструктор</div>
           <h2>Олександр</h2>
@@ -396,8 +423,10 @@ export default function Landing({ user, profile }) {
             </div>
           </div>
         </section>
+        </Reveal>
 
         {/* REVIEWS */}
+        <Reveal>
         <section className="lsection">
           <div className="lsection-title">Відгуки</div>
           <h2>Що кажуть учні</h2>
@@ -444,8 +473,10 @@ export default function Landing({ user, profile }) {
             </div>
           ))}
         </div>
+        </Reveal>
 
         {/* CONTACTS */}
+        <Reveal>
         <section className="lsection">
           <div className="lsection-title">Контакти</div>
           <h2>Звʼязатись зі мною</h2>
@@ -473,8 +504,10 @@ export default function Landing({ user, profile }) {
             </a>
           </div>
         </section>
+        </Reveal>
 
         {/* TERMS */}
+        <Reveal>
         <section className="lsection">
           <button className="terms-btn" onClick={() => setTermsOpen(o => !o)}>
             <div className="terms-ico">📄</div>
@@ -535,6 +568,7 @@ export default function Landing({ user, profile }) {
             </div>
           )}
         </section>
+        </Reveal>
 
         {/* FOOTER */}
         <div className="footer">
