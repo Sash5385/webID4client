@@ -16,6 +16,79 @@ import Auth from './pages/Auth'
 import Cabinet from './pages/Cabinet'
 import Landing from './pages/Landing'
 
+// ─── PWA INSTALL PROMPT (пропонуємо зберегти застосунок лише при
+// першому вході — раз показали (banner з'явився), більше не пропонуємо,
+// незалежно від того, встановив користувач чи закрив). Android/Chrome —
+// нативний beforeinstallprompt; iOS Safari його не підтримує, тож для
+// iPhone показуємо власну підказку "Поділитися → На екран Домівка".
+// У нативному Capacitor-застосунку (вже встановлений) банер не потрібен.
+// Окремо від кнопки в футері лендингу (Landing.jsx) — той самий event,
+// два незалежні споживачі, показується лише той, що зараз на екрані.
+const IOS_UA_RE = /iphone|ipad|ipod/i
+function useInstallPrompt() {
+  const [deferredPrompt, setDeferredPrompt] = useState(null)
+  const [installed, setInstalled] = useState(() =>
+    window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true
+  )
+  useEffect(() => {
+    const onBeforeInstall = (e) => { e.preventDefault(); setDeferredPrompt(e) }
+    const onInstalled = () => { setInstalled(true); setDeferredPrompt(null) }
+    window.addEventListener('beforeinstallprompt', onBeforeInstall)
+    window.addEventListener('appinstalled', onInstalled)
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstall)
+      window.removeEventListener('appinstalled', onInstalled)
+    }
+  }, [])
+  return { deferredPrompt, installed }
+}
+
+function InstallBanner() {
+  const { deferredPrompt, installed } = useInstallPrompt()
+  const ios = IOS_UA_RE.test(window.navigator.userAgent)
+  const [dismissed, setDismissed] = useState(() => localStorage.getItem('pwa_install_offered') === '1')
+  const eligible = !Capacitor.isNativePlatform() && !installed && !dismissed && (deferredPrompt || ios)
+
+  useEffect(() => {
+    if (eligible) localStorage.setItem('pwa_install_offered', '1')
+  }, [eligible])
+
+  if (!eligible) return null
+
+  const handleInstall = async () => {
+    if (deferredPrompt) { deferredPrompt.prompt(); await deferredPrompt.userChoice }
+    setDismissed(true)
+  }
+
+  return (
+    <div style={{
+      position:'fixed', left:12, right:12, bottom:'calc(env(safe-area-inset-bottom,0px) + 76px)', zIndex:200,
+      background:'var(--surface)', border:'1px solid var(--border)', borderRadius:16, padding:'12px 14px',
+      boxShadow:'0 10px 30px rgba(0,0,0,0.4)',
+      display:'flex', alignItems:'center', gap:10,
+    }}>
+      <div style={{fontSize:24, flexShrink:0}}>📲</div>
+      <div style={{flex:1, minWidth:0}}>
+        <div style={{fontSize:13, fontWeight:800, color:'var(--text)'}}>Встановіть застосунок</div>
+        <div style={{fontSize:11, color:'var(--dim)', marginTop:2}}>
+          {ios && !deferredPrompt ? 'Поділитися → «На екран Домівка»' : 'Швидкий доступ з головного екрана, без браузера'}
+        </div>
+      </div>
+      {deferredPrompt && (
+        <button onClick={handleInstall} style={{
+          padding:'8px 14px', borderRadius:10, border:'none', cursor:'pointer',
+          fontSize:12, fontWeight:800, color:'#fff', flexShrink:0,
+          background:'linear-gradient(145deg,var(--acc-hi),var(--accent))',
+        }}>Встановити</button>
+      )}
+      <button onClick={()=>setDismissed(true)} aria-label="Закрити" style={{
+        width:26, height:26, borderRadius:8, border:'none', cursor:'pointer', flexShrink:0,
+        background:'rgba(255,255,255,0.06)', color:'var(--dim)', fontSize:14,
+      }}>✕</button>
+    </div>
+  )
+}
+
 export default function App() {
   const navigate = useNavigate()
   const { showToast, ToastEl } = useToast()
@@ -200,6 +273,7 @@ export default function App() {
       </div>
     )}
     {ToastEl}
+    <InstallBanner/>
     </>
   )
 }
