@@ -115,6 +115,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   const [dialogSlot, setDialogSlot] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [successData, setSuccessData] = useState(null) // {type:'booking'|'queue', date, time, service, duration}
+  const [studentNote, setStudentNote] = useState("")
 
   useEffect(() => {
     getAdminSettings().then(s => setAdminSettings(s)).catch(() => {})
@@ -377,6 +378,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           durationHours,
           studentName: profile.name,
           phone: profile.phone || user.phoneNumber,
+          studentNote: studentNote.trim() || undefined,
         })
       } catch (createErr) {
         if (claimedStart) await unclaimSlot(dateStr, startTime).catch(() => {})
@@ -389,6 +391,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       }
       setSelectedTime(null)
       setSelectedTime2(null)
+      setStudentNote("")
       setSuccessData({ type: 'booking', date: formatDateYMD(selectedDate), time: startTime, service: bookedService, surcharge, fixedPrice, durationHours })
     } catch (e) {
       showToast('Помилка: ' + e.message)
@@ -881,6 +884,20 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                 {discountAmt > 0 && <span style={{marginLeft:6, color:'#4ade80', fontSize:11}}>−{discountAmt * durationHours}₴</span>}
               </div>
             ) : null}
+            <textarea
+              value={studentNote}
+              onChange={e => setStudentNote(e.target.value)}
+              placeholder="Коментар для інструктора (необов'язково)…"
+              maxLength={120}
+              rows={2}
+              style={{
+                width:'100%', marginTop:10, padding:'10px 12px',
+                borderRadius:12, border:'1px solid rgba(255,255,255,0.1)',
+                background:'rgba(255,255,255,0.04)', color:'var(--text)',
+                fontSize:13, fontFamily:'inherit', resize:'none',
+                boxSizing:'border-box', outline:'none',
+              }}
+            />
             <button className="btn-primary" style={{marginTop:10}} onClick={handleBook} disabled={submitting}>
               {submitting ? 'Записуємо...' : `✓ Записатись ${dateLabel} о ${timeLabel}${totalPrice ? ` · ${totalPrice}₴` : ''}`}
             </button>

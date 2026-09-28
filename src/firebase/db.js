@@ -193,6 +193,10 @@ export async function confirmAttendance(uid, bookingId) {
   await update(ref(db, `bookings/${uid}/${bookingId}`), { studentConfirmed: true })
 }
 
+export async function saveStudentNote(uid, bookingId, note) {
+  await update(ref(db, `bookings/${uid}/${bookingId}`), { studentNote: note || null })
+}
+
 export async function cancelBooking(uid, bookingId, { isReschedule = false } = {}) {
   const snap = await get(ref(db, `bookings/${uid}/${bookingId}`))
   const booking = snap.val()
