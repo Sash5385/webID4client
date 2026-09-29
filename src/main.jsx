@@ -1,5 +1,3 @@
-// Діагностика слотів: ?slotdebug=1 запам'ятовується до того, як роутер прибере параметр
-try { if (new URLSearchParams(window.location.search).has('slotdebug')) localStorage.setItem('slotdebug', '1') } catch {}
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
