@@ -83,6 +83,18 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   })
   const [slots, setSlots] = useState({})
   const dbgRef = useRef([]) // діагностика (?slotdebug=1): усі слоти до фільтрів
+  const [dbgOn, setDbgOn] = useState(() => { try { return localStorage.getItem('slotdebug') === '1' || new URLSearchParams(window.location.search).has('slotdebug') } catch { return false } })
+  const dbgTaps = useRef({ n: 0, t: 0 })
+  const tapDebug = () => {
+    const now = Date.now()
+    dbgTaps.current = { n: now - dbgTaps.current.t < 1500 ? dbgTaps.current.n + 1 : 1, t: now }
+    if (dbgTaps.current.n >= 5) {
+      dbgTaps.current.n = 0
+      const next = !dbgOn
+      try { if (next) localStorage.setItem('slotdebug', '1'); else localStorage.removeItem('slotdebug') } catch {}
+      setDbgOn(next)
+    }
+  }
   const [queueMap, setQueueMap] = useState({}) // time → count
   const [selectedTime, setSelectedTime] = useState(notifParams?.time || null)
   // Другий обраний годинний слот — коли учень бере два сусідні вільні годинні
@@ -755,10 +767,10 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       {/* 3. ЧАС */}
       {selectedDate && (
         <>
-          <div ref={timeSectionRef} className="section-title" style={{color:'#ffffff', fontSize:13, textAlign:'center'}}>
+          <div ref={timeSectionRef} onClick={tapDebug} className="section-title" style={{color:'#ffffff', fontSize:13, textAlign:'center'}}>
             2. Час ({selectedDate.toLocaleDateString('uk-UA', { weekday: 'short', day: 'numeric', month: 'long' })})
           </div>
-          {typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('slotdebug') && (
+          {dbgOn && (
             <pre style={{fontSize:9, lineHeight:1.3, color:'#9fe', background:'rgba(0,0,0,.6)', padding:8, borderRadius:8, whiteSpace:'pre-wrap', wordBreak:'break-all', maxHeight:260, overflow:'auto'}}>
               {JSON.stringify({
                 date: formatDateYMD(selectedDate),
