@@ -2,6 +2,7 @@
   ref, get, set, update, push, onValue, off, remove, increment, onDisconnect, runTransaction
 } from 'firebase/database'
 import { db } from './config'
+import { restoreRangeUpdates } from '../utils/slotRules'
 
 // в”Ђв”Ђв”Ђ ACCESS CONTROL в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 // Заблокований адміном учень не бачить явного повідомлення про блок —
@@ -219,17 +220,9 @@ export async function cancelBooking(uid, bookingId, { isReschedule = false } = {
     const [h, m] = booking.time.split(':').map(Number)
     const startMin = h * 60 + m
     const durMin = (booking.durationHours || 1) * 60
-    for (let i = 0; i < durMin; i += 30) {
-      const slotMin = startMin + i
-      const slotH = String(Math.floor(slotMin / 60)).padStart(2, '0')
-      const slotM = String(slotMin % 60).padStart(2, '0')
-      const path = `timeslots/${booking.date}/slot${slotH}${slotM}`
-      const node = day[`slot${slotH}${slotM}`]
-      if (!node || node.phantom) { updates[path] = null; continue }
-      updates[`${path}/available`] = true
-      updates[`${path}/time`] = `${slotH}:${slotM}`
-      updates[`${path}/bookingStart`] = null
-    }
+    // Єдині правила (utils/slotRules.js): phantom видаляємо, справжні слоти повертаємо,
+    // відсутні не створюємо; усі документи всередині часу запису (крок може бути й 10 хв)
+    Object.assign(updates, restoreRangeUpdates(day, `timeslots/${booking.date}/`, startMin, durMin))
   }
   await update(ref(db, '/'), updates)
 }
