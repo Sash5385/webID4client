@@ -130,7 +130,8 @@ export default function App() {
             body,
             icon: '/icon-192.png',
             badge: '/icon-192.png',
-            tag: 'id4drive-notif',
+            // Унікальний tag — інакше друге повідомлення поспіль тихо замінює перше.
+            tag: payload.data?.tag || ('id4drive-notif-' + Date.now()),
             requireInteraction: true,
             data: { url },
           })
