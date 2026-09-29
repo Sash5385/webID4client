@@ -37,16 +37,21 @@ export function blockRangeUpdates(day, prefix, startMin, durMin, opts = {}) {
   return upd
 }
 
-// skipIds — позиції, які не чіпаємо (напр. вони одразу знову блокуються
-// новим місцем при переносі запису).
+// Проходимо по ВСІХ документах дня, що лежать усередині часу запису, а не по
+// кроку 30 хв: клієнт блокує з кроком зі своїх налаштувань (може бути 10 хв),
+// і phantom на :40/:50 інакше лишались би "зайнятими" і ховали справжні слоти.
+// skipRange {start,end} — діапазон, який не чіпаємо (напр. нове місце при
+// переносі запису, де ці позиції одразу знову блокуються).
 export function restoreRangeUpdates(day, prefix, startMin, durMin, opts = {}) {
-  const { step = 30, extra = null, skipIds = null } = opts
+  const { extra = null, skipRange = null } = opts
+  const endMin = startMin + durMin
   const upd = {}
-  for (let i = 0; i < durMin; i += step) {
-    const min = startMin + i
-    const id = slotIdAt(min)
-    if (skipIds && skipIds.has(id)) continue
-    const node = day?.[id]
+  for (const [id, node] of Object.entries(day || {})) {
+    const mm = /^slot(\d{2})(\d{2})$/.exec(id)
+    if (!mm) continue
+    const min = Number(mm[1]) * 60 + Number(mm[2])
+    if (min < startMin || min >= endMin) continue
+    if (skipRange && min >= skipRange.start && min < skipRange.end) continue
     if (!slotExists(node)) continue
     if (node.phantom) {
       upd[`${prefix}${id}`] = null
@@ -61,7 +66,7 @@ export function restoreRangeUpdates(day, prefix, startMin, durMin, opts = {}) {
   return upd
 }
 
-// Множина slotId, які займає діапазон — для skipIds.
+// Множина slotId, які займає діапазон.
 export function rangeSlotIds(startMin, durMin, step = 30) {
   const ids = new Set()
   for (let i = 0; i < durMin; i += step) ids.add(slotIdAt(startMin + i))
