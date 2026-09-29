@@ -82,19 +82,6 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     return null
   })
   const [slots, setSlots] = useState({})
-  const dbgRef = useRef([]) // діагностика (?slotdebug=1): усі слоти до фільтрів
-  const [dbgOn, setDbgOn] = useState(() => { try { return localStorage.getItem('slotdebug') === '1' || new URLSearchParams(window.location.search).has('slotdebug') } catch { return false } })
-  const dbgTaps = useRef({ n: 0, t: 0 })
-  const tapDebug = () => {
-    const now = Date.now()
-    dbgTaps.current = { n: now - dbgTaps.current.t < 1500 ? dbgTaps.current.n + 1 : 1, t: now }
-    if (dbgTaps.current.n >= 5) {
-      dbgTaps.current.n = 0
-      const next = !dbgOn
-      try { if (next) localStorage.setItem('slotdebug', '1'); else localStorage.removeItem('slotdebug') } catch {}
-      setDbgOn(next)
-    }
-  }
   const [queueMap, setQueueMap] = useState({}) // time → count
   const [selectedTime, setSelectedTime] = useState(notifParams?.time || null)
   // Другий обраний годинний слот — коли учень бере два сусідні вільні годинні
@@ -520,7 +507,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     const lunchEndMin = dayLunchEnabled ? dayLunchEnd * 60 : null
     const lunchStartMin = dayLunchEnabled ? dayLunchStart * 60 : null
 
-    const mapped = Object.values(slots)
+    return Object.values(slots)
       .filter(slot => !!(slot.time))
       .filter(slot => !slot.vipOnly || isVipStudent)
       .filter(slot => !slot.privateOnly || isPrivateStudent)
@@ -602,8 +589,6 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           totalPrice: slot.fixedPrice != null ? slot.fixedPrice : slotPrice(baseService, dateStr, durHoursForSlot, totalSurcharge),
         }
       })
-    dbgRef.current = mapped
-    return mapped
       .filter(slot => !slot.lunchBlocked && !slot.overlapBlocked && !(slot.cutoffBlocked && slot.available !== false))
       .filter(slot => slot.isSticky || slot.isMyBooked)
       .filter(slot => {
@@ -767,26 +752,9 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       {/* 3. ЧАС */}
       {selectedDate && (
         <>
-          <div ref={timeSectionRef} onClick={tapDebug} className="section-title" style={{color:'#ffffff', fontSize:13, textAlign:'center'}}>
+          <div ref={timeSectionRef} className="section-title" style={{color:'#ffffff', fontSize:13, textAlign:'center'}}>
             2. Час ({selectedDate.toLocaleDateString('uk-UA', { weekday: 'short', day: 'numeric', month: 'long' })})
           </div>
-          {dbgOn && (
-            <pre style={{fontSize:9, lineHeight:1.3, color:'#9fe', background:'rgba(0,0,0,.6)', padding:8, borderRadius:8, whiteSpace:'pre-wrap', wordBreak:'break-all', maxHeight:260, overflow:'auto'}}>
-              {JSON.stringify({
-                date: formatDateYMD(selectedDate),
-                rawDocs: Object.keys(slots).length,
-                shown: slotsList.length,
-                sticky: { on: !!adminSettings.stickyTimeEnabled, mode: adminSettings.stickyTime },
-                cutoffHours: adminSettings.bookCutoffHours || 0,
-                lunch: { on: adminSettings.lunchEnabled, s: adminSettings.lunchStart, e: adminSettings.lunchEnd },
-                override: (adminSettings.dateOverrides || []).find(o => o.date === formatDateYMD(selectedDate)) || null,
-                blocked: undefined,
-                myUpcoming: bookingsData.upcoming.filter(b => b.date === formatDateYMD(selectedDate)).map(b => ({ t: b.time, h: b.durationHours, st: b.status })),
-                raw: Object.entries(slots).map(([id, x]) => `${id} a=${x.available} t=${x.time || '-'} ph=${x.phantom ? 1 : 0} bs=${x.bookingStart} d=${x.durMin || '-'} vip=${x.vipOnly ? 1 : 0} pr=${x.privateOnly ? 1 : 0} off=${x.offeredTo ? 1 : 0} adm=${x.adminBlocked ? 1 : 0}`),
-                stages: dbgRef.current.map(x => `${x.time} lunch=${+!!x.lunchBlocked} overlap=${+!!x.overlapBlocked} cutoff=${+!!x.cutoffBlocked} sticky=${+!!x.isSticky} mine=${+!!x.isMyBooked}`),
-              }, null, 1)}
-            </pre>
-          )}
           {loading ? (
             <div style={{textAlign:'center', padding:'24px'}}><div className="spinner" style={{margin:'0 auto'}}></div></div>
           ) : slotsList.length === 0 ? (
