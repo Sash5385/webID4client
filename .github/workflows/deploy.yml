@@ -30,26 +30,15 @@ jobs:
           channelId: live
           projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
 
-  deploy-functions:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install functions dependencies
-        run: npm ci
-        working-directory: functions
-
-      - name: Write service account key
-        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/sa-key.json"
-
-      - name: Deploy functions to Firebase
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa-key.json
-        run: npx firebase-tools deploy --only functions --project ${{ secrets.FIREBASE_PROJECT_ID }} --non-interactive --force
+  # deploy-functions job REMOVED: functions/index.js in this repo is a stale,
+  # pre-refactor duplicate of webid4's functions (different function names —
+  # onNewBooking/onBookingStatusChanged/onAdminPush — but the SAME Firebase
+  # project id4drive-booking-44182 and overlapping RTDB trigger paths). Every
+  # push here raced webid4's own functions deploy and force-deleted/recreated
+  # each other's functions, intermittently wiping out onBookingChanged and
+  # silently killing admin push notifications for booking create/cancel.
+  # webid4 is the actively maintained source of truth for Cloud Functions —
+  # this repo must never deploy functions to that project again.
 
   build-android:
     runs-on: ubuntu-latest
