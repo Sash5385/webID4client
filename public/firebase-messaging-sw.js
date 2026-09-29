@@ -24,8 +24,6 @@ messaging.onBackgroundMessage((payload) => {
   // розраховуючи на foreground-хендлер в App.jsx). Прибрано: "видима" вкладка
   // не гарантує, що foreground-хендлер реально спрацює (напр. приспаний таб
   // на телефоні) — у такому разі сповіщення не показував ХТОСЬ взагалі.
-  // Дублю немає: і тут, і в App.jsx однаковий tag ('id4drive-notif'), тому
-  // другий showNotification() з тим самим tag просто ЗАМІНЮЄ перший.
   //
   // Data-only push (no top-level/webpush "notification" — інакше браузер показав би
   // сповіщення сам ще раз ДОДАТКОВО до цього showNotification(), тобто дубль).
@@ -35,7 +33,10 @@ messaging.onBackgroundMessage((payload) => {
     body: payload.data?.body || '',
     icon: '/icon-192.png',
     badge: '/badge-96.png',
-    tag: 'id4drive-notif',
+    // Унікальний tag — зі сталим tag кожне наступне сповіщення (напр. друге
+    // повідомлення в чаті поспіль) тихо ЗАМІНЮЄ попереднє без нового звуку/
+    // вібрації на частині Android/Chrome, замість показу нового сповіщення.
+    tag: payload.data?.tag || ('id4drive-notif-' + Date.now()),
     requireInteraction: true,
     vibrate: [200, 100, 200],
     data: { url, ...(payload.data || {}) },
