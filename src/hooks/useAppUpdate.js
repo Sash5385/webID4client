@@ -47,7 +47,18 @@ export function useAppUpdate() {
     if (isUpdating) return
     setIsUpdating(true)
 
-    const doReload = () => window.location.reload()
+    // Повноекранна анімація оновлення (src/updateOverlay.inline.js): перезавантаження чекає її кінця.
+    const anim = window.__updOverlay ? window.__updOverlay.show() : Promise.resolve()
+    let reloaded = false
+    const doReload = () => {
+      if (reloaded) return
+      reloaded = true
+      const reload = () => window.location.reload()
+      anim.then(reload, reload)
+    }
+    // Страховка: якщо новий SW так і не перехопив керування — перезавантажуємось усе одно,
+    // щоб оверлей не лишився на екрані.
+    setTimeout(doReload, 3500)
     const worker = waitingWorkerRef.current
 
     if (worker) {
