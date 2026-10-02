@@ -57,9 +57,10 @@
   background: linear-gradient(180deg, var(--bg) 60%, rgba(240,241,245,0.92));
 }
 
-.cab-title { font-size: 13px; font-weight: 800; letter-spacing: -0.3px; }
+/* Назва не ламає шапку на вузьких екранах (320px): обрізається, а кнопки не стискаються */
+.cab-title { font-size: 13px; font-weight: 800; letter-spacing: -0.3px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 6px; }
 
-.cab-actions { display: flex; gap: 6px; align-items: center; }
+.cab-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
 
 .cab-icon-btn {
   width: 28px; height: 28px; border-radius: 9px;
