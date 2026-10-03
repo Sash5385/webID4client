@@ -460,14 +460,22 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     const isVip = profile?.isVip === true
     const dateStr = selectedDate ? formatDateYMD(selectedDate) : ''
 
-    // Check if this date is closed per admin settings
+    // День без робочого графіка (закритий явно або вимкнений у тижневому шаблоні, напр. неділя):
+    // слоти, які адмін ВІДКРИВ ВРУЧНУ, учень бачить — джерело істини сам timeslots/{date}.
+    // Для такого дня не застосовуємо обід із шаблону (його немає). closedDay — явний override
+    // "closed": там показуємо лише вільні слоти (мітки зайнятості зі старих записів не потрібні).
+    let offDay = false
+    let closedDay = false
     if (selectedDate) {
       const ov = (adminSettings.dateOverrides || []).find(o => o.date === dateStr)
-      if (ov?.type === 'closed') return []
-      if (!ov && Object.keys(slots).length === 0) {
+      if (ov?.type === 'closed') { offDay = true; closedDay = true }
+      if (!ov) {
         const dow = (selectedDate.getDay() + 6) % 7  // Mon=0..Sun=6
         const ws = (adminSettings.weekSchedule || [])[dow]
-        if (ws && ws.enabled === false) return []
+        if (ws && ws.enabled === false) {
+          if (Object.keys(slots).length === 0) return []
+          offDay = true
+        }
       }
     }
 
@@ -509,6 +517,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
 
     return Object.values(slots)
       .filter(slot => !!(slot.time))
+      .filter(slot => !closedDay || (slot.available !== false && !slot.adminBlocked))
       .filter(slot => !slot.vipOnly || isVipStudent)
       .filter(slot => !slot.privateOnly || isPrivateStudent)
       .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
@@ -569,7 +578,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           // lunchOverride — адмін вручну відкрив саме цей слот під час обіду
           // (webid4: довгий тап → "Вільний слот"); такий слот не ховаємо,
           // навіть якщо його час формально потрапляє у вікно обіду.
-          lunchBlocked:   !slot.lunchOverride && isBlockedByLunch(slot.time, durHoursForSlot),
+          lunchBlocked:   !slot.lunchOverride && !offDay && isBlockedByLunch(slot.time, durHoursForSlot),
           overlapBlocked: slot.available !== false && (isCustomDur ? false : wouldOverlapTaken(slot.time, durHoursForSlot)),
           cutoffBlocked:  (() => {
             const hrs = adminSettings.bookCutoffHours || 0
