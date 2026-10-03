@@ -1209,3 +1209,66 @@
   }
   .review-card { flex: 0 1 320px; }
 }
+
+/* Підпис розробника */
+.devby {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 26px;
+  padding-top: 24px;
+  position: relative;
+}
+
+.devby::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(260px, 70%);
+  height: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, var(--border-hi, rgba(255,255,255,0.22)), transparent);
+}
+
+.devby small {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.devby b {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  background: linear-gradient(100deg, var(--acc-hi), var(--gold) 40%, #c084fc 75%, var(--acc-hi));
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 16px rgba(255,122,92,0.3));
+  animation: devshine 7s linear infinite;
+}
+
+[data-theme="light"] .devby b {
+  background-image: linear-gradient(100deg, var(--accent), #d97706 40%, #7c3aed 75%, var(--accent));
+  filter: none;
+}
+
+.devby span {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: var(--dim);
+}
+
+@keyframes devshine { to { background-position: 220% center; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .devby b { animation: none; }
+}
