@@ -593,7 +593,6 @@ export default function Landing({ user, profile }) {
           {installPrompt && !installed && (
             <button className="footer-install-btn" onClick={handleInstallClick}>📲 Встановити додаток</button>
           )}
-          <div>© 2026 ID4Drive. Школа водіння в Києві.</div>
           <div className="devby">
             <small>Розробка та дизайн</small>
             <b>AlDemi Studio</b>
