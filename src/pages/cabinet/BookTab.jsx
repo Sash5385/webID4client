@@ -697,7 +697,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           background:'linear-gradient(135deg,rgba(91,155,255,0.13),rgba(37,99,235,0.08))',
           border:'1px solid rgba(91,155,255,0.25)',
           borderRadius:12, padding:'10px 14px',
-          display:'flex', alignItems:'center', gap:10, marginBottom:8,
+          display:'flex', alignItems:'center', gap:10, marginTop:8, marginBottom:8,
         }}>
           <span style={{fontSize:22}}>📅</span>
           <div style={{flex:1, minWidth:0}}>
