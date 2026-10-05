@@ -167,9 +167,9 @@ export default function ProgressTab({ user, profile, bookingsData }) {
       )}
 
       <div className="progress-hero" style={{ marginTop: 14 }}>
-        <div className="progress-title" style={{ marginBottom: 14 }}>🏅 Медалі</div>
+        <div className="progress-title" style={{ marginBottom: 14 }}>🏅 Заохочення</div>
         {Object.keys(profile?.badges || {}).length === 0 ? (
-          <div className="progress-subtitle">Ще немає медалей</div>
+          <div className="progress-subtitle">Ще немає заохочень</div>
         ) : (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {Object.entries(profile.badges).sort((a, b) => (b[1].awardedAt || 0) - (a[1].awardedAt || 0)).map(([bid, b]) => (
