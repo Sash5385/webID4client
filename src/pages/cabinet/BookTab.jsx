@@ -537,7 +537,10 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
         const slotStartMin = th * 60 + tm
         // Тривалість цього конкретного слота (адмін міг розтягнути його на
         // календарі) — вона ж і буде тривалістю запису, якщо учень його обере.
-        const slotDurMin = slot.durMin || 60
+        // Межа розтягнутого слота — початок наступного слота дня (як в адмінці): слот не «наїжджає» на
+        // наступний, навіть якщо в durMin лишилось більше.
+        const nextDocStart = Object.values(slots).filter(x => x.time).map(x => timeToMin(x.time)).filter(t => t > slotStartMin).sort((x, y) => x - y)[0]
+        const slotDurMin = (slot.durMin && nextDocStart != null) ? Math.min(slot.durMin, nextDocStart - slotStartMin) : (slot.durMin || 60)
         const isCustomDur = slotDurMin !== 60
         const durHoursForSlot = slotDurMin / 60
         let totalSurcharge = 0
