@@ -4,7 +4,7 @@ import { useToast } from '../../hooks/useToast'
 import { useBackClose } from '../../hooks/useBackButton'
 import { cancelBooking, createBooking, markSlotsUnavailable, claimSlot, unclaimSlot, saveStudentNote, subscribeSlotsForDate, getAdminSettings, getAdminServices, subscribeMonthAvailability } from '../../firebase/db'
 import { parseYMD, getMonthShort, getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay, formatDateLabel } from '../../utils/date'
-import { googleCalendarLink, downloadICS } from '../../utils/calendar'
+import { googleCalendarLink, downloadICS, onGoogleCalendarClick } from '../../utils/calendar'
 import './BookingsTab.css'
 import './BookTab.css'
 
@@ -369,7 +369,7 @@ export default function BookingsTab({ user, profile, bookingsData }) {
           )}
           {!isPast && b.status !== 'cancelled' && (
             <div className="booking-cal-row">
-              <a href={googleCalendarLink(b)} target="_blank" rel="noopener noreferrer" className="cal-add-btn">
+              <a href={googleCalendarLink(b)} onClick={e => onGoogleCalendarClick(e, b)} target="_blank" rel="noopener noreferrer" className="cal-add-btn">
                 Google Calendar
               </a>
               <button className="cal-add-btn" onClick={() => downloadICS(b)}>
