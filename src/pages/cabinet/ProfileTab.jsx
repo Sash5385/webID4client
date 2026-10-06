@@ -16,7 +16,7 @@ const EXPERIENCE_LABELS = {
   licensed: "З правами",
 };
 
-export default function ProfileTab({ user, profile, onProfileUpdate }) {
+export default function ProfileTab({ user, profile, bookingsData, onProfileUpdate }) {
   useTheme();
   const { showToast, ToastEl } = useToast();
 
@@ -61,6 +61,33 @@ export default function ProfileTab({ user, profile, onProfileUpdate }) {
         </div>
       </div>
 
+
+      {(profile?.studentType || 'school') === 'school' && (() => {
+        const hours = Math.max(0, Number(bookingsData?.schoolHours) || 0)
+        const done = hours >= 40
+        const shown = Math.min(hours, 40)
+        const pct = Math.round((shown / 40) * 100)
+        const fmtH = (n) => (Number.isInteger(n) ? n : Math.round(n * 10) / 10)
+        return (
+          <div className="profile-section">
+            <div className="section-title">🎓 Прогрес автошколи</div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:8}}>
+              <div style={{fontSize:22,fontWeight:900,color: done ? '#34d399' : 'var(--text, inherit)'}}>
+                {fmtH(shown)} <span style={{fontSize:14,fontWeight:700,color:"var(--dim)"}}>/ 40 год</span>
+              </div>
+              <div style={{fontSize:13,fontWeight:800,color: done ? '#34d399' : '#fbbf24'}}>{pct}%</div>
+            </div>
+            <div style={{height:10,borderRadius:6,background:"rgba(255,255,255,0.10)",overflow:"hidden"}}>
+              <div style={{width:`${pct}%`,height:"100%",borderRadius:6,background: done ? 'linear-gradient(90deg,#34d399,#10b981)' : 'linear-gradient(90deg,#fbbf24,#f59e0b)',transition:"width .4s ease"}}/>
+            </div>
+            <div style={{fontSize:12,color:"var(--dim)",marginTop:8,lineHeight:1.5}}>
+              {done
+                ? '✅ 40 годин автошколи пройдено — переходимо на приватні уроки.'
+                : `Залишилось ${fmtH(40 - shown)} год до 40 годин — після них перейдемо на приватні уроки.`}
+            </div>
+          </div>
+        )
+      })()}
 
       <div className="profile-section">
         <div className="section-title">Контакти інструктора</div>
