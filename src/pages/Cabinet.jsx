@@ -209,6 +209,14 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
   const SWIPE_TABS = ['bookings', 'queue', 'book', 'chat', 'notifications']
   const touchStartRef = useRef(null)
   const handleContentTouchStart = (e) => {
+    // Жест починається всередині горизонтально прокручуваного блоку (швидкі відповіді в чаті тощо) —
+    // це прокрутка самого блоку, а не перемикання вкладок
+    for (let el = e.target; el && el !== e.currentTarget; el = el.parentElement) {
+      if (el.scrollWidth > el.clientWidth + 1 && /(auto|scroll)/.test(getComputedStyle(el).overflowX)) {
+        touchStartRef.current = null
+        return
+      }
+    }
     const t = e.touches[0]
     touchStartRef.current = { x: t.clientX, y: t.clientY }
   }
