@@ -506,7 +506,10 @@ export async function declineQueueOffer(uid, slotKey, date, time) {
 // ─── ADMIN SETTINGS ──────────────────────────────────────────────
 export async function getAdminSettings() {
   const snap = await get(ref(db, 'admin_settings'))
-  return snap.exists() ? snap.val() : { lunchEnabled: false, lunchStart: 12, lunchEnd: 13, workStart: 9, workEnd: 18, interval: 30 }
+  return snap.exists() ? snap.val() : {
+    lunchEnabled: false, lunchStart: 12, lunchEnd: 13, workStart: 9, workEnd: 18, interval: 30,
+    studentCanCancel: true, studentCanReschedule: true, minChangeHours: 24,
+  }
 }
 
 export async function getAdminServices() {

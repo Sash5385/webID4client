@@ -18,9 +18,6 @@ function effectivePrice(svc, dateStr) {
   return svc.price || 0
 }
 
-// Мінімальний час до уроку, коли учень ще може самостійно скасувати (год)
-const CANCEL_WINDOW_HOURS = 24
-
 function hoursUntilLesson(booking) {
   if (!booking?.date || !booking?.time) return Infinity
   const [h, m] = booking.time.split(':').map(Number)
@@ -41,7 +38,7 @@ function RescheduleModal({ booking, user, profile, onClose, onDone }) {
   const [selectedTime, setSelectedTime] = useState(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [adminSettings, setAdminSettings] = useState({ lunchEnabled: true, lunchStart: 12, lunchEnd: 13 })
+  const [adminSettings, setAdminSettings] = useState({ lunchEnabled: true, lunchStart: 12, lunchEnd: 13, studentCanReschedule: true, minChangeHours: 24 })
   const [monthAvail, setMonthAvail] = useState({})
   const [services, setServices] = useState([])
 
@@ -115,6 +112,13 @@ function RescheduleModal({ booking, user, profile, onClose, onDone }) {
 
   const handleConfirm = async () => {
     if (!selectedDate || !selectedTime) return
+    // Захист від повторного відкриття модалки після того, як вікно переносу
+    // вже закрилось (кнопка в списку не встигла перерендеритись disabled) —
+    // та саме обмеження, що й на кнопці "📅 Перенести" в списку записів.
+    if (adminSettings.studentCanReschedule === false || hoursUntilLesson(booking) < (adminSettings.minChangeHours ?? 24)) {
+      showModalToast(`Перенесення доступне не пізніше ніж за ${adminSettings.minChangeHours ?? 24} год до уроку`)
+      return
+    }
     setSaving(true)
     try {
       const newDate = formatDateYMD(selectedDate)
@@ -291,6 +295,13 @@ export default function BookingsTab({ user, profile, bookingsData }) {
   const [showAllCompleted, setShowAllCompleted] = useState(false)
   const [noteOpenId, setNoteOpenId] = useState(null)
   const [noteDraft, setNoteDraft] = useState('')
+  const [adminSettings, setAdminSettings] = useState({ studentCanCancel: true, studentCanReschedule: true, minChangeHours: 24 })
+
+  useEffect(() => {
+    getAdminSettings().then(s => setAdminSettings(s)).catch(() => {})
+  }, [])
+
+  const changeWindowHours = adminSettings.minChangeHours ?? 24
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type })
@@ -298,8 +309,12 @@ export default function BookingsTab({ user, profile, bookingsData }) {
   }
 
   const handleCancel = async (booking) => {
-    if (hoursUntilLesson(booking) < CANCEL_WINDOW_HOURS) {
-      showToast(`Скасувати урок можна не пізніше ніж за ${CANCEL_WINDOW_HOURS} год до початку. Зверніться до інструктора.`, 'error')
+    if (adminSettings.studentCanCancel === false) {
+      showToast('Самостійна відміна вимкнена. Зверніться до інструктора.', 'error')
+      return
+    }
+    if (hoursUntilLesson(booking) < changeWindowHours) {
+      showToast(`Скасувати урок можна не пізніше ніж за ${changeWindowHours} год до початку. Зверніться до інструктора.`, 'error')
       return
     }
     if (cancelConfirmId !== booking.id) {
@@ -324,7 +339,8 @@ export default function BookingsTab({ user, profile, bookingsData }) {
           return `${String(Math.floor(total / 60)).padStart(2,'0')}:${String(total % 60).padStart(2,'0')}`
         })()
       : null
-    const cancelLocked = hoursUntilLesson(b) < CANCEL_WINDOW_HOURS
+    const cancelLocked = adminSettings.studentCanCancel === false || hoursUntilLesson(b) < changeWindowHours
+    const rescheduleLocked = adminSettings.studentCanReschedule === false || hoursUntilLesson(b) < changeWindowHours
     const statusClass = b.status === 'confirmed' ? 'status-confirmed'
       : b.status === 'cancelled' ? 'status-cancelled' : 'status-pending'
     const statusText = b.status === 'confirmed' ? (isPast ? 'Завершено' : 'Підтверджено')
@@ -362,9 +378,9 @@ export default function BookingsTab({ user, profile, bookingsData }) {
               ✓ Ви підтвердили присутність
             </div>
           )}
-          {!isPast && b.status !== 'cancelled' && cancelLocked && (
+          {!isPast && b.status !== 'cancelled' && (cancelLocked || rescheduleLocked) && (
             <div className="booking-meta" style={{ color: 'var(--dim)', marginTop: 4 }}>
-              ⏳ Скасування — не пізніше ніж за {CANCEL_WINDOW_HOURS} год
+              ⏳ Зміни/скасування — не пізніше ніж за {changeWindowHours} год
             </div>
           )}
           {!isPast && b.status !== 'cancelled' && (
@@ -404,7 +420,13 @@ export default function BookingsTab({ user, profile, bookingsData }) {
         </div>
         {!isPast && b.status !== 'cancelled' && (
           <div className="booking-actions">
-            <button className="action-btn" title="Перенести" onClick={() => setRescheduleBooking(b)}>📅</button>
+            <button
+              className="action-btn"
+              title={rescheduleLocked ? `Перенесення доступне не пізніше ніж за ${changeWindowHours} год` : 'Перенести'}
+              onClick={() => !rescheduleLocked && setRescheduleBooking(b)}
+              disabled={rescheduleLocked}
+              style={rescheduleLocked ? { opacity: 0.4 } : {}}
+            >📅</button>
             {cancelConfirmId === b.id ? (
               <>
                 <button className="action-btn" style={{ color: '#e53935', fontSize: 11, padding: '2px 6px' }} onClick={() => handleCancel(b)}>Так</button>
@@ -413,7 +435,7 @@ export default function BookingsTab({ user, profile, bookingsData }) {
             ) : (
               <button
                 className="action-btn"
-                title={cancelLocked ? `Скасування доступне не пізніше ніж за ${CANCEL_WINDOW_HOURS} год` : 'Скасувати'}
+                title={cancelLocked ? `Скасування доступне не пізніше ніж за ${changeWindowHours} год` : 'Скасувати'}
                 onClick={() => handleCancel(b)}
                 disabled={cancelLocked}
                 style={cancelLocked ? { opacity: 0.4 } : {}}

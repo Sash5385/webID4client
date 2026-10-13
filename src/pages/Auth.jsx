@@ -247,6 +247,10 @@ export default function Auth({ user, profile, onProfileSaved }) {
       const data = {
         name: `${name.trim()} ${surname.trim()}`,
         phone: user.phoneNumber || `+380${surveyPhone.trim()}`,
+        // Відомий безкоштовно для Google/Email-входу — зберігаємо, щоб
+        // Cloud Function onNewStudentRegistered могла зіставити з заздалегідь
+        // створеною адміном карткою учня ще й по email, не лише по телефону.
+        email: user.email || null,
         studentType,
         experience,
         filmingConsent,
