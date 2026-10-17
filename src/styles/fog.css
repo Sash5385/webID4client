@@ -1,0 +1,61 @@
+/* Стиль «Туман» (з Juno): синьо-індиго фон, скляні картки, градієнтні кнопки.
+   Вмикається атрибутом data-fog="on" на <html> (див. hooks/useTheme.js); лише темна тема.
+   Вимикач — Профіль → «Стиль «Туман»». Без атрибута цей файл нічого не змінює. */
+html[data-fog="on"] body[data-theme="dark"]{
+  --bg:#10141c;--bg-deep:#0b0f16;--surface:#1a2133;--surf-hi:#232c42;--surf-lo:#141a28;
+  --border:rgba(255,255,255,0.14);--text:#e8edf6;--dim:#c0c9d9;--faint:#b0bacc;
+  --accent:#60a5fa;--acc-hi:#93c5fd;--blue:#93c5fd;
+  --shadow:0 6px 20px rgba(0,0,0,0.25);
+  --fog-glass:rgba(255,255,255,0.07);
+  --fog-btn:linear-gradient(165deg,#93c5fd,#60a5fa);
+  --fog-btn-sh:0 6px 16px rgba(96,165,250,0.35);
+}
+html[data-fog="on"] body[data-theme="dark"] #root::before{
+  background:radial-gradient(circle 400px at 0% 0%,rgba(96,165,250,.30),transparent),radial-gradient(circle 370px at 100% 80%,rgba(129,140,248,.26),transparent),#10141c;
+}
+html[data-fog="on"] body[data-theme="dark"] #root::after{background:none}
+
+/* картки */
+html[data-fog="on"] body[data-theme="dark"] :is(.cal-card,.svc-tile,.user-banner,.booking-card,.notif-card,.profile-section,.profile-banner,.empty-state,.progress-hero,.stat-card,.chat-input-box,.history-msg-item,.bubble-in,.phone-card,.dur-pill){
+  background:var(--fog-glass);
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+  border:1px solid var(--border);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+}
+html[data-fog="on"] body[data-theme="dark"] .dur-pill{border-radius:99px}
+html[data-fog="on"] body[data-theme="dark"] .bubble-in{border-radius:18px 18px 18px 6px}
+
+/* верхня й нижня панелі */
+html[data-fog="on"] body[data-theme="dark"] .cab-topbar{background:linear-gradient(180deg,rgba(16,20,28,.85) 60%,rgba(16,20,28,.6));border-bottom:1px solid var(--border);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+html[data-fog="on"] body[data-theme="dark"] .botnav-inner{background:rgba(16,20,28,.7);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:28px;box-shadow:var(--shadow)}
+html[data-fog="on"] body[data-theme="dark"] .cab-icon-btn{background:var(--fog-glass);border:1px solid var(--border);border-radius:50%}
+
+/* кнопки */
+html[data-fog="on"] body[data-theme="dark"] :is(.btn-primary,.dialog-btn.primary){
+  background:var(--fog-btn);color:#06182e;border-radius:16px;box-shadow:var(--fog-btn-sh);
+}
+html[data-fog="on"] body[data-theme="dark"] .btn-primary:active:not(:disabled){box-shadow:0 2px 8px rgba(96,165,250,.3)}
+html[data-fog="on"] body[data-theme="dark"] .btn-primary:disabled{background:var(--surf-lo);color:var(--faint);box-shadow:none}
+html[data-fog="on"] body[data-theme="dark"] .btn-primary::before,
+html[data-fog="on"] body[data-theme="dark"] .dialog-btn.primary::before{display:none}
+html[data-fog="on"] body[data-theme="dark"] .dialog-btn.secondary{border-radius:16px;background:var(--fog-glass);border:1px solid var(--border)}
+html[data-fog="on"] body[data-theme="dark"] .botnav-fab{background:var(--fog-btn);border-color:#10141c;box-shadow:0 8px 20px rgba(96,165,250,.45)}
+html[data-fog="on"] body[data-theme="dark"] .botnav-fab-glow{background:radial-gradient(circle,rgba(96,165,250,.35),transparent 70%)}
+html[data-fog="on"] body[data-theme="dark"] .botnav-btn.active .botnav-ico,
+html[data-fog="on"] body[data-theme="dark"] .botnav-btn.active .botnav-lbl{color:var(--accent)}
+
+/* календар і слоти: плитки з тінтом за наповненням */
+html[data-fog="on"] body[data-theme="dark"] .cal-day{border-radius:11px}
+html[data-fog="on"] body[data-theme="dark"] .cal-day.day-free{background:rgba(126,217,87,.22);color:#d6f5c4;box-shadow:none;border:1px solid rgba(126,217,87,.35)}
+html[data-fog="on"] body[data-theme="dark"] .cal-day.day-partial{background:rgba(247,201,72,.22);color:#fdeeb0;box-shadow:none;border:1px solid rgba(247,201,72,.35)}
+html[data-fog="on"] body[data-theme="dark"] .cal-day.day-full{background:rgba(239,68,68,.22);color:#fecaca;box-shadow:none;border:1px solid rgba(239,68,68,.35);opacity:.8}
+html[data-fog="on"] body[data-theme="dark"] .cal-day.selected{background:var(--fog-btn);color:#06182e !important;border-radius:11px;box-shadow:var(--fog-btn-sh)}
+html[data-fog="on"] body[data-theme="dark"] .cal-day.today:not(.selected)::before{border-radius:11px;border-color:var(--accent)}
+html[data-fog="on"] body[data-theme="dark"] .cal-day.today:not(.selected){color:var(--accent) !important}
+html[data-fog="on"] body[data-theme="dark"] .slot{border-radius:14px;background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--text)}
+html[data-fog="on"] body[data-theme="dark"] .slot.taken{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3)}
+html[data-fog="on"] body[data-theme="dark"] .slot.selected{background:var(--fog-btn);color:#06182e;border-color:rgba(96,165,250,.7);box-shadow:var(--fog-btn-sh)}
+
+/* вікна */
+html[data-fog="on"] body[data-theme="dark"] .dialog{background:linear-gradient(180deg,#1a2132,#10141c);border-radius:28px}

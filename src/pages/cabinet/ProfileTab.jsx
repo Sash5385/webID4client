@@ -1,4 +1,5 @@
-import { useTheme } from "../../hooks/useTheme";
+import { useState } from "react";
+import { useTheme, isFogOn, applyFog, FOG_KEY } from "../../hooks/useTheme";
 import { useToast } from "../../hooks/useToast";
 import { getInitials, formatPhone } from "../../utils/format";
 import "./ProfileTab.css";
@@ -19,6 +20,13 @@ const EXPERIENCE_LABELS = {
 export default function ProfileTab({ user, profile, bookingsData, onProfileUpdate }) {
   useTheme();
   const { showToast, ToastEl } = useToast();
+  const [fog, setFog] = useState(isFogOn);
+  const toggleFog = () => {
+    const next = !fog;
+    setFog(next);
+    applyFog(next);
+    try { localStorage.setItem(FOG_KEY, next ? 'on' : 'off'); } catch { /* приватний режим */ }
+  };
 
   if (!profile) {
     return (
@@ -119,6 +127,18 @@ export default function ProfileTab({ user, profile, bookingsData, onProfileUpdat
             <div className="val">Київ, Верховинна 44</div>
           </div>
         </a>
+      </div>
+
+      <div className="profile-section">
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+          <div>
+            <div style={{fontSize:14,fontWeight:700}}>Стиль «Туман»</div>
+            <div style={{fontSize:12,color:"var(--dim)",marginTop:2}}>Скляний фон і картки</div>
+          </div>
+          <div className={`edit-switch${fog ? " on" : ""}`} onClick={toggleFog} role="switch" aria-checked={fog} aria-label="Стиль «Туман»">
+            <div className="edit-switch-knob"/>
+          </div>
+        </div>
       </div>
 
       {ToastEl}
