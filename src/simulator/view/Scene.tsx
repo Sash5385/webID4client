@@ -137,7 +137,7 @@ const Dynamic = ({ stateRef }: { stateRef: { current: RoadState } }) => {
   )
 }
 
-const useGroupFrame = (fn: (g: THREE.Group) => void) => {
+export const useGroupFrame = (fn: (g: THREE.Group) => void) => {
   const ref = useMemo(() => ({ current: null as THREE.Group | null }), [])
   useFrame(() => { if (ref.current) fn(ref.current) })
   return ref
