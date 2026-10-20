@@ -16,6 +16,7 @@ import Auth from './pages/Auth'
 import Cabinet from './pages/Cabinet'
 import Landing from './pages/Landing'
 const SimPage = lazy(() => import('./simulator/pages/SimPage'))
+const QuizPage = lazy(() => import('./simulator/pages/QuizPage'))
 const CrossingPage = lazy(() => import('./simulator/pages/CrossingPage'))
 
 // ─── PWA INSTALL PROMPT (пропонуємо зберегти застосунок лише при
@@ -267,6 +268,7 @@ export default function App() {
 
       <Route path="/simulator" element={<Suspense fallback={null}><SimPage /></Suspense>} />
       <Route path="/simulator/crossing" element={<Suspense fallback={null}><CrossingPage /></Suspense>} />
+      <Route path="/test3d" element={<Suspense fallback={null}><QuizPage /></Suspense>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     {needRefresh && (
