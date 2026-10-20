@@ -6,6 +6,7 @@ import type { EventType, Input, RoadState, SignalDir } from '../engine/types'
 import { DT, toKmh } from '../engine/units'
 import { Controls } from '../ui/Controls'
 import { EVENT_TEXT, Hud } from '../ui/Hud'
+import { SimAudio } from '../view/audio'
 import { Scene } from '../view/Scene'
 
 type Mode = 'learn' | 'exam'
@@ -33,6 +34,9 @@ function Run({ mode, onRestart, onExit }: { mode: Mode; onRestart: () => void; o
   const acc = useRef(0)
   const last = useRef(performance.now())
   const errors = useRef<EventType[]>([])
+  const audio = useRef<SimAudio>(new SimAudio())
+  const [muted, setMuted] = useState(false)
+  useEffect(() => { const a = audio.current; return () => a.dispose() }, [])
   const [signal, setSignal] = useState<SignalDir>(0)
   const [hud, setHud] = useState({ kmh: 0, message: '', errors: 0, over: false })
 
@@ -44,13 +48,15 @@ function Run({ mode, onRestart, onExit }: { mode: Mode; onRestart: () => void; o
       const r = step(stateRef.current, input.current, DT)
       input.current.laneChange = 0
       stateRef.current = r.state
-      for (const e of r.events) if (e.type !== 'finish') errors.current.push(e.type)
+      for (const e of r.events) if (e.type !== 'finish') { errors.current.push(e.type); if (e.type === 'collision') audio.current.crash(); else audio.current.beep() }
       if (r.events.length) {
         const e = r.events[r.events.length - 1]
         setHud((h) => ({ ...h, message: learn || e.type === 'collision' || e.type === 'finish' ? EVENT_TEXT[e.type] : h.message }))
       }
       acc.current -= DT
     }
+    const pl = stateRef.current.player
+    audio.current.update(pl.v, input.current.gas, input.current.brake, pl.signal !== 0, 1 / 60)
   }, [learn])
 
   useEffect(() => {
@@ -74,7 +80,8 @@ function Run({ mode, onRestart, onExit }: { mode: Mode; onRestart: () => void; o
 
   const passed = errors.current.length <= MAX_ERRORS && !errors.current.includes('collision')
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#000' }}>
+    <div style={{ position: 'fixed', inset: 0, background: '#000' }} onPointerDown={() => audio.current.unlock()}>
+      <button onClick={(e) => { e.stopPropagation(); audio.current.unlock(); audio.current.setMuted(!muted); setMuted(!muted) }} style={{ position: 'absolute', top: 44, right: 8, zIndex: 2, width: 40, height: 40, borderRadius: 20, border: 'none', background: 'rgba(0,0,0,.55)', color: '#fff', fontSize: 18 }}>{muted ? '🔇' : '🔊'}</button>
       <Canvas shadows dpr={[1, 2]} camera={{ fov: 60, near: 0.1, far: 200 }}>
         <Scene stateRef={stateRef} hint={learn} tick={tick} />
       </Canvas>

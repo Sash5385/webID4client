@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createCrossState, stepCross, type CrossEventType, type CrossInput, type CrossState } from '../engine/crossing'
 import type { SignalDir } from '../engine/types'
 import { DT, toKmh } from '../engine/units'
+import { SimAudio } from '../view/audio'
 import { CrossScene } from '../view/CrossScene'
 
 const TEXT: Record<CrossEventType, string> = {
@@ -27,6 +28,9 @@ function Run({ onRestart }: { onRestart: () => void }) {
   const acc = useRef(0)
   const last = useRef(performance.now())
   const log = useRef<CrossEventType[]>([])
+  const audio = useRef<SimAudio>(new SimAudio())
+  const [muted, setMuted] = useState(false)
+  useEffect(() => { const a = audio.current; return () => a.dispose() }, [])
   const [signal, setSignal] = useState<SignalDir>(0)
   const [hud, setHud] = useState({ kmh: 0, over: false, msg: '' })
 
@@ -38,9 +42,11 @@ function Run({ onRestart }: { onRestart: () => void }) {
       const r = stepCross(stateRef.current, input.current, DT)
       input.current.turn = null
       stateRef.current = r.state
-      for (const e of r.events) log.current.push(e.type)
+      for (const e of r.events) { log.current.push(e.type); if (e.type === 'collision') audio.current.crash(); else if (e.type !== 'finish') audio.current.beep() }
       acc.current -= DT
     }
+    const pl = stateRef.current.player
+    audio.current.update(pl.v, input.current.gas, input.current.brake, pl.signal !== 0, 1 / 60)
   }, [])
 
   useEffect(() => {
@@ -63,7 +69,8 @@ function Run({ onRestart }: { onRestart: () => void }) {
   const ok = log.current.includes('finish') && errs.length <= MAX_ERRORS && !errs.includes('collision')
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#000' }}>
+    <div style={{ position: 'fixed', inset: 0, background: '#000' }} onPointerDown={() => audio.current.unlock()}>
+      <button onClick={(e) => { e.stopPropagation(); audio.current.unlock(); audio.current.setMuted(!muted); setMuted(!muted) }} style={{ position: 'absolute', top: 44, right: 8, zIndex: 2, width: 40, height: 40, borderRadius: 20, border: 'none', background: 'rgba(0,0,0,.55)', color: '#fff', fontSize: 18 }}>{muted ? '🔇' : '🔊'}</button>
       <Canvas shadows dpr={[1, 2]} camera={{ fov: 60, near: 0.1, far: 200 }}>
         <CrossScene stateRef={stateRef} tick={tick} />
       </Canvas>

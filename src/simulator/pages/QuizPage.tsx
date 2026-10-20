@@ -1,9 +1,10 @@
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
-import { useMemo, useRef, useState, type MutableRefObject } from 'react'
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
 import * as THREE from 'three'
 import { buildPath, buildPlan, pointAt, positionOf, type QuizPlan, type QuizScenario } from '../engine/quiz'
 import { QUIZ_SCENARIOS } from '../engine/scenarios/quiz'
+import { SimAudio } from '../view/audio'
 import { Car } from '../view/Scene'
 
 const COLORS = ['#d9534f', '#e0a800', '#5cb85c', '#8e5ad7']
@@ -64,6 +65,8 @@ export default function QuizPage() {
   const [warn, setWarn] = useState('')
   const [score, setScore] = useState(0)
   const anim = useRef<Anim>({ plan: null, t: 0 })
+  const audio = useRef<SimAudio>(new SimAudio())
+  useEffect(() => { const a = audio.current; return () => a.dispose() }, [])
 
   const pick = (id: string) => {
     if (checked) return
@@ -73,8 +76,10 @@ export default function QuizPage() {
   const check = () => {
     if (order.length !== sc.cars.length) { setWarn('Оберіть порядок для всіх машин'); return }
     const plan = buildPlan(sc, order)
+    audio.current.unlock()
     anim.current = { plan, t: 0 }
     setChecked(plan)
+    if (plan.collisionAt !== null) setTimeout(() => audio.current.crash(), plan.collisionAt * 1000)
     if (plan.correct) setScore((s) => s + 1)
   }
   const next = () => {
