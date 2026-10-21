@@ -15,7 +15,7 @@ const TEXT: Record<CrossEventType, string> = {
 }
 const MAX_ERRORS = 2
 
-const b: React.CSSProperties = { flex: 1, minHeight: 52, border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, background: 'rgba(30,32,38,.85)', color: '#fff', touchAction: 'none' }
+const b: React.CSSProperties = { flex: 1, minWidth: 0, padding: '0 2px', minHeight: 52, border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, background: 'rgba(30,32,38,.85)', color: '#fff', touchAction: 'none' }
 
 export default function CrossingPage() {
   const [run, setRun] = useState(0)

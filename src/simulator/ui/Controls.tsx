@@ -2,7 +2,7 @@ import type { MutableRefObject } from 'react'
 import type { Input, SignalDir } from '../engine/types'
 
 const btn: React.CSSProperties = {
-  flex: 1, minHeight: 56, border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700,
+  flex: 1, minWidth: 0, padding: '0 2px', minHeight: 56, border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700,
   background: 'rgba(30,32,38,.85)', color: '#fff', touchAction: 'none', userSelect: 'none',
 }
 
