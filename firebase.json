@@ -1,4 +1,4 @@
-﻿{
+{
     "hosting":  {
                     "site":  "id4drive-booking-44182",
                     "public":  "dist",
@@ -14,13 +14,5 @@
                                          "destination":  "/index.html"
                                      }
                                  ]
-                },
-    "functions":  [
-                      {
-                          "source":  "functions"
-                      }
-                  ],
-    "database": {
-        "rules": "database.rules.json"
-    }
+                }
 }

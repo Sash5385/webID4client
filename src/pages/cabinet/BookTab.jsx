@@ -100,10 +100,12 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   const ctaSectionRef = useRef(null)
   const [cardCopied, setCardCopied] = useState(false)
   const copyingCardRef = useRef(false)
+  // Картка з Налаштувань адмінки (admin_settings/paymentCard); якщо не задана — стара за замовчуванням.
+  const paymentCard = String(adminSettings.paymentCard || '').replace(/\D/g, '') || '4035200041312916'
   const copyCard = () => {
     if (copyingCardRef.current) return
     copyingCardRef.current = true
-    navigator.clipboard.writeText('4035200041312916').then(() => {
+    navigator.clipboard.writeText(paymentCard).then(() => {
       setCardCopied(true)
       setTimeout(() => setCardCopied(false), 1800)
     }).catch(() => {}).finally(() => {
@@ -677,7 +679,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
       <div className="user-banner">
         <button type="button" className="banner-card" aria-label="Скопіювати номер картки" onClick={copyCard}>
           <div className="banner-card-chip" />
-          <div className="banner-card-num">••2916</div>
+          <div className="banner-card-num">••{paymentCard.slice(-4)}</div>
         </button>
         <div className="banner-center">
           <div className="banner-avatar">{getInitials(profile?.name)}</div>
