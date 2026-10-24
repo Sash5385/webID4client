@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useTheme } from '../hooks/useTheme'
+import { useTheme, isFogOn, applyFog, FOG_KEY } from '../hooks/useTheme'
 import { useToast } from '../hooks/useToast'
 import { useBookings } from '../hooks/useBookings'
 import { useBackClose } from '../hooks/useBackButton'
@@ -233,6 +233,15 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
     nav('/', { replace: true })
   }
 
+  // Стиль «Туман» — перемикач у верхній панелі (раніше був у Профілі)
+  const [fog, setFog] = useState(isFogOn)
+  const toggleFog = () => {
+    const next = !fog
+    setFog(next)
+    applyFog(next)
+    try { localStorage.setItem(FOG_KEY, next ? 'on' : 'off') } catch { /* приватний режим */ }
+  }
+
   return (
     <div className="cabinet-page">
 
@@ -255,6 +264,13 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
         </div>
         <div className="cab-title">{TITLES[activeTab] || 'КАБІНЕТ'}</div>
         <div className="cab-actions">
+          <button className="cab-icon-btn" onClick={toggleFog} aria-label="Стиль «Туман»" title="Стиль «Туман»"
+            style={fog ? { color: 'var(--accent)' } : undefined}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17.5 10a5.5 5.5 0 0 0-10.7-1.5A4 4 0 0 0 7 16.5h10.5a3.25 3.25 0 0 0 0-6.5z" transform="translate(0 -2)"/>
+              <line x1="4" y1="20" x2="14" y2="20"/><line x1="9" y1="23" x2="20" y2="23" transform="translate(0 -1)"/>
+            </svg>
+          </button>
           <button className="cab-icon-btn" onClick={forceUpdate} aria-label="Оновити">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="23 4 23 10 17 10"/>
