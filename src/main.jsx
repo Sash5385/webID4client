@@ -3,11 +3,13 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import { initErrorReporter } from './errorReporter.js'
+import { applyUiScale, readScale } from './hooks/useTheme'
 import './styles/tokens.css'
 import './styles/global.css'
 import './styles/fog.css'
 
 initErrorReporter()
+applyUiScale(readScale()) // масштаб інтерфейсу (Профіль → Розмір інтерфейсу) — до першого рендеру
 
 // Після деплою старі файли застосунку зникають із сервера: відкрита (або закешована) стара версія просить «чанк», якого вже немає,
 // і замість JS отримує index.html (помилка «text/html is not a valid JavaScript MIME type»). Тоді просто перезавантажуємо сторінку

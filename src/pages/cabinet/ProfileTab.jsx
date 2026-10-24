@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTheme, isFogOn, applyFog, FOG_KEY } from "../../hooks/useTheme";
+import { useTheme, isFogOn, applyFog, FOG_KEY, UI_SCALES, readScale, setUiScale } from "../../hooks/useTheme";
 import { useToast } from "../../hooks/useToast";
 import { getInitials, formatPhone } from "../../utils/format";
 import "./ProfileTab.css";
@@ -21,6 +21,7 @@ export default function ProfileTab({ user, profile, bookingsData, onProfileUpdat
   useTheme();
   const { showToast, ToastEl } = useToast();
   const [fog, setFog] = useState(isFogOn);
+  const [uiScale, setUiScaleLocal] = useState(readScale);
   const toggleFog = () => {
     const next = !fog;
     setFog(next);
@@ -138,6 +139,18 @@ export default function ProfileTab({ user, profile, bookingsData, onProfileUpdat
           <div className={`edit-switch${fog ? " on" : ""}`} onClick={toggleFog} role="switch" aria-checked={fog} aria-label="Стиль «Туман»">
             <div className="edit-switch-knob"/>
           </div>
+        </div>
+      </div>
+
+      <div className="profile-section">
+        <div className="section-title">🔎 Розмір інтерфейсу</div>
+        <div className="edit-tiles">
+          {UI_SCALES.map(sc => (
+            <button key={sc.id} type="button" className={`edit-tile${uiScale === sc.id ? " selected" : ""}`} onClick={() => { setUiScale(sc.id); setUiScaleLocal(sc.id); }}>
+              <span style={{display:"block",fontWeight:800,fontSize:sc.id === "s" ? 13 : sc.id === "l" ? 20 : 16,marginBottom:2}}>Аа</span>
+              {sc.name}
+            </button>
+          ))}
         </div>
       </div>
 
