@@ -145,7 +145,8 @@ function RescheduleModal({ booking, user, profile, onClose, onDone }) {
       const svc = services.find(s => s.id === booking.serviceId)
       let newPrice = booking.price
       if (svc) {
-        newPrice = Math.max(0, effectivePrice(svc, newDate) + newSurcharge - discountAmt)
+        // тариф — за годину, тож множимо на тривалість (раніше 2-годинний запис після перенесення коштував як 1 год)
+        newPrice = Math.max(0, Math.round(effectivePrice(svc, newDate) * durationHours) + newSurcharge - discountAmt)
       } else if (booking.price != null) {
         // Фіксована знижка вже врахована в booking.price раніше — тут лише
         // додаємо/віднімаємо різницю надбавки, без повторного застосування знижки.
