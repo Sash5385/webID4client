@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useState, useRef } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
 import { Capacitor } from '@capacitor/core'
@@ -87,6 +87,14 @@ function InstallBanner() {
       }}>✕</button>
     </div>
   )
+}
+
+// Неавторизований заходить на захищений маршрут: пам'ятаємо, куди хотів потрапити (глибоке посилання, пуш),
+// щоб після входу Auth.jsx повернув його туди, а не просто в /cabinet.
+function SaveRedirect({ to }) {
+  const location = useLocation()
+  localStorage.setItem('redirectAfterLogin', location.pathname + location.search)
+  return <Navigate to={to} replace />
 }
 
 export default function App() {
@@ -260,7 +268,7 @@ export default function App() {
       <Route path="/cabinet/*" element={
         user && profile
           ? <Cabinet user={user} profile={profile} onProfileUpdate={reloadProfile} />
-          : <Navigate to="/" replace />
+          : <SaveRedirect to="/" />
       } />
 
       <Route path="*" element={<Navigate to="/" replace />} />

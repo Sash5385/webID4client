@@ -228,6 +228,7 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
 
   const handleLogout = async () => {
     if (!window.confirm('Вийти з акаунту?')) return
+    localStorage.setItem('redirectAfterLogin', loc.pathname)
     await signOut()
     nav('/', { replace: true })
   }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { subscribeSlotsForDate, createBooking, joinQueue, leaveQueue, subscribeQueueForSlot, getAdminSettings, getAdminServices, markSlotsUnavailable, claimSlot, unclaimSlot, claimReservedSlot, setViewingSlot, clearViewingSlot, subscribeMonthAvailability } from '../../firebase/db'
+import { subscribeSlotsForDate, createBooking, joinQueue, leaveQueue, subscribeQueueCounts, subscribeMyQueueEntry, getAdminSettings, getAdminServices, markSlotsUnavailable, claimSlot, unclaimSlot, claimReservedSlot, setViewingSlot, clearViewingSlot, subscribeMonthAvailability } from '../../firebase/db'
 import { getMonthGrid, getMonthName, formatDateYMD, isPast, isSameDay, parseYMD } from '../../utils/date'
 import { getInitials, pluralize } from '../../utils/format'
 import { useToast } from '../../hooks/useToast'
@@ -82,7 +82,8 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     return null
   })
   const [slots, setSlots] = useState({})
-  const [queueMap, setQueueMap] = useState({}) // time → count
+  const [queueCounts, setQueueCounts] = useState({}) // time → { n, at } (публічний агрегат черги)
+  const [myQueue, setMyQueue] = useState({}) // time → власний запис учня в черзі
   const [selectedTime, setSelectedTime] = useState(notifParams?.time || null)
   // Другий обраний годинний слот — коли учень бере два сусідні вільні годинні
   // слоти (напр. 8:00 і 9:00), вони об'єднуються в один запис на 2 години.
@@ -214,27 +215,40 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
     return unsub
   }, [selectedDate])
 
-  // Підписка на чергу для всіх зайнятих слотів
+  // Черга: кількість — з публічного агрегату queue_counts (без ПІБ/телефонів), а власний
+  // запис учня — окремо за своїм uid (чужі записи черги правила БД не віддають).
   useEffect(() => {
+    setQueueCounts({})
+    setMyQueue({})
     if (!selectedDate) return
+    return subscribeQueueCounts(formatDateYMD(selectedDate), setQueueCounts)
+  }, [selectedDate])
+
+  useEffect(() => {
+    if (!selectedDate || !user?.uid) return
     const dateKey = formatDateYMD(selectedDate)
     const unsubs = []
     Object.values(slots).forEach(slot => {
       if (slot.available === false) {
-        const unsub = subscribeQueueForSlot(dateKey, slot.time, entries => {
-          const sorted = [...entries].sort((a, b) => (a.addedAt || 0) - (b.addedAt || 0))
-          const myIdx = sorted.findIndex(e => e.uid === user?.uid && (e.status === 'waiting' || e.status === 'offered'))
-          const waitingCount = entries.filter(e => e.status === 'waiting').length
-          setQueueMap(prev => ({
-            ...prev,
-            [slot.time]: { count: waitingCount, mine: myIdx >= 0, position: myIdx + 1 }
-          }))
-        })
-        unsubs.push(unsub)
+        unsubs.push(subscribeMyQueueEntry(user.uid, dateKey, slot.time, entry => {
+          setMyQueue(prev => ({ ...prev, [slot.time]: entry }))
+        }))
       }
     })
     return () => unsubs.forEach(u => u())
   }, [slots, selectedDate, user?.uid])
+
+  const queueMap = useMemo(() => {
+    const out = {}
+    new Set([...Object.keys(queueCounts), ...Object.keys(myQueue)]).forEach(time => {
+      const c = queueCounts[time]
+      const e = myQueue[time]
+      const mine = !!e && (e.status === 'waiting' || e.status === 'offered')
+      const ahead = mine ? Object.values(c?.at || {}).filter(t => t < (e.addedAt || 0)).length : 0
+      out[time] = { count: c?.n || 0, mine, position: mine ? ahead + 1 : 0 }
+    })
+    return out
+  }, [queueCounts, myQueue])
 
   // Сигналізуємо адміну що учень дивиться на цей слот
   useEffect(() => {

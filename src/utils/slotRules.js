@@ -61,6 +61,7 @@ export function restoreRangeUpdates(day, prefix, startMin, durMin, opts = {}) {
     upd[`${prefix}${id}/time`] = slotTimeAt(min)
     upd[`${prefix}${id}/phantom`] = null
     upd[`${prefix}${id}/bookingStart`] = null
+    upd[`${prefix}${id}/bookedBy`] = null // власник слота (див. правила БД): вільний слот не має власника
     if (extra) for (const [k, v] of Object.entries(extra)) upd[`${prefix}${id}/${k}`] = v
   }
   return upd

@@ -198,7 +198,9 @@ export default function Auth({ user, profile, onProfileSaved }) {
       const existing = await getUserProfile(u.uid)
       if (existing) {
         if (onProfileSaved) await onProfileSaved()
-        nav('/cabinet')
+        const r = localStorage.getItem('redirectAfterLogin') || '/cabinet'
+        localStorage.removeItem('redirectAfterLogin')
+        nav(r)
       } else {
         setStep('survey')
       }
@@ -262,7 +264,9 @@ export default function Auth({ user, profile, onProfileSaved }) {
       await saveUserProfile(uid, data)
       sessionStorage.removeItem('id4_invite_token')
       if (onProfileSaved) await onProfileSaved()
-      nav('/cabinet')
+      const r = localStorage.getItem('redirectAfterLogin') || '/cabinet'
+      localStorage.removeItem('redirectAfterLogin')
+      nav(r)
     } catch (e) {
       console.error(e)
       showToast('Не вдалось зберегти профіль')
@@ -290,7 +294,9 @@ export default function Auth({ user, profile, onProfileSaved }) {
       const existing = await getUserProfile(u.uid)
       if (existing) {
         if (onProfileSaved) await onProfileSaved()
-        nav('/cabinet')
+        const r = localStorage.getItem('redirectAfterLogin') || '/cabinet'
+        localStorage.removeItem('redirectAfterLogin')
+        nav(r)
       } else {
         setStep('survey')
       }
@@ -330,7 +336,9 @@ export default function Auth({ user, profile, onProfileSaved }) {
       const existing = await getUserProfile(u.uid)
       if (existing) {
         if (onProfileSaved) await onProfileSaved()
-        nav('/cabinet')
+        const r = localStorage.getItem('redirectAfterLogin') || '/cabinet'
+        localStorage.removeItem('redirectAfterLogin')
+        nav(r)
       } else {
         setStep('survey')
       }

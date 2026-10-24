@@ -1,7 +1,7 @@
 ﻿import {
   ref, get, set, update, push, onValue, off, remove, increment, onDisconnect, runTransaction
 } from 'firebase/database'
-import { db } from './config'
+import { db, auth } from './config'
 import { restoreRangeUpdates } from '../utils/slotRules'
 
 // в”Ђв”Ђв”Ђ ACCESS CONTROL в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
@@ -168,7 +168,7 @@ export function subscribeMyBookings(uid, phone, callback) {
     h2 = onValue(r2, snap => {
       list2 = snap.exists() ? Object.entries(snap.val()).map(([id, b]) => ({ id, ...b })) : []
       merge()
-    })
+    }, () => {}) // правила БД: читати можна лише bookings_by_phone власного номера — без помилки в консоль
   }
 
   return () => {
@@ -224,7 +224,19 @@ export async function cancelBooking(uid, bookingId, { isReschedule = false } = {
     // відсутні не створюємо; усі документи всередині часу запису (крок може бути й 10 хв)
     Object.assign(updates, restoreRangeUpdates(day, `timeslots/${booking.date}/`, startMin, durMin))
   }
-  await update(ref(db, '/'), updates)
+  try {
+    await update(ref(db, '/'), updates)
+  } catch (e) {
+    // Слоти без власника (записи, створені до оновлення правил БД) учень звільнити не може —
+    // правила відхиляють весь атомарний update. Тоді скасовуємо лише сам запис, а слоти
+    // звільняє Cloud Function onBookingChanged (скасування учнем / перенесення).
+    if (e?.code !== 'PERMISSION_DENIED' && !/permission_denied/i.test(String(e?.message))) throw e
+    await update(ref(db, '/'), {
+      [`bookings/${uid}/${bookingId}/status`]: 'cancelled',
+      [`bookings/${uid}/${bookingId}/cancelledAt`]: updates[`bookings/${uid}/${bookingId}/cancelledAt`],
+      [`bookings/${uid}/${bookingId}/cancelledBy`]: isReschedule ? 'reschedule' : 'student',
+    })
+  }
 }
 
 // в”Ђв”Ђв”Ђ QUEUE (Р»РёСЃС‚ РѕС‡С–РєСѓРІР°РЅРЅСЏ) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
@@ -267,20 +279,18 @@ export async function leaveQueue(uid, date, time) {
   })
 }
 
-export async function getQueueForSlot(date, time) {
-  const slotKey = `${date}_${time}`
-  const snap = await get(ref(db, `queue/${slotKey}/entries`))
-  if (!snap.exists()) return []
-  return Object.values(snap.val())
+// Публічний агрегат черги БЕЗ ПІБ/телефонів: queue_counts/{date}/{time} = { n, at: [addedAt очікуючих] }.
+// Його веде Cloud Function (syncQueueCount); чужі записи queue/*/entries правила БД учню не віддають.
+export function subscribeQueueCounts(date, callback) {
+  const r = ref(db, `queue_counts/${date}`)
+  const handler = onValue(r, snap => callback(snap.val() || {}), () => callback({}))
+  return () => off(r, 'value', handler)
 }
 
-export function subscribeQueueForSlot(date, time, callback) {
-  const slotKey = `${date}_${time}`
-  const r = ref(db, `queue/${slotKey}/entries`)
-  const handler = onValue(r, snap => {
-    if (!snap.exists()) return callback([])
-    callback(Object.values(snap.val()))
-  })
+// Власний запис учня в черзі на конкретний слот (читати дозволено лише свій uid).
+export function subscribeMyQueueEntry(uid, date, time, callback) {
+  const r = ref(db, `queue/${date}_${time}/entries/${uid}`)
+  const handler = onValue(r, snap => callback(snap.val() || null), () => callback(null))
   return () => off(r, 'value', handler)
 }
 
@@ -351,6 +361,8 @@ export function getCompletedHours(bookings) {
 // Повертає true якщо вдалось зайняти, false якщо слот уже зайнятий іншим.
 export async function claimSlot(date, startTime) {
   if (_blocked) return false
+  const uid = auth.currentUser?.uid
+  if (!uid) return false
   const slotId = `slot${startTime.replace(':', '')}`
   const slotRef = ref(db, `timeslots/${date}/${slotId}`)
   const result = await runTransaction(slotRef, current => {
@@ -359,7 +371,7 @@ export async function claimSlot(date, startTime) {
     }
     // Документа не було (current === null) — він існує лише під цей запис: phantom,
     // щоб скасування видалило його, а не лишило окремим вільним слотом.
-    return { ...(current || {}), ...(current ? {} : { phantom: true }), available: false, time: startTime, bookingStart: true }
+    return { ...(current || {}), ...(current ? {} : { phantom: true }), available: false, time: startTime, bookingStart: true, bookedBy: uid }
   })
   return result.committed
 }
@@ -368,10 +380,12 @@ export async function claimSlot(date, startTime) {
 // завершити (другий слот перехопили), повертаємо перший назад у вільні.
 export async function unclaimSlot(date, startTime) {
   const slotId = `slot${startTime.replace(':', '')}`
-  await update(ref(db, `timeslots/${date}/${slotId}`), { available: true, bookingStart: null })
+  await update(ref(db, `timeslots/${date}/${slotId}`), { available: true, bookingStart: null, bookedBy: null })
 }
 
 export async function markSlotsUnavailable(date, startTime, durationHours, intervalMin = 30) {
+  const uid = auth.currentUser?.uid
+  if (!uid) throw new Error('Не вдалося виконати запис, спробуйте пізніше')
   const daySnap = await get(ref(db, `timeslots/${date}`))
   const day = daySnap.val() || {}
   const [h, m] = startTime.split(':').map(Number)
@@ -390,6 +404,8 @@ export async function markSlotsUnavailable(date, startTime, durationHours, inter
     // Явний прапорець реального старту бронювання — адмінка/клієнт показують
     // лише його, а не кожен проміжний блок (важливо, коли записи йдуть впритул).
     updates[`timeslots/${date}/${slotId}/bookingStart`] = min === startMin
+    // Власник слота — правила БД дозволяють звільняти/змінювати зайнятий слот лише йому
+    updates[`timeslots/${date}/${slotId}/bookedBy`] = uid
   }
   await update(ref(db, '/'), updates)
 }
