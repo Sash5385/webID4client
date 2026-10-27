@@ -1211,6 +1211,8 @@
 }
 
 /* Підпис розробника */
+a.devby { text-decoration: none; color: inherit; cursor: pointer; }
+
 .devby {
   display: flex;
   flex-direction: column;

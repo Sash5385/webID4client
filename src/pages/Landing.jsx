@@ -593,11 +593,11 @@ export default function Landing({ user, profile }) {
           {installPrompt && !installed && (
             <button className="footer-install-btn" onClick={handleInstallClick}>📲 Встановити додаток</button>
           )}
-          <div className="devby">
+          <a className="devby" href="https://aldemi.com.ua" target="_blank" rel="noopener noreferrer">
             <small>Розробка та дизайн</small>
             <b>AlDemi Studio</b>
             <span>Founder &amp; Head of Product</span>
-          </div>
+          </a>
           <div style={{marginTop:8,fontSize:13,fontWeight:600,letterSpacing:0.5,opacity:0.6}}>{APP_VERSION}</div>
         </div>
 
