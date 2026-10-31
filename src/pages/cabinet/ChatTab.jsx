@@ -1,16 +1,21 @@
 import { useState, useEffect, useRef } from 'react'
 import {
   subscribeStudentChat, sendStudentMessage, markDirectChatRead, clearStudentChat,
-  subscribeGeneralChat, sendGeneralMessage,
+  subscribeGeneralChat, sendGeneralMessage, editStudentMessage, editGeneralMessage,
 } from '../../firebase/db'
 import { useToast } from '../../hooks/useToast'
 import './ChatTab.css'
+
+// Редагувати можна свої повідомлення протягом доби
+const EDIT_WINDOW = 24 * 60 * 60 * 1000
+const fmtTime = ts => new Date(ts).toLocaleTimeString('uk', { hour: '2-digit', minute: '2-digit' })
 
 // ─── DIRECT CHAT (with instructor) ───────────────────────────────
 function DirectChat({ user, profile }) {
   const [messages, setMessages] = useState([])
   const { showToast, ToastEl } = useToast()
   const [text, setText] = useState('')
+  const [editing, setEditing] = useState(null)
   const [sending, setSending] = useState(false)
   const bottomRef = useRef(null)
   const taRef = useRef(null)
@@ -29,7 +34,12 @@ function DirectChat({ user, profile }) {
     if (!text.trim() || sending) return
     setSending(true)
     try {
-      await sendStudentMessage(user.uid, text.trim())
+      if (editing) {
+        await editStudentMessage(user.uid, editing, text.trim())
+        setEditing(null)
+      } else {
+        await sendStudentMessage(user.uid, text.trim())
+      }
       setText('')
       taRef.current?.focus()
     } catch {
@@ -44,6 +54,9 @@ function DirectChat({ user, profile }) {
   }
 
   const handleBlur = () => { window.scrollTo(0, 0) }
+
+  const startEdit = m => { setEditing(m.id); setText(m.text || ''); taRef.current?.focus() }
+  const cancelEdit = () => { setEditing(null); setText('') }
 
   const initials = (profile?.name || 'У').split(' ').map(w => w[0]).slice(0, 2).join('')
 
@@ -106,7 +119,12 @@ function DirectChat({ user, profile }) {
               <div className={`chat-bubble ${isMe ? 'bubble-out' : isBroadcast ? 'bubble-broadcast' : 'bubble-in'}`}>
                 {isBroadcast && <div className="bubble-broadcast-label">📢 Оголошення</div>}
                 <div className="bubble-text">{m.text}</div>
-                <div className="bubble-time">{m.time}</div>
+                <div className="bubble-time">
+                    {m.editedAt ? `ред. ${fmtTime(m.editedAt)} · ` : ''}{m.time}
+                    {isMe && !m.broadcast && Date.now() - (m.ts || 0) < EDIT_WINDOW && (
+                      <button className="bubble-edit" onClick={() => startEdit(m)} aria-label="Редагувати">✎</button>
+                    )}
+                  </div>
               </div>
               {isMe && <div className="chat-msg-avatar me">{initials}</div>}
             </div>
@@ -116,6 +134,12 @@ function DirectChat({ user, profile }) {
       </div>
 
       <div className="chat-input-area">
+        {editing && (
+          <div className="chat-edit-bar">
+            <span>✎ Редагування повідомлення</span>
+            <button onClick={cancelEdit} aria-label="Скасувати">✕</button>
+          </div>
+        )}
         <div className="chat-input-box">
           <textarea
             ref={taRef}
@@ -147,6 +171,7 @@ function DirectChat({ user, profile }) {
 function GeneralChat({ user, profile }) {
   const [messages, setMessages] = useState([])
   const [text, setText] = useState('')
+  const [editing, setEditing] = useState(null)
   const [sending, setSending] = useState(false)
   const bottomRef = useRef(null)
   const taRef = useRef(null)
@@ -165,7 +190,12 @@ function GeneralChat({ user, profile }) {
     setSending(true)
     try {
       const name = profile?.name || 'Учень'
-      await sendGeneralMessage(user.uid, name, text.trim())
+      if (editing) {
+        await editGeneralMessage(editing, text.trim())
+        setEditing(null)
+      } else {
+        await sendGeneralMessage(user.uid, name, text.trim())
+      }
       setText('')
       taRef.current?.focus()
     } catch {
@@ -180,6 +210,9 @@ function GeneralChat({ user, profile }) {
   }
 
   const handleBlur = () => { window.scrollTo(0, 0) }
+
+  const startEdit = m => { setEditing(m.id); setText(m.text || ''); taRef.current?.focus() }
+  const cancelEdit = () => { setEditing(null); setText('') }
 
   const getInitials = name => (name || '?').split(' ').map(w => w[0]).slice(0, 2).join('')
   const getHue = uid => [160, 220, 30, 280, 340, 200, 40, 300][((uid || '').charCodeAt(0) || 0) % 8]
@@ -221,7 +254,12 @@ function GeneralChat({ user, profile }) {
                 {!isMe && <div className="chat-sender-name">{m.name}</div>}
                 <div className={`chat-bubble ${isMe ? 'bubble-out' : 'bubble-in'}`}>
                   <div className="bubble-text">{m.text}</div>
-                  <div className="bubble-time">{m.time}</div>
+                  <div className="bubble-time">
+                    {m.editedAt ? `ред. ${fmtTime(m.editedAt)} · ` : ''}{m.time}
+                    {isMe && !m.broadcast && Date.now() - (m.ts || 0) < EDIT_WINDOW && (
+                      <button className="bubble-edit" onClick={() => startEdit(m)} aria-label="Редагувати">✎</button>
+                    )}
+                  </div>
                 </div>
               </div>
               {isMe && (
@@ -236,6 +274,12 @@ function GeneralChat({ user, profile }) {
       </div>
 
       <div className="chat-input-area">
+        {editing && (
+          <div className="chat-edit-bar">
+            <span>✎ Редагування повідомлення</span>
+            <button onClick={cancelEdit} aria-label="Скасувати">✕</button>
+          </div>
+        )}
         <div className="chat-input-box">
           <textarea
             ref={taRef}

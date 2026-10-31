@@ -625,3 +625,12 @@ export function clearNotification(uid, notifId) {
 export function clearAllNotifications(uid) {
   return remove(ref(db, `notifications/${uid}`))
 }
+
+// ─── РЕДАГУВАННЯ ПОВІДОМЛЕНЬ (до 24 год; відмітка editedAt) ───────
+export async function editStudentMessage(uid, id, text) {
+  await update(ref(db, `chats/${uid}/${id}`), { text, editedAt: Date.now() })
+}
+
+export async function editGeneralMessage(id, text) {
+  await update(ref(db, `chats/general/${id}`), { text, editedAt: Date.now() })
+}
