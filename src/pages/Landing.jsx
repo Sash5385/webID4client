@@ -590,6 +590,7 @@ export default function Landing({ user, profile }) {
         {/* FOOTER */}
         <div className="footer">
           <button className="footer-cta" onClick={goAuth}>🚗 Записатись зараз</button>
+          <button className="footer-install-btn" onClick={() => nav('/trainer')}>🚦 3D-тренажер маршрутів</button>
           {installPrompt && !installed && (
             <button className="footer-install-btn" onClick={handleInstallClick}>📲 Встановити додаток</button>
           )}

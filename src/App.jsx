@@ -15,6 +15,7 @@ import { APP_VERSION } from './version.js'
 import Auth from './pages/Auth'
 import Cabinet from './pages/Cabinet'
 import Landing from './pages/Landing'
+import Trainer from './pages/Trainer'
 
 // ─── PWA INSTALL PROMPT (пропонуємо зберегти застосунок лише при
 // першому вході — раз показали (banner з'явився), більше не пропонуємо,
@@ -260,6 +261,9 @@ export default function App() {
           ? <Navigate to="/cabinet" replace />
           : <Auth user={user} profile={profile} onProfileSaved={reloadProfile} />
       } />
+
+      {/* 3D-тренажер маршрутів — для всіх (результати зберігаються лише для авторизованих) */}
+      <Route path="/trainer" element={<Trainer user={user} />} />
 
       {/* Лендінг для авторизованих — перегляд без виходу */}
       <Route path="/home" element={<Landing user={user} profile={profile} />} />

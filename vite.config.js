@@ -130,7 +130,18 @@ export default defineConfig({
         skipWaiting: true,
         clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        // 3D-тренажер (5 МБ) не в предзавантаженні: кешується лише при відкритті (runtimeCaching нижче).
+        globIgnores: ['trainer/**'],
+        navigateFallbackDenylist: [/^\/trainer\//],
         runtimeCaching: [
+          {
+            urlPattern: /^\/trainer\//,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'trainer-cache',
+              expiration: { maxEntries: 4, maxAgeSeconds: 60 * 60 * 24 * 30 }
+            }
+          },
           {
             urlPattern: /^\/manifest\.json/,
             handler: 'NetworkFirst',
