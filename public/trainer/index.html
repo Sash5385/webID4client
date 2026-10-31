@@ -32,7 +32,7 @@ body { background: var(--bg); color: var(--fg); font-family: var(--display); ove
 #stage { position: relative; flex: 1; min-height: 0; }
 #c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #cam { position: absolute; left: 8px; bottom: 76px; background: rgba(16,20,28,.7); border: 1px solid var(--fog-line); height: 28px; font-size: 12px; }
-.mirror { position: absolute; pointer-events: none; border: 2px solid rgba(232,237,246,.55); border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.45); box-sizing: border-box; z-index: 2; }
+.mirror { position: absolute; pointer-events: none; border: 2px solid rgba(232,237,246,.55); border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.45); box-sizing: border-box; z-index: 1; }
 #c { touch-action: none; }
 #wx { position: absolute; left: 8px; bottom: 42px; background: rgba(30,33,41,.82); border: 1px solid var(--key); height: 28px; font-size: 12px; }
 #qual { position: absolute; left: 8px; bottom: 8px; background: rgba(30,33,41,.82); border: 1px solid var(--key); height: 28px; font-size: 12px; }
@@ -57,7 +57,7 @@ body { background: var(--bg); color: var(--fg); font-family: var(--display); ove
 #gas.down { background: #2f6b3f; }
 #brake { background: #5a2626; height: 72px; }
 #brake.down { background: #7d3030; }
-#result { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(10,12,16,.72); padding: 16px; }
+#result { position: absolute; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center; background: rgba(10,12,16,.72); padding: 16px; }
 #result .card { background: var(--panel); border-radius: 16px; padding: 20px; width: min(100%, 420px); max-height: 100%; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
 #resTitle { font-size: 26px; font-weight: 800; margin: 0; }
 #resTitle.ok { color: var(--ok); } #resTitle.bad { color: var(--bad); }
