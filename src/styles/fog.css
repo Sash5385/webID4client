@@ -59,3 +59,13 @@ html[data-fog="on"] body[data-theme="dark"] .slot.selected{background:var(--fog-
 
 /* вікна */
 html[data-fog="on"] body[data-theme="dark"] .dialog{background:linear-gradient(180deg,#1a2132,#10141c);border-radius:28px}
+
+/* чат: «таблетки» на всю ширину, симетрично (вх./вих. однакової ширини) */
+html[data-fog="on"] body[data-theme="dark"] .chat-msg-row .chat-bubble,
+html[data-fog="on"] body[data-theme="dark"] .chat-msg-row .chat-bubble-wrap{flex:1;max-width:none;min-width:0}
+html[data-fog="on"] body[data-theme="dark"] .chat-bubble-wrap .chat-bubble{width:100%}
+html[data-fog="on"] body[data-theme="dark"] .chat-bubble{border-radius:99px;padding:10px 20px;text-align:center}
+html[data-fog="on"] body[data-theme="dark"] .bubble-in{border-radius:99px}
+html[data-fog="on"] body[data-theme="dark"] .bubble-out{background:linear-gradient(135deg,rgba(96,165,250,.28),rgba(129,140,248,.18));border:1px solid rgba(147,197,253,.4);box-shadow:var(--shadow)}
+html[data-fog="on"] body[data-theme="dark"] .chat-bubble .bubble-time{text-align:center}
+html[data-fog="on"] body[data-theme="dark"] .chat-sender-name{text-align:center;width:100%;padding-left:0}
