@@ -49,12 +49,12 @@ export default function Trainer({ user }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg, #15171c)' }}>
-      <div style={{
+      <div className="trainer-bar" style={{
         display: 'flex', alignItems: 'center', gap: 12,
         padding: 'calc(8px + env(safe-area-inset-top, 0px)) 12px 8px',
         background: 'rgba(0,0,0,0.35)', color: '#fff', flex: '0 0 auto',
       }}>
-        <button onClick={goBack} style={{
+        <button className="trainer-back" onClick={goBack} style={{
           background: 'rgba(255,255,255,0.12)', color: '#fff', border: 0, borderRadius: 10,
           padding: '8px 14px', fontSize: 15, fontWeight: 600, cursor: 'pointer',
         }}>← Назад</button>

@@ -69,3 +69,8 @@ html[data-fog="on"] body[data-theme="dark"] .bubble-in{border-radius:99px}
 html[data-fog="on"] body[data-theme="dark"] .bubble-out{background:linear-gradient(135deg,rgba(96,165,250,.28),rgba(129,140,248,.18));border:1px solid rgba(147,197,253,.4);box-shadow:var(--shadow)}
 html[data-fog="on"] body[data-theme="dark"] .chat-bubble .bubble-time{text-align:center}
 html[data-fog="on"] body[data-theme="dark"] .chat-sender-name{text-align:center;width:100%;padding-left:0}
+
+/* 3D-тренажер: кнопка в підвалі й шапка екрана /trainer */
+html[data-fog="on"] body[data-theme="dark"] .footer-install-btn{background:var(--fog-glass);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow)}
+html[data-fog="on"] body[data-theme="dark"] .trainer-bar{background:linear-gradient(180deg,rgba(16,20,28,.9) 60%,rgba(16,20,28,.7)) !important;border-bottom:1px solid var(--border);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+html[data-fog="on"] body[data-theme="dark"] .trainer-back{background:var(--fog-glass) !important;border:1px solid var(--border) !important;border-radius:14px !important;color:var(--acc-hi) !important}
