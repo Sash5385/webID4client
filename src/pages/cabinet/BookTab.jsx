@@ -643,6 +643,31 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slots, adminSettings, profile?.isVip, selectedDate, baseService, bookingsData.upcoming])
 
+  // Години робочої сітки, яких немає серед слотів дня, показуємо як «зайнято» (червоні, без дії):
+  // клієнт бачить усю робочу сітку, а не лише відкриті майстром слоти. Обід пропускаємо.
+  const displaySlots = useMemo(() => {
+    if (!selectedDate || !adminSettings || Object.keys(adminSettings).length === 0) return slotsList
+    const dateStr = formatDateYMD(selectedDate)
+    const ov = (adminSettings.dateOverrides || []).find(o => o.date === dateStr)
+    const dow = (selectedDate.getDay() + 6) % 7
+    const ws = (adminSettings.weekSchedule || [])[dow] || {}
+    const start = ov?.start ?? ws.start ?? adminSettings.workStart ?? 9
+    const end = ov?.end ?? ws.end ?? adminSettings.workEnd ?? 18
+    const { lunchEnabled, lunchStart, lunchEnd } = getLunchForDate(selectedDate)
+    const covered = slotsList.map(sl => { const a = timeToMin(sl.time); return [a, a + (sl.durMin || 60)] })
+    const isToday = dateStr === formatDateYMD(new Date())
+    const nowMin = new Date().getHours() * 60 + new Date().getMinutes()
+    const filler = []
+    for (let min = Math.round(start * 60); min + 60 <= Math.round(end * 60); min += 60) {
+      if (lunchEnabled && lunchEnd > lunchStart && min < lunchEnd * 60 && min + 60 > lunchStart * 60) { min = lunchEnd * 60 - 60; continue }
+      if (isToday && min <= nowMin) continue
+      if (covered.some(([a, b]) => min >= a && min < b)) continue
+      const time = `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`
+      filler.push({ time, available: false, filler: true })
+    }
+    return filler.length ? [...slotsList, ...filler].sort((a, b) => (a.time || '').localeCompare(b.time || '')) : slotsList
+  }, [slotsList, selectedDate, adminSettings]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const nextLesson = useMemo(() => {
     const now = Date.now()
     return (bookingsData?.upcoming || [])
@@ -785,14 +810,14 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
           </div>
           {loading ? (
             <div style={{textAlign:'center', padding:'24px'}}><div className="spinner" style={{margin:'0 auto'}}></div></div>
-          ) : slotsList.length === 0 ? (
+          ) : displaySlots.length === 0 ? (
             <div style={{textAlign:'center', padding:'24px', color:'var(--dim)', fontSize:'13px'}}>
               На цю дату немає слотів
             </div>
           ) : (
             <>
               <div className="slots-grid">
-                {slotsList.map(slot => {
+                {displaySlots.map(slot => {
                   const q = queueMap[slot.time]
                   const isAvailable = slot.available !== false
                   const isMyQueue = q?.mine
@@ -806,14 +831,14 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                   const isPartOfMyBooking = slot.isPartOfMyBooking
                   const isTaken = !isAvailable && !isMyReserved
                   const isTakenByOthers = isTaken && !isPartOfMyBooking
-                  const isUnavailable = isLunch || isOverlap || isVipLocked || isTaken || isMyBooked
+                  const isUnavailable = isLunch || isOverlap || isVipLocked || isTaken || isMyBooked || !!slot.filler
                   return (
                     <div key={slot.time} style={{position:'relative'}}>
                       <button
                         className={`slot ${isMyReserved || isMyQueue ? 'my-queue' : isPartOfMyBooking ? 'my-booked' : isUnavailable ? 'taken' : ''} ${isSelected ? 'selected' : ''}`}
                         style={{width:'100%'}}
                         onClick={() => !isMyQueue && !isMyBooked && handleSlotClick(slot)}
-                        disabled={isLunch || isOverlap || isMyBooked}
+                        disabled={isLunch || isOverlap || isMyBooked || !!slot.filler}
                         title={isExactlyMine ? 'Ваш урок' : isPartOfMyBooking ? 'Ваш урок (продовження)' : isMyBooked ? 'Перетин з вашим уроком' : isLunch ? 'Обідня перерва' : isOverlap ? 'Перетин з іншим уроком' : isVipLocked ? 'VIP слот' : isMyReserved ? 'Зарезервовано для вас!' : isTaken ? 'Зайнято — стати в чергу?' : undefined}
                       >
                         <div className="slot-time">{slot.time}</div>
@@ -826,7 +851,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
                           <div style={{fontSize:8, opacity:0.5}}>обід</div>
                         ) : isVipLocked ? (
                           <div style={{fontSize:8, opacity:0.5}}>👑</div>
-                        ) : isTakenByOthers || isOverlap ? (
+                        ) : isTakenByOthers || isOverlap || slot.filler ? (
                           <div style={{fontSize:8, opacity:0.7}}>зайнято</div>
                         ) : isMyQueue ? (
                           <div className="slot-queue">
