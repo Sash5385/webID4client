@@ -668,3 +668,7 @@
 @media (prefers-reduced-motion: reduce) {
   .fixed-price-banner, .fixed-price-banner::after { animation: none; }
 }
+
+/* Недоступні дні календаря — приглушено-червоні, не прозорі */
+.cal-day.day-full.day-off { opacity: 0.4; box-shadow: none; color: #fff; }
+.cal-day.day-full.day-off:hover { opacity: 0.4; }

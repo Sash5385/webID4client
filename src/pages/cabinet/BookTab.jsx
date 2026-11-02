@@ -785,8 +785,8 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
             const selected = selectedDate && isSameDay(d, selectedDate)
             const dateStr = formatDateYMD(d)
             const avail = monthAvail[dateStr]      // undefined=loading, null=empty, 'free'/'partial'/'full'
-            const dayClass = disabled ? '' :
-              avail === undefined ? 'has-slots' :  // loading - show neutral
+            // Прозорих днів немає: недоступні (минулі / поза горизонтом) і ті, що ще вантажаться, — приглушено-червоні
+            const dayClass = disabled || avail === undefined ? 'day-full day-off' :
               avail ? `day-${avail}` : 'day-full'  // loaded: без слотів — теж червоний («зайнято»)
             return (
               <button
