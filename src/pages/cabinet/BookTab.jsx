@@ -787,7 +787,7 @@ export default function BookTab({ user, profile, bookingsData, notifParams }) {
             const avail = monthAvail[dateStr]      // undefined=loading, null=empty, 'free'/'partial'/'full'
             const dayClass = disabled ? '' :
               avail === undefined ? 'has-slots' :  // loading - show neutral
-              avail ? `day-${avail}` : ''          // loaded: colored or plain
+              avail ? `day-${avail}` : 'day-full'  // loaded: без слотів — теж червоний («зайнято»)
             return (
               <button
                 key={i}
