@@ -11,6 +11,7 @@ export function formatPhone(raw) {
 export function normalizePhone(input) {
   // Приймає що завгодно, повертає +380XXXXXXXXX або null
   const digits = input.replace(/\D/g, '')
+  if (/^\s*\+/.test(input) && digits.length >= 8 && digits.length <= 15) return `+${digits}`  // будь-який E.164
   if (digits.length === 9) return `+380${digits}`  // 989225442
   if (digits.length === 10 && digits.startsWith('0')) return `+380${digits.slice(1)}`  // 0989225442
   if (digits.length === 12 && digits.startsWith('380')) return `+${digits}`

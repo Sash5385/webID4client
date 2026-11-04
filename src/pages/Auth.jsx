@@ -7,6 +7,7 @@ import { useTheme } from '../hooks/useTheme'
 import { useToast } from '../hooks/useToast'
 import { normalizePhone, formatPhone } from '../utils/format'
 import './Auth.css'
+import { COUNTRIES, getCountry } from '../phoneCountries'
 
 const iosDevice = isIOSDevice()
 const inAppBrowser = isInAppBrowser()
@@ -65,6 +66,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
 
   // phone step
   const [phoneInput, setPhoneInput] = useState('')
+  const [phoneIso, setPhoneIso] = useState('UA')
   const [phone, setPhone] = useState('')
   const [phoneError, setPhoneError] = useState('')
   const [sending, setSending] = useState(false)
@@ -98,6 +100,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
   const [name, setName] = useState('')
   const [surname, setSurname] = useState('')
   const [surveyPhone, setSurveyPhone] = useState('')
+  const [surveyIso, setSurveyIso] = useState('UA')
   const [studentType, setStudentType] = useState('school')
   const [experience, setExperience] = useState('no_license')
   const [filmingConsent, setFilmingConsent] = useState(true)
@@ -163,7 +166,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
   // ─── PHONE ───────────────────────────────────────────
   const handleSendCode = async () => {
     setPhoneError('')
-    const normalized = normalizePhone('+380' + phoneInput)
+    const normalized = normalizePhone(getCountry(phoneIso).code + phoneInput)
     if (!normalized) {
       setPhoneError('Введи коректний номер')
       return
@@ -237,7 +240,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
   const handleSubmitSurvey = async () => {
     if (!name.trim() || !surname.trim()) { setSurveyNameError('Введіть ваше ПІБ'); return }
     setSurveyNameError('')
-    if (!user?.phoneNumber && surveyPhone.trim().length !== 9) { showToast('Введи коректний номер телефону'); return }
+    if (!user?.phoneNumber && surveyPhone.trim().length < getCountry(surveyIso).min) { showToast('Введи коректний номер телефону'); return }
     if (!termsAgreed) { showToast('Прийми умови користування'); return }
 
     setSavingProfile(true)
@@ -248,7 +251,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
       const inviteToken = sessionStorage.getItem('id4_invite_token') || ''
       const data = {
         name: `${name.trim()} ${surname.trim()}`,
-        phone: user.phoneNumber || `+380${surveyPhone.trim()}`,
+        phone: user.phoneNumber || `${getCountry(surveyIso).code}${surveyPhone.trim()}`,
         // Відомий безкоштовно для Google/Email-входу — зберігаємо, щоб
         // Cloud Function onNewStudentRegistered могла зіставити з заздалегідь
         // створеною адміном карткою учня ще й по email, не лише по телефону.
@@ -493,21 +496,20 @@ export default function Auth({ user, profile, onProfileSaved }) {
               </div>
             )}
             <div className="phone-card">
-              <div className="phone-flag">UA</div>
-              <div className="phone-code">+380</div>
+              <select className="phone-code" value={phoneIso} onChange={e=>{setPhoneIso(e.target.value);setPhoneInput(v=>v.slice(0,getCountry(e.target.value).max))}} aria-label="Країна" style={{background:'transparent',border:'none',outline:'none',fontFamily:'inherit',cursor:'pointer',padding:0,maxWidth:96,flexShrink:0}}>{COUNTRIES.map(c=><option key={c.iso} value={c.iso}>{c.flag} {c.code}</option>)}</select>
               <input
                 className="phone-input"
                 type="tel"
                 placeholder="__ ___ ____"
-                maxLength={9}
+                maxLength={getCountry(phoneIso).max}
                 inputMode="numeric"
                 value={phoneInput}
-                onChange={e=>setPhoneInput(e.target.value.replace(/\D/g,'').slice(0,9))}
+                onChange={e=>setPhoneInput(e.target.value.replace(/\D/g,'').slice(0,getCountry(phoneIso).max))}
                 autoFocus
               />
             </div>
             <div id="recaptcha-container" style={{marginTop:8}}/>
-            {iosDevice && phoneInput.length >= 9 && !captchaSolved && (
+            {iosDevice && phoneInput.length >= getCountry(phoneIso).min && !captchaSolved && (
               <p style={{fontSize:11,color:'var(--dim)',textAlign:'center',marginTop:4}}>
                 Відмітьте reCAPTCHA вище щоб продовжити
               </p>
@@ -515,7 +517,7 @@ export default function Auth({ user, profile, onProfileSaved }) {
             {phoneError && <div className="auth-error">{phoneError}</div>}
             <div style={{marginTop:16}}>
               <button className="btn-primary" onClick={handleSendCode}
-                disabled={sending || phoneInput.length < 9 || (iosDevice && !captchaSolved)}>
+                disabled={sending || phoneInput.length < getCountry(phoneIso).min || (iosDevice && !captchaSolved)}>
                 {sending ? 'Надсилаємо...' : 'Надіслати код →'}
               </button>
             </div>
@@ -680,16 +682,15 @@ export default function Auth({ user, profile, onProfileSaved }) {
             <div className="field">
               <div className="field-label">Телефон *</div>
               <div className="phone-card" style={{marginTop:0}}>
-                <div className="phone-flag">UA</div>
-                <div className="phone-code">+380</div>
+                <select className="phone-code" value={surveyIso} onChange={e=>{setSurveyIso(e.target.value);setSurveyPhone(v=>v.slice(0,getCountry(e.target.value).max))}} aria-label="Країна" style={{background:'transparent',border:'none',outline:'none',fontFamily:'inherit',cursor:'pointer',padding:0,maxWidth:96,flexShrink:0}}>{COUNTRIES.map(c=><option key={c.iso} value={c.iso}>{c.flag} {c.code}</option>)}</select>
                 <input
                   className="phone-input"
                   type="tel"
                   placeholder="__ ___ ____"
-                  maxLength={9}
+                  maxLength={getCountry(surveyIso).max}
                   inputMode="numeric"
                   value={surveyPhone}
-                  onChange={e=>setSurveyPhone(e.target.value.replace(/\D/g,'').slice(0,9))}
+                  onChange={e=>setSurveyPhone(e.target.value.replace(/\D/g,'').slice(0,getCountry(surveyIso).max))}
                 />
               </div>
             </div>
