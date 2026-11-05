@@ -374,7 +374,16 @@ export default function BookingsTab({ user, profile, bookingsData }) {
           {(b.status === 'confirmed' || b.status === 'cancelled') && (
             <div className={`booking-status ${statusClass}`}>{statusText}</div>
           )}
-          {!isPast && b.status !== 'cancelled' && b.studentConfirmed && (
+{isPast && b.status !== 'cancelled' && (b.lessonRating >= 1 || b.lessonNote) && (
+            <div style={{marginTop:6,padding:'7px 10px',borderRadius:9,
+              background:'rgba(251,191,36,0.08)',border:'1px solid rgba(251,191,36,0.25)',
+              fontSize:11,color:'var(--text)',lineHeight:1.5,wordBreak:'break-word'}}>
+              <span style={{fontSize:11,fontWeight:700,color:'#fbbf24',display:'block',marginBottom:2}}>Оцінка інструктора</span>
+              {b.lessonRating >= 1 && <span style={{fontSize:15,letterSpacing:1,color:'#fbbf24'}}>{'★'.repeat(Math.min(5, Math.round(b.lessonRating)))}{'☆'.repeat(5 - Math.min(5, Math.round(b.lessonRating)))}</span>}
+              {b.lessonNote && <div>{b.lessonNote}</div>}
+            </div>
+          )}
+                    {!isPast && b.status !== 'cancelled' && b.studentConfirmed && (
             <div className="booking-meta" style={{ color: '#4caf50', marginTop: 4 }}>
               ✓ Ви підтвердили присутність
             </div>

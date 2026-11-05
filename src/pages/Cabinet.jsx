@@ -89,11 +89,15 @@ export default function Cabinet({ user, profile, onProfileUpdate }) {
   const [reviewDismissed, setReviewDismissed] = useState(() => new Set())
   useEffect(() => {
     if (reviewBooking) return
+    // ?review=<bookingId> з пушу «Оцініть урок» — відкриваємо форму саме цього уроку
+    const reqId = new URLSearchParams(loc.search).get('review')
+    const requested = reqId && bookingsData.bookings.find(b => b.id === reqId && b.status !== 'cancelled' && !b.reviewed && !reviewDismissed.has(b.id))
+    if (requested) { setReviewBooking(requested); return }
     const candidate = bookingsData.bookings
       .filter(b => b.status === 'confirmed' && isBookingPast(b) && !b.reviewed && !reviewDismissed.has(b.id))
       .sort((a, b) => new Date(`${b.date}T${b.time || '00:00'}`) - new Date(`${a.date}T${a.time || '00:00'}`))[0]
     if (candidate) setReviewBooking(candidate)
-  }, [bookingsData.bookings, reviewDismissed, reviewBooking])
+  }, [bookingsData.bookings, reviewDismissed, reviewBooking, loc.search])
 
   const lsKey = user?.uid ? `lastSeenBookingsTs_${user.uid}` : null
   const [lastSeenTs, setLastSeenTs] = useState(() =>
