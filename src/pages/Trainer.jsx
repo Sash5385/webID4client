@@ -9,7 +9,7 @@ import { registerBackHandler } from '../hooks/useBackButton'
 const STR = (v, n) => String(v ?? '').slice(0, n)
 
 // Номери маршрутів ТСЦ № 8042, які є в тренажері (мають збігатися з database.rules.json).
-const ROUTES = [1, 3, 4, 5, 6, 7, 9, 10, 14]
+const ROUTES = [1, 3, 4, 5, 6, 7, 9, 10, 12, 13, 14, 15]
 
 export default function Trainer({ user }) {
   const nav = useNavigate()
