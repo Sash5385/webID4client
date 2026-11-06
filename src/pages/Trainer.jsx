@@ -8,6 +8,9 @@ import { registerBackHandler } from '../hooks/useBackButton'
 // Тренажер після кожної спроби шле сюди postMessage; зберігаємо в users/{uid}/trainerRuns (лише для авторизованих).
 const STR = (v, n) => String(v ?? '').slice(0, n)
 
+// Номери маршрутів ТСЦ № 8042, які є в тренажері (мають збігатися з database.rules.json).
+const ROUTES = [1, 3, 4, 5, 6, 7, 9, 10, 14]
+
 export default function Trainer({ user }) {
   const nav = useNavigate()
   const frameRef = useRef(null)
@@ -27,7 +30,7 @@ export default function Trainer({ user }) {
       const d = e.data
       if (!d || d.type !== 'route-trainer-result' || d.v !== 1) return
       const run = {
-        route: d.route === 1 ? 1 : 7,
+        route: ROUTES.includes(d.route) ? d.route : 7,
         mode: d.mode === 'exam' ? 'exam' : 'learn',
         passed: !!d.passed,
         reason: STR(d.reason, 160),
