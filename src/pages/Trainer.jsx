@@ -29,8 +29,9 @@ export default function Trainer({ user }) {
       if (e.source !== frameRef.current?.contentWindow) return
       const d = e.data
       if (!d || d.type !== 'route-trainer-result' || d.v !== 1) return
+      if (!ROUTES.includes(d.route)) return // невідомий номер маршруту не записуємо (раніше підмінявся на 7)
       const run = {
-        route: ROUTES.includes(d.route) ? d.route : 7,
+        route: d.route,
         mode: d.mode === 'exam' ? 'exam' : 'learn',
         passed: !!d.passed,
         reason: STR(d.reason, 160),
