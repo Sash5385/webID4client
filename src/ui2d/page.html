@@ -1,0 +1,135 @@
+<title>Маршрути 1 і 7 · тренажер</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Один екран: зверху HUD, карта на всю висоту, знизу пульт під великий палець. Свідомо одна темна тема (кабіна). */
+:root {
+  --bg: #15171c; --panel: #1e2129; --key: #2a2e39; --key-down: #3a4050;
+  --fg: #eef0f4; --muted: #9aa1b2; --accent: #ffa31a; --ok: #30d158; --bad: #ff5a4e; --hint: #5aa9ff;
+  --display: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--fg); font-family: var(--display); overflow: hidden;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+#app { height: 100%; display: flex; flex-direction: column; }
+#hud { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "spd next" "spd row"; align-items: center; column-gap: 12px; row-gap: 6px; padding-block: 8px;
+  padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px));
+  background: var(--panel); }
+#speedBox { grid-area: spd; display: flex; flex-direction: column; align-items: center; min-width: 64px; }
+#speed { font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+#speed.over { color: var(--bad); }
+#speedBox small { color: var(--muted); font-size: 12px; }
+#next { grid-area: next; min-width: 0; font-size: 15px; font-weight: 650; line-height: 1.25; text-wrap: balance; }
+#row { grid-area: row; display: flex; align-items: center; gap: 6px; min-width: 0; }
+#faults { flex: 1; min-width: 0; font-size: 13px; color: var(--muted); white-space: nowrap; }
+#faults.warn { color: var(--accent); }
+.mini { background: var(--key); color: var(--fg); border: 0; border-radius: 8px; min-width: 34px; height: 32px;
+  font: 600 13px var(--display); padding: 0 8px; }
+.mini.armed { background: var(--accent); color: #1a1205; }
+#stage { position: relative; flex: 1; min-height: 0; }
+#c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#toast { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); width: min(92%, 460px);
+  padding: 10px 14px; border-radius: 10px; font-size: 14px; line-height: 1.35; text-align: center;
+  background: var(--panel); border: 1px solid var(--key); }
+#toast.fault { border-color: var(--bad); color: #ffd9d5; }
+#toast.hint { border-color: var(--hint); color: #dcebff; }
+#toast.info { color: var(--muted); }
+#zoom { position: absolute; right: max(10px, env(safe-area-inset-right, 0px)); bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
+#pad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding-block: 10px;
+  padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px));
+  background: var(--panel); }
+.k { background: var(--key); color: var(--fg); border: 0; border-radius: 12px; height: 56px;
+  font: 700 15px var(--display); display: flex; align-items: center; justify-content: center; gap: 6px; }
+.k:focus-visible, .mini:focus-visible { outline: 2px solid var(--hint); outline-offset: 2px; }
+.k.down { background: var(--key-down); }
+.k.armed { box-shadow: inset 0 0 0 2px var(--accent); }
+.k.on { background: var(--accent); color: #1a1205; }
+#turn { grid-column: span 2; }
+#turnL, #turnR { font-size: 14px; padding: 0 2px; }
+#gas { background: #234a2f; height: 72px; }
+#gas.down { background: #2f6b3f; }
+#brake { background: #5a2626; height: 72px; }
+#brake.down { background: #7d3030; }
+#result { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(10,12,16,.72); padding: 16px; }
+#result .card { background: var(--panel); border-radius: 16px; padding: 20px; width: min(100%, 420px); max-height: 100%; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
+#resTitle { font-size: 26px; font-weight: 800; margin: 0; }
+#resTitle.ok { color: var(--ok); } #resTitle.bad { color: var(--bad); }
+#resReason { color: var(--muted); margin: 0; }
+#resList { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+#again { height: 48px; border-radius: 12px; border: 0; background: var(--accent); color: #1a1205; font: 700 16px var(--display); }
+.keys { color: var(--muted); font-size: 12px; margin: 0; }
+#rt { position: absolute; left: 8px; bottom: 8px; background: rgba(30,33,41,.82); border: 1px solid var(--key); height: 28px; font-size: 12px; }
+#picker { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(10,12,16,.72); padding: 16px; z-index: 5; }
+#picker .card { background: var(--panel); border-radius: 16px; padding: 18px; width: min(100%, 420px); max-height: 100%; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; touch-action: pan-y; overscroll-behavior: contain; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; }
+#picker .card > * { flex: 0 0 auto; }
+#picker h2 { margin: 0 0 2px; font-size: 20px; }
+.pick { touch-action: pan-y; background: var(--key); color: var(--fg); border: 2px solid transparent; border-radius: 12px; min-height: 56px; padding: 8px 12px; text-align: left; font: 700 16px var(--display); display: flex; flex-direction: column; gap: 2px; }
+.pick small { font-weight: 500; font-size: 12px; color: var(--muted); }
+.pick.cur { border-color: var(--accent); }
+.pick:focus-visible, #pickClose:focus-visible { outline: 2px solid var(--hint); outline-offset: 2px; }
+#pickClose { height: 40px; border-radius: 10px; border: 0; background: transparent; color: var(--muted); font: 600 14px var(--display); }
+#osm { color: var(--muted); font-size: 12px; margin: 0; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<div id="app">
+  <div id="hud">
+    <div id="speedBox"><span id="speed">0</span><small>км/год</small></div>
+    <div id="next">—</div>
+    <div id="row">
+      <div id="faults"></div>
+      <button class="mini" id="mLearn" aria-label="Навчання">Навч.</button>
+      <button class="mini" id="mExam">Іспит</button>
+      <button class="mini" id="sound" aria-label="Звук">🔊</button>
+      <button class="mini" id="pause" aria-label="Пауза">❚❚</button>
+      <button class="mini" id="restart" aria-label="Почати знову">↺</button>
+    </div>
+  </div>
+  <div id="stage">
+    <canvas id="c"></canvas>
+    <button class="mini" id="rt" aria-label="Вибір маршруту">Маршрут 7 ▾</button>
+    <div id="toast" hidden></div>
+    <div id="zoom"><button class="mini" id="zin" aria-label="Наблизити">+</button><button class="mini" id="zout" aria-label="Віддалити">−</button></div>
+    <div id="picker" hidden>
+      <div class="card">
+        <h2>Оберіть маршрут</h2>
+        <button class="pick" id="pick-route1">Маршрут 1 · пл. Марченка<small>≈ 2,8 км: кільце, вул. Стеценка, розворот, лівий на вул. Турчина, вул. Мрії</small></button>
+        <button class="pick" id="pick-route3">Маршрут 3 · вул. Мрії до Салютної<small>≈ 5,9 км: кільце, вул. Мрії на південь до Салютної, розворот, назад, далі як маршрут 1</small></button>
+        <button class="pick" id="pick-route4">Маршрут 4 · Щербаківського, Салютна<small>≈ 4,5 км: кільце, Стеценка, правий на вул. Щербаківського, правий на Салютну, правий на Мрію</small></button>
+        <button class="pick" id="pick-route5">Маршрут 5 · вул. Щербаківського<small>≈ 4,6 км: Стеценка, вул. Щербаківського до Ружинської, розворот, лівий на Стеценку</small></button>
+        <button class="pick" id="pick-route6">Маршрут 6 · вул. Мрії до Турчина<small>≈ 3,8 км: кільце, вул. Мрії до Турчина, розворот, назад, далі як маршрут 1</small></button>
+        <button class="pick" id="pick-route7">Маршрут 7 · вул. Мрії<small>кільце і вул. Мрії з розворотом</small></button>
+        <button class="pick" id="pick-route9">Маршрут 9 · бульвар Вірського, Корчака<small>≈ 6,8 км: Мрія, Турчина, Стеценка, бульвар Вірського до вул. Корчака, мінікруг, назад і Стеценка до кільця</small></button>
+        <button class="pick" id="pick-route10">Маршрут 10 · Салютна, Ружинська, Вірського<small>≈ 6,5 км: Мрія на південь, Салютна, Щербаківського, Ружинська, бульвар Вірського, назад по Салютній</small></button>
+        <button class="pick" id="pick-route12">Маршрут 12 · Стеценка на ПнЗ, пл. Марченка<small>≈ 4,4 км: кільце, Стеценка на ПнЗ до розвороту, назад, далі як маршрут 1</small></button>
+        <button class="pick" id="pick-route13">Маршрут 13 · Стеценка на ПнЗ, пл. Марченка<small>≈ 4,9 км: схожий на №12 (відрізняється деталлю біля знака «Дати дорогу»)</small></button>
+        <button class="pick" id="pick-route14">Маршрут 14 · вул. Виговського<small>≈ 4,1 км: Стеценка, лівий на Виговського до вул. Некрасова, розворот, правий на Стеценку</small></button>
+        <button class="pick" id="pick-route15">Маршрут 15 · Берестейський проспект<small>≈ 8,7 км: Мрія до Берестейського проспекту, розвороти біля Святошина і вул. Нивської, назад по Мрії</small></button>
+        <button id="pickClose">Закрити</button>
+      </div>
+    </div>
+    <div id="result" hidden>
+      <div class="card">
+        <h2 id="resTitle"></h2>
+        <p id="resReason"></p>
+        <ul id="resList"></ul>
+        <button id="again">Ще раз</button>
+        <p class="keys">Клавіатура: ↑ газ, ↓ гальмо, Q/E покажчики, A/D перестроювання, пробіл — зʼїзд/розворот/поворот за покажчиком (Z — ліворуч, C — праворуч).</p>
+        <p class="keys">Маршрут 1: на вулиці «◀ Ліворуч/Розворот» і «Праворуч ▶» — поворот у найближчий зʼїзд у цей бік (спершу ввімкніть покажчик); на кільці й перед ним — «Зʼїзд».</p>
+        <p class="keys" id="osm" hidden>Дані маршруту 1: Map data © OpenStreetMap contributors, ODbL (openstreetmap.org/copyright).</p>
+      </div>
+    </div>
+  </div>
+  <div id="pad">
+    <button class="k" id="sigL" aria-label="Лівий покажчик">◀ покажч.</button>
+    <button class="k" id="turn">Зʼїзд</button>
+    <button class="k" id="turnL" hidden>◀ Ліворуч</button>
+    <button class="k" id="turnR" hidden>Праворуч ▶</button>
+    <button class="k" id="sigR" aria-label="Правий покажчик">покажч. ▶</button>
+    <button class="k" id="laneL" aria-label="Перестроїтись ліворуч">⇇ смуга</button>
+    <button class="k" id="brake">Гальмо</button>
+    <button class="k" id="gas">Газ</button>
+    <button class="k" id="laneR" aria-label="Перестроїтись праворуч">смуга ⇉</button>
+  </div>
+</div>
+<script>%%SCRIPT%%</script>

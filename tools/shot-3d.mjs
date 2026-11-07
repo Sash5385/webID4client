@@ -1,0 +1,21 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell', args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const Q = process.argv[2] || 'mid'; // low | mid | high
+const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+const errors = [];
+page.on('pageerror', (e) => errors.push(String(e)));
+page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errors.push(m.text()); });
+await page.goto('file://' + process.cwd() + '/dist/route7-3d.html?q=' + Q);
+await page.waitForTimeout(1500);
+await page.screenshot({ path: 'dist/3d-' + Q + '-1-start.png' });
+await page.click('#sigR');
+const gas = await page.$('#gas'); const b = await gas.boundingBox();
+await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await page.mouse.down();
+await page.waitForTimeout(6000);
+await page.click('#turn').catch(() => {});
+await page.screenshot({ path: 'dist/3d-' + Q + '-2-ring.png' });
+await page.waitForTimeout(20000);
+await page.screenshot({ path: 'dist/3d-' + Q + '-3-street.png' });
+await page.mouse.up();
+console.log('errors:', errors);
+await browser.close();

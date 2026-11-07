@@ -1,0 +1,190 @@
+<title>Маршрути 1 і 7 · 3D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Один екран: зверху HUD, карта на всю висоту, знизу пульт під великий палець. Свідомо одна темна тема (кабіна). */
+:root {
+  --bg: #10141c; --panel: #151b29; --key: rgba(255,255,255,.08); --key-down: rgba(96,165,250,.28);
+  --fg: #e8edf6; --muted: #b0bacc; --accent: #60a5fa; --fog-btn: linear-gradient(165deg,#93c5fd,#60a5fa); --fog-line: rgba(255,255,255,.14); --ok: #30d158; --bad: #ff5a4e; --hint: #5aa9ff;
+  --display: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--fg); font-family: var(--display); overflow: hidden;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+#app { height: 100%; display: flex; flex-direction: column; }
+#hud { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "spd next" "spd row"; align-items: center; column-gap: 12px; row-gap: 6px; padding-block: 8px;
+  padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px));
+  background: var(--panel); }
+#speedBox { grid-area: spd; display: flex; flex-direction: column; align-items: center; min-width: 64px; }
+#speed { font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+#speed.over { color: var(--bad); }
+#speedBox small { color: var(--muted); font-size: 12px; }
+#next { grid-area: next; min-width: 0; font-size: 15px; font-weight: 650; line-height: 1.25; text-wrap: balance; }
+#row { grid-area: row; display: flex; align-items: center; gap: 6px; min-width: 0; }
+#faults { flex: 1; min-width: 0; font-size: 13px; color: var(--muted); white-space: nowrap; }
+#faults.warn { color: var(--accent); }
+.mini { background: var(--key); color: var(--fg); border: 0; border-radius: 8px; min-width: 34px; height: 32px;
+  font: 600 13px var(--display); padding: 0 8px; }
+.mini.armed { background: var(--accent); color: #1a1205; }
+#stage { position: relative; flex: 1; min-height: 0; }
+#c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#cam { position: absolute; left: 8px; bottom: 76px; background: rgba(16,20,28,.7); border: 1px solid var(--fog-line); height: 28px; font-size: 12px; }
+.mirror { position: absolute; pointer-events: none; border: 2px solid rgba(232,237,246,.55); border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.45); box-sizing: border-box; z-index: 1; }
+#c { touch-action: none; }
+#wx { position: absolute; left: 8px; bottom: 42px; background: rgba(30,33,41,.82); border: 1px solid var(--key); height: 28px; font-size: 12px; }
+#qual { position: absolute; left: 8px; bottom: 8px; background: rgba(30,33,41,.82); border: 1px solid var(--key); height: 28px; font-size: 12px; }
+#toast { position: absolute; left: 50%; top: 58px; transform: translateX(-50%); width: min(92%, 460px);
+  padding: 10px 14px; border-radius: 10px; font-size: 14px; line-height: 1.35; text-align: center;
+  background: var(--panel); border: 1px solid var(--key); }
+#toast.fault { border-color: var(--bad); color: #ffd9d5; }
+#toast.hint { border-color: var(--hint); color: #dcebff; }
+#toast.info { color: var(--muted); }
+#pad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding-block: 10px;
+  padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px));
+  background: var(--panel); }
+.k { background: var(--key); color: var(--fg); border: 0; border-radius: 12px; height: 56px;
+  font: 700 15px var(--display); display: flex; align-items: center; justify-content: center; gap: 6px; }
+.k:focus-visible, .mini:focus-visible { outline: 2px solid var(--hint); outline-offset: 2px; }
+.k.down { background: var(--key-down); }
+.k.armed { box-shadow: inset 0 0 0 2px var(--accent); }
+.k.on { background: var(--accent); color: #1a1205; }
+#turn { grid-column: span 2; }
+#turnL, #turnR { font-size: 14px; padding: 0 2px; }
+#gas { background: #234a2f; height: 72px; }
+#gas.down { background: #2f6b3f; }
+#brake { background: #5a2626; height: 72px; }
+#brake.down { background: #7d3030; }
+#result { position: absolute; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center; background: rgba(10,12,16,.72); padding: 16px; }
+#result .card { background: var(--panel); border-radius: 16px; padding: 20px; width: min(100%, 420px); max-height: 100%; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
+#resTitle { font-size: 26px; font-weight: 800; margin: 0; }
+#resTitle.ok { color: var(--ok); } #resTitle.bad { color: var(--bad); }
+#resReason { color: var(--muted); margin: 0; }
+#resList { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+#again { height: 48px; border-radius: 12px; border: 0; background: var(--accent); color: #1a1205; font: 700 16px var(--display); }
+.keys { color: var(--muted); font-size: 12px; margin: 0; }
+#rt { position: absolute; right: 8px; bottom: 8px; background: rgba(30,33,41,.82); border: 1px solid var(--key); height: 28px; font-size: 12px; }
+#picker { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(10,12,16,.72); padding: 16px; z-index: 5; }
+#picker .card { background: var(--panel); border-radius: 16px; padding: 18px; width: min(100%, 420px); max-height: 100%; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; touch-action: pan-y; overscroll-behavior: contain; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; }
+#picker .card > * { flex: 0 0 auto; }
+#picker h2 { margin: 0 0 2px; font-size: 20px; }
+.pick { touch-action: pan-y; background: var(--key); color: var(--fg); border: 2px solid transparent; border-radius: 12px; min-height: 56px; padding: 8px 12px; text-align: left; font: 700 16px var(--display); display: flex; flex-direction: column; gap: 2px; }
+.pick small { font-weight: 500; font-size: 12px; color: var(--muted); }
+.pick.cur { border-color: var(--accent); }
+.pick:focus-visible, #pickClose:focus-visible { outline: 2px solid var(--hint); outline-offset: 2px; }
+#pickClose { height: 40px; border-radius: 10px; border: 0; background: transparent; color: var(--muted); font: 600 14px var(--display); }
+#osm { color: var(--muted); font-size: 12px; margin: 0; }
+/* Парковка: у пульті лише кермо, передача, гальмо й газ */
+#steerBox, #gear, #clutch, #gDn, #gUp, #gInd { display: none; }
+#pad.man #clutch, #pad.man #gDn, #pad.man #gUp, #pad.man #gInd { display: flex; height: 46px; }
+#pad.man.park #gear { display: none; } #pad.man.park #steerBox { grid-column: span 4; }
+#gInd { font-size: 18px; background: rgba(255,255,255,.04); } #gInd.stall { color: var(--bad); }
+#clutch { background: rgba(251,191,36,.2); border-color: rgba(251,191,36,.45); } #clutch.down { background: rgba(251,191,36,.42); }
+#tod { position: absolute; left: 8px; bottom: 144px; background: rgba(16,20,28,.7); border: 1px solid var(--fog-line); height: 28px; font-size: 12px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+#cfg { position: absolute; left: 8px; bottom: 8px; background: rgba(16,20,28,.78); border: 1px solid var(--fog-line); height: 30px; font-size: 12px; z-index: 2; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+#cfgPanel { position: absolute; left: 8px; bottom: 44px; z-index: 2; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; max-height: calc(100% - 56px); overflow-y: auto; }
+#cfgPanel .mini { position: static; bottom: auto; left: auto; height: 30px; }
+#gb { position: absolute; left: 8px; bottom: 110px; background: rgba(16,20,28,.7); border: 1px solid var(--fog-line); height: 28px; font-size: 12px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+#pad.park #sigL, #pad.park #sigR, #pad.park #laneL, #pad.park #laneR, #pad.park #turn, #pad.park #turnL, #pad.park #turnR { display: none; }
+#pad.park #gear { display: flex; } #pad.park #steerBox { display: flex; grid-column: span 3; align-items: center; gap: 8px; }
+#pad.park #brake, #pad.park #gas { grid-column: span 2; }
+#steer { flex: 1; min-width: 0; height: 44px; accent-color: #60a5fa; touch-action: none; }
+#steer0 { height: 40px; min-width: 40px; }
+#gear.rev { background: var(--accent); color: #06182e; }
+.pickRow { background: var(--key); }
+#goPark { display: flex; flex-wrap: wrap; gap: 8px; } #goPark button { flex: 1 1 40%; height: 44px; border-radius: 14px; border: 1px solid var(--fog-line); background: var(--key); color: var(--fg); font: 700 14px var(--display); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* Стиль «Туман»: скляні кнопки, градієнт для активних */
+#hud, #pad { background: rgba(16,20,28,.92); border-color: var(--fog-line); }
+#hud { border-bottom: 1px solid var(--fog-line); } #pad { border-top: 1px solid var(--fog-line); }
+.k, .mini, .pick { border: 1px solid var(--fog-line); }
+.k { border-radius: 16px; } .mini { border-radius: 12px; }
+.mini.armed, .k.on, #again { background: var(--fog-btn); color: #06182e; box-shadow: 0 6px 16px rgba(96,165,250,.35); border-color: transparent; }
+#again { border-radius: 16px; }
+.k.armed { box-shadow: inset 0 0 0 2px var(--accent); }
+#gas { background: rgba(126,217,87,.22); border-color: rgba(126,217,87,.4); } #gas.down { background: rgba(126,217,87,.42); }
+#brake { background: rgba(239,68,68,.22); border-color: rgba(239,68,68,.4); } #brake.down { background: rgba(239,68,68,.42); }
+#wx, #qual, #rt { background: rgba(16,20,28,.7); border: 1px solid var(--fog-line); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+#toast, #result .card, #picker .card { background: rgba(21,27,41,.94); border: 1px solid var(--fog-line); border-radius: 18px; }
+.pick { border-radius: 16px; } .pick.cur { border-color: var(--accent); }
+</style>
+<div id="app">
+  <div id="hud">
+    <div id="speedBox"><span id="speed">0</span><small>км/год</small></div>
+    <div id="next">—</div>
+    <div id="row">
+      <div id="faults"></div>
+      <button class="mini" id="mLearn" aria-label="Навчання">Навч.</button>
+      <button class="mini" id="mExam">Іспит</button>
+      <button class="mini" id="sound" aria-label="Звук">🔊</button>
+      <button class="mini" id="pause" aria-label="Пауза">❚❚</button>
+      <button class="mini" id="restart" aria-label="Почати знову">↺</button>
+    </div>
+  </div>
+  <div id="stage">
+    <canvas id="c"></canvas>
+    <button class="mini" id="cam" aria-label="Камера">Камера: Ззаду</button>
+    <button class="mini" id="cfg" aria-label="Налаштування">⚙ Налаштування</button>
+    <div id="cfgPanel" hidden>
+    <button class="mini" id="col" aria-label="Колір авто">Колір: Стандарт</button>
+    <button class="mini" id="tod" aria-label="Час доби">Час: День</button>
+    <button class="mini" id="gb" aria-label="Коробка передач">Коробка: Автомат</button>
+    <button class="mini" id="wx" aria-label="Погода">Погода: Ясно</button>
+    <button class="mini" id="qual" aria-label="Якість графіки">Якість: Середня</button>
+    </div>
+    <button class="mini" id="rt" aria-label="Вибір маршруту">Маршрут 7 ▾</button>
+    <div id="toast" hidden></div>
+    <div id="picker" hidden>
+      <div class="card">
+        <h2>Оберіть маршрут</h2>
+        <button class="pick" id="pick-route1">Маршрут 1 · пл. Марченка<small>≈ 2,8 км: кільце, вул. Стеценка, розворот, лівий на вул. Турчина, вул. Мрії</small></button>
+        <button class="pick" id="pick-route3">Маршрут 3 · вул. Мрії до Салютної<small>≈ 5,9 км: кільце, вул. Мрії на південь до Салютної, розворот, назад, далі як маршрут 1</small></button>
+        <button class="pick" id="pick-route4">Маршрут 4 · Щербаківського, Салютна<small>≈ 4,5 км: кільце, Стеценка, правий на вул. Щербаківського, правий на Салютну, правий на Мрію</small></button>
+        <button class="pick" id="pick-route5">Маршрут 5 · вул. Щербаківського<small>≈ 4,6 км: Стеценка, вул. Щербаківського до Ружинської, розворот, лівий на Стеценку</small></button>
+        <button class="pick" id="pick-route6">Маршрут 6 · вул. Мрії до Турчина<small>≈ 3,8 км: кільце, вул. Мрії до Турчина, розворот, назад, далі як маршрут 1</small></button>
+        <button class="pick" id="pick-route7">Маршрут 7 · вул. Мрії<small>кільце і вул. Мрії з розворотом</small></button>
+        <button class="pick" id="pick-route9">Маршрут 9 · бульвар Вірського, Корчака<small>≈ 6,8 км: Мрія, Турчина, Стеценка, бульвар Вірського до вул. Корчака, мінікруг, назад і Стеценка до кільця</small></button>
+        <button class="pick" id="pick-route10">Маршрут 10 · Салютна, Ружинська, Вірського<small>≈ 6,5 км: Мрія на південь, Салютна, Щербаківського, Ружинська, бульвар Вірського, назад по Салютній</small></button>
+        <button class="pick" id="pick-route12">Маршрут 12 · Стеценка на ПнЗ, пл. Марченка<small>≈ 4,4 км: кільце, Стеценка на ПнЗ до розвороту, назад, далі як маршрут 1</small></button>
+        <button class="pick" id="pick-route13">Маршрут 13 · Стеценка на ПнЗ, пл. Марченка<small>≈ 4,9 км: схожий на №12 (відрізняється деталлю біля знака «Дати дорогу»)</small></button>
+        <button class="pick" id="pick-route14">Маршрут 14 · вул. Виговського<small>≈ 4,1 км: Стеценка, лівий на Виговського до вул. Некрасова, розворот, правий на Стеценку</small></button>
+        <button class="pick" id="pick-route15">Маршрут 15 · Берестейський проспект<small>≈ 8,7 км: Мрія до Берестейського проспекту, розвороти біля Святошина і вул. Нивської, назад по Мрії</small></button>
+        <button class="pick" id="pick-parallel">Парковка · паралельна задом<small>вправа: місце 6,6 м між двома авто, бордюр праворуч</small></button>
+        <button class="pick" id="pick-garage">Парковка · заїзд у гараж<small>вправа: проріз 3,6 м між стінами, задній хід</small></button>
+        <button class="pick" id="pick-turn">Розворот у 3 прийоми (ластівка)<small>вправа: вулиця 11,4 м між бордюрами, вперед–назад–вперед</small></button>
+        <button id="pickClose">Закрити</button>
+      </div>
+    </div>
+    <div id="result" hidden>
+      <div class="card">
+        <h2 id="resTitle"></h2>
+        <p id="resReason"></p>
+        <ul id="resList"></ul>
+        <button id="again">Ще раз</button>
+        <div id="goPark"><button id="goParallel">Парковка: паралельна</button><button id="goGarage">Заїзд у гараж</button><button id="goTurn">Розворот у 3 прийоми</button></div>
+        <p class="keys">Клавіатура: ↑ газ, ↓ гальмо, Q/E покажчики, A/D перестроювання, пробіл — зʼїзд/розворот/поворот за покажчиком (Z — ліворуч, C — праворуч).</p>
+        <p class="keys">Маршрут 1: на вулиці «◀ Ліворуч/Розворот» і «Праворуч ▶» — поворот у найближчий зʼїзд у цей бік (спершу ввімкніть покажчик); на кільці й перед ним — «Зʼїзд».</p>
+        <p class="keys" id="osm" hidden>Дані маршруту 1: Map data © OpenStreetMap contributors, ODbL (openstreetmap.org/copyright).</p>
+        <p class="keys">Моделі авто та вуличні обʼєкти: Kenney (kenney.nl), CC0.<br>Небо (HDRI qwantani_afternoon_puresky) і текстури (asphalt_04, large_square_pattern_01, leafy_grass, concrete_wall_008): Poly Haven (polyhaven.com), CC0.</p>
+      </div>
+    </div>
+  </div>
+  <div id="pad">
+    <button class="k" id="clutch" aria-label="Зчеплення">Зчепл.</button>
+    <button class="k" id="gDn" aria-label="Передача нижче">▼</button>
+    <div class="k" id="gInd">N</div>
+    <button class="k" id="gUp" aria-label="Передача вище">▲</button>
+    <button class="k" id="gear" aria-label="Передача">Вперед</button>
+    <div id="steerBox"><input id="steer" type="range" min="-100" max="100" value="0" step="1" aria-label="Кермо"><button class="mini" id="steer0" aria-label="Кермо прямо">⟲</button></div>
+    <button class="k" id="sigL" aria-label="Лівий покажчик">◀ покажч.</button>
+    <button class="k" id="turn">Зʼїзд</button>
+    <button class="k" id="turnL" hidden>◀ Ліворуч</button>
+    <button class="k" id="turnR" hidden>Праворуч ▶</button>
+    <button class="k" id="sigR" aria-label="Правий покажчик">покажч. ▶</button>
+    <button class="k" id="laneL" aria-label="Перестроїтись ліворуч">⇇ смуга</button>
+    <button class="k" id="brake">Гальмо</button>
+    <button class="k" id="gas">Газ</button>
+    <button class="k" id="laneR" aria-label="Перестроїтись праворуч">смуга ⇉</button>
+  </div>
+</div>
+<script>%%SCRIPT%%</script>
