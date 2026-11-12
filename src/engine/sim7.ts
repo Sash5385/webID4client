@@ -196,7 +196,7 @@ export class Route7Sim {
     this.braking = ctl.brake;
     if (this.gb.manual) this.v = this.gb.step(this.v, { gas: ctl.gas, brake: ctl.brake, clutch: !!ctl.clutch }, P, this.grip, dt);
     else if (ctl.brake) this.v -= P.brake * this.grip * dt;
-    else if (ctl.gas) this.v += P.accel * (0.4 + 0.6 * this.grip) * (1 - Math.pow(this.v / P.maxV, 3)) * dt;
+    else if (ctl.gas) this.v += P.accel * (0.4 + 0.6 * this.grip) * Math.max(1 - Math.pow(this.v / 22, 3), 0.5 * (1 - this.v / P.maxV)) * dt; // до 80 км/год як раніше; далі повільніший набір швидкості до максимуму
     else this.v -= P.coast * dt;
     this.v = clamp(this.v, 0, P.maxV);
     if (this.sig !== 0) this.sigT += dt;
@@ -237,10 +237,12 @@ export class Route7Sim {
     this.faults.push(f);
     this.events.push({ type: 'fault', fault: f });
     if (f.severity === 'serious') this.finish(false, message);
-    else if (this.minorCount >= this.cfg.rules.maxMinorFaults) this.finish(false, `Набрано ${this.minorCount} помилки`);
+    // Іспит: дрібні помилки накопичуються, їзда не обривається; вердикт — після фінішу (4 і більше = «Не склав»). У навчанні — як раніше.
+    else if (this.cfg.mode !== 'exam' && this.minorCount >= this.cfg.rules.maxMinorFaults) this.finish(false, `Набрано ${this.minorCount} помилки`);
   }
 
   private finish(passed: boolean, reason: string): void {
+    if (passed && this.minorCount >= this.cfg.rules.maxMinorFaults) { passed = false; reason = `Набрано ${this.minorCount} дрібних помилок`; }
     this.result = { passed, reason, faults: this.faults.slice(), minor: this.minorCount, time: this.t };
     this.events.push({ type: 'finish', result: this.result });
   }

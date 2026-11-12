@@ -73,7 +73,7 @@ export class Interior {
       c.fillText(label, cx, cy + r * 0.78);
     };
     // Спідометр (зліва).
-    arc(120, 100, 82, g.speed, 180, 999, 'км/год');
+    arc(120, 100, 82, g.speed, 240, 999, 'км/год');
     c.fillStyle = '#eaf2ff'; c.font = '700 64px system-ui, sans-serif'; c.textAlign = 'center'; c.fillText(String(Math.round(g.speed)), 120, 118);
     // Тахометр (механіка) або передача (автомат).
     if (g.manual) {

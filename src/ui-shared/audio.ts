@@ -23,6 +23,10 @@ export class Sound {
   private roadGain!: GainNode;
   private trafficGain!: GainNode;
   private brakeGain!: GainNode;
+  private rainGain!: GainNode;
+  private roadFilter!: BiquadFilterNode;
+  private wx: 'clear' | 'fog' | 'rain' | 'snow' | 'ice' = 'clear';
+  setWeather(w: 'clear' | 'fog' | 'rain' | 'snow' | 'ice'): void { this.wx = w; }
   private noiseBuf!: AudioBuffer;
   private lastTick = -1;
   private lastSig = 0;
@@ -84,9 +88,18 @@ export class Sound {
     // Шум дороги/вітру.
     const road = this.noise();
     const rf = c.createBiquadFilter(); rf.type = 'bandpass'; rf.frequency.value = 500; rf.Q.value = 0.5;
+    this.roadFilter = rf;
     this.roadGain = c.createGain(); this.roadGain.gain.value = 0;
     road.connect(rf).connect(this.roadGain).connect(this.master);
     road.start();
+
+    // Опади: дощ — густий шум зверху (крапі по кузову), сніг — майже тиша з легким шелестом.
+    const rn = this.noise();
+    const rhf = c.createBiquadFilter(); rhf.type = 'highpass'; rhf.frequency.value = 1800;
+    const rlf = c.createBiquadFilter(); rlf.type = 'lowpass'; rlf.frequency.value = 7000;
+    this.rainGain = c.createGain(); this.rainGain.gain.value = 0;
+    rn.connect(rhf).connect(rlf).connect(this.rainGain).connect(this.master);
+    rn.start();
 
     // Міський фон: інші авто поруч.
     const tr = this.noise();
@@ -149,10 +162,10 @@ export class Sound {
     const t = c.currentTime;
     const v = active ? sim.player.v : 0;
     // «Передачі»: оберти ростуть до зміни передачі, потім падають.
-    const gears = [0, 4, 8, 13, 19, 30];
+    const gears = [0, 4, 8, 13, 19, 30, 44, 60];
     let g = 1; while (g < gears.length - 1 && v > gears[g]!) g++;
     const lo = gears[g - 1]!, hi = gears[g]!;
-    const rpm = (v - lo) / (hi - lo + 1e-6);
+    const rpm = Math.min(1.25, (v - lo) / (hi - lo + 1e-6));
     const gb = sim.gb;
     let f0 = 28 + rpm * 38 + g * 3 + (gas ? 4 : 0);
     let loud = active ? (gas ? 0.2 : 0.11) : 0, bright = 260 + rpm * 260 + (gas ? 220 : 0);
@@ -166,7 +179,10 @@ export class Sound {
     this.engB.frequency.setTargetAtTime(f0 * 0.5, t, 0.05);
     this.engFilter.frequency.setTargetAtTime(bright, t, 0.08);
     this.engGain.gain.setTargetAtTime(loud, t, 0.08);
-    this.roadGain.gain.setTargetAtTime(active ? Math.min(0.22, v * 0.012) : 0, t, 0.15);
+    const wet = this.wx === 'rain' ? 1.9 : this.wx === 'snow' ? 0.6 : this.wx === 'ice' ? 0.45 : 1;
+    this.roadGain.gain.setTargetAtTime(active ? Math.min(0.3, v * 0.012 * wet) : 0, t, 0.15);
+    this.roadFilter.frequency.setTargetAtTime(this.wx === 'rain' ? 1400 : this.wx === 'snow' ? 260 : 500, t, 0.3); // мокрий асфальт — шиплячий шум; сніг приглушує
+    this.rainGain.gain.setTargetAtTime(this.wx === 'rain' ? 0.1 + Math.min(0.05, v * 0.002) : this.wx === 'snow' ? 0.012 : 0, t, 0.4);
     let near = 0;
     for (const car of sim.traffic.cars) { const d = Math.hypot(car.x - sim.x, car.z - sim.z); if (d < 45) near += (1 - d / 45) * (0.3 + Math.min(1, car.v / 10)); }
     this.trafficGain.gain.setTargetAtTime(active ? Math.min(0.28, near * 0.05) : 0, t, 0.3);
@@ -186,6 +202,6 @@ export class Sound {
   silence(): void {
     const c = this.ctx; if (!c) return;
     const t = c.currentTime;
-    for (const g of [this.engGain, this.roadGain, this.trafficGain, this.brakeGain]) g.gain.setTargetAtTime(0, t, 0.05);
+    for (const g of [this.engGain, this.roadGain, this.trafficGain, this.brakeGain, this.rainGain]) g.gain.setTargetAtTime(0, t, 0.05);
   }
 }

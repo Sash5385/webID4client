@@ -200,3 +200,28 @@ describe('погода: занос', () => {
     expect(codes(dry)).not.toContain('skid');
   });
 });
+
+describe('іспит: накопичення дрібних помилок', () => {
+  it('у навчанні 4 дрібні помилки закінчують заїзд, в іспиті — ні (вердикт після фінішу)', () => {
+    const learn = new Sim(withConfig({ mode: 'learn' }), 'route1') as any;
+    for (let i = 0; i < 4; i++) learn.fault('noSignal');
+    expect(learn.result?.passed).toBe(false);
+    const ex = new Sim(withConfig({ mode: 'exam' }), 'route1') as any;
+    for (let i = 0; i < 5; i++) ex.fault('noSignal');
+    expect(ex.result).toBeNull();
+    expect(ex.minorCount).toBe(5);
+    ex.finish(true, 'Маршрут пройдено');
+    expect(ex.result.passed).toBe(false);
+    ex.fault('crash'); // після результату нічого не змінюється
+    const ex2 = new Sim(withConfig({ mode: 'exam' }), 'route1') as any;
+    ex2.fault('crash');
+    expect(ex2.result.passed).toBe(false);
+  });
+  it('швидкість авто доходить до 200 км/год', () => {
+    const s = new Sim(DEFAULT_CONFIG, 'route1') as any;
+    s.fault = (): void => { /* фізику перевіряємо без судейства */ };
+    let mx = 0;
+    for (let i = 0; i < 60 * 150 && !s.result; i++) { s.step({ gas: true, brake: false }); mx = Math.max(mx, s.v); }
+    expect(mx * 3.6).toBeGreaterThan(150);
+  });
+});

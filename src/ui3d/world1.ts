@@ -31,8 +31,8 @@ function resample(pts: readonly Vec2[], step = 14): Vec2[] {
 const ribbon = (g: Geo, pts: readonly Vec2[], halfW: number, y: number, col: readonly number[]): void => ribbonRaw(g, resample(pts), halfW, y, col);
 const lineRibbon = (g: Geo, p: PL, d: number, halfW: number, y: number, col: readonly number[]): void => ribbon(g, d === 0 ? p.pts : p.offset(d).pts, halfW, y, col);
 const SW = 2.5;               // ширина тротуару
-type Layer = 'asph' | 'side' | 'edge' | 'mark' | 'props' | 'glass';
-const LAYERS: readonly Layer[] = ['asph', 'side', 'edge', 'mark', 'props', 'glass'];
+type Layer = 'asph' | 'side' | 'fil' | 'edge' | 'mark' | 'props' | 'glass';
+const LAYERS: readonly Layer[] = ['asph', 'side', 'fil', 'edge', 'mark', 'props', 'glass'];
 // Радіус показу комірок (м від гравця): узгоджено з туманом/далекою площиною камери.
 const SHOW_R: Record<Quality, number> = { low: 125, mid: 205, high: 340 };
 
@@ -55,7 +55,7 @@ class Fac {
 }
 
 class Cell {
-  readonly geos: Record<Layer, Geo> = { asph: new Geo(), side: new Geo(), edge: new Geo(), mark: new Geo(), props: new Geo(), glass: new Geo() };
+  readonly geos: Record<Layer, Geo> = { asph: new Geo(), side: new Geo(), fil: new Geo(), edge: new Geo(), mark: new Geo(), props: new Geo(), glass: new Geo() };
   readonly fac = new Fac();
   readonly sq: Matrix4[] = []; readonly cu: Matrix4[] = [];
   readonly trees: { x: number; z: number; s: number; y0: number }[] = [];
@@ -110,7 +110,7 @@ export function buildWorld1(sim: NetSim, q: Quality, models: Models, pbr: Pbr | 
   const router = new Router();
   const G = {} as Record<Layer, CGeo>;
   for (const l of LAYERS) G[l] = new CGeo(router, l);
-  const { asph, side, edge, mark, props, glass } = G;
+  const { asph, side, fil, edge, mark, props, glass } = G;
   const solidL = cfg.rules.solidBeforeStop;
 
   // ---------- Допоміжні запити: дорога/будинок у точці ----------
@@ -178,25 +178,78 @@ export function buildWorld1(sim: NetSim, q: Quality, models: Models, pbr: Pbr | 
 
   // ---------- Проїзна частина ----------
   const major = (e: NetEdge): boolean => e.kind === 'street' || e.kind === 'arm' || e.kind === 'cross';
+  // Дороги з OSM, що закінчуються за кілька метрів до проїзної частини (недотягнуті до магістралі), подовжуємо до її правого краю: без розриву й зі скругленням.
+  const ctxRoads = data.context.map((c) => {
+    if (c.kind === 'footway' || c.kind === 'path' || c.kind === 'cycleway' || c.kind === 'pedestrian' || c.pts.length < 2) return c;
+    const pts = c.pts.map((p) => [p[0], p[1]] as [number, number]);
+    for (const end of [0, 1]) {
+      const n = pts.length, pe = pts[end === 0 ? 0 : n - 1]!, q = pts[end === 0 ? 1 : n - 2]!;
+      let dx = pe[0] - q[0], dz = pe[1] - q[1]; const dl = Math.hypot(dx, dz);
+      if (dl < 0.5) continue;
+      dx /= dl; dz /= dl;
+      let best = 0;
+      for (const e of net.edgeList) {
+        if (e.kind !== 'street' && e.kind !== 'arm' && e.kind !== 'cross') continue;
+        const pr = e.ref.project(pe[0], pe[1]);
+        if (pr.s < 2 || pr.s > e.length - 2) continue;
+        const w = e.n * e.W, gap = pr.d - w; // відстань за правим краєм
+        if (gap < 0.5 || gap > 9) continue;
+        const B = net.pose(e, pr.s, w);
+        const toward = dx * -Math.cos(B.a) + dz * -Math.sin(B.a); // компонента напряму «до осі» (вісь ліворуч від напряму ребра)
+        if (toward < 0.35) continue;
+        const ext = gap / toward + 0.6;
+        if (ext > 12) continue;
+        best = Math.max(best, ext);
+      }
+      if (best > 0) { const np: [number, number] = [pe[0] + dx * best, pe[1] + dz * best]; if (end === 0) pts.unshift(np); else pts.push(np); }
+    }
+    return { ...c, pts };
+  });
   for (const e of net.edgeList) {
     const w = e.n * e.W;
     lineRibbon(asph, e.ref, w / 2, w / 2 + 0.02, Y_ASPH, K.asph);
     // Щілина між двома проїзними частинами однієї вулиці (осьова): заливає ребро-власник.
     if (e.data.centreOwner && e.data.centreLine !== 'none') { const m = e.data.median; lineRibbon(asph, e.ref, -m, m + 0.02, Y_ASPH, K.asph); }
   }
-  for (const c of net.connList) ribbon(asph, c.path.pts, 1.9, Y_ASPH, K.asph);
+  // Зʼєднувачі малюємо по згладженій кривій (Катмулл–Ром через ті самі точки): ламана з кроком 1–3 м дає «кутасті» повороти.
+  const smooth = (pts: readonly Vec2[], sub = 5): Vec2[] => {
+    if (pts.length < 3) return pts.slice();
+    const out: Vec2[] = [];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[Math.max(0, i - 1)]!, p1 = pts[i]!, p2 = pts[i + 1]!, p3 = pts[Math.min(pts.length - 1, i + 2)]!;
+      for (let k = 0; k < sub; k++) {
+        const t = k / sub, t2 = t * t, t3 = t2 * t;
+        const f = (a: number, b: number, c: number, d: number): number => 0.5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
+        out.push({ x: f(p0.x, p1.x, p2.x, p3.x), z: f(p0.z, p1.z, p2.z, p3.z) });
+      }
+    }
+    out.push(pts[pts.length - 1]!);
+    return out;
+  };
+  for (const c of net.connList) ribbon(asph, smooth(c.path.pts), 1.9, Y_ASPH, K.asph);
   for (const j of data.junctions) {
     if (j.kind === 'uturn') continue; // опукла оболонка петлі закрила б сквер: тут вистачає зʼєднувачів
+    // Кути оболонки перехрестя скруглюємо (квадратична крива в кожній вершині, радіус до 6 м, не більше 40 % сусідніх сторін).
+    const src = j.poly, np = src.length, rp: [number, number][] = [];
+    for (let i = 0; i < np; i++) {
+      const v = src[i]!, a = src[(i + np - 1) % np]!, b = src[(i + 1) % np]!;
+      const la = Math.hypot(a[0] - v[0], a[1] - v[1]), lb = Math.hypot(b[0] - v[0], b[1] - v[1]);
+      const t = Math.min(6, 0.4 * la, 0.4 * lb);
+      if (t < 0.3 || la < 1e-6 || lb < 1e-6) { rp.push([v[0], v[1]]); continue; }
+      const p0: [number, number] = [v[0] + ((a[0] - v[0]) / la) * t, v[1] + ((a[1] - v[1]) / la) * t];
+      const p2: [number, number] = [v[0] + ((b[0] - v[0]) / lb) * t, v[1] + ((b[1] - v[1]) / lb) * t];
+      for (let k = 0; k <= 6; k++) { const u = k / 6, w0 = (1 - u) * (1 - u), w1 = 2 * u * (1 - u), w2 = u * u; rp.push([w0 * p0[0] + w1 * v[0] + w2 * p2[0], w0 * p0[1] + w1 * v[1] + w2 * p2[1]]); }
+    }
     let cx = 0, cz = 0;
-    for (const p of j.poly) { cx += p[0]; cz += p[1]; }
-    cx /= j.poly.length; cz /= j.poly.length;
-    for (let i = 0; i < j.poly.length; i++) {
-      const a = j.poly[i]!, b = j.poly[(i + 1) % j.poly.length]!;
+    for (const p of rp) { cx += p[0]; cz += p[1]; }
+    cx /= rp.length; cz /= rp.length;
+    for (let i = 0; i < rp.length; i++) {
+      const a = rp[i]!, b = rp[(i + 1) % rp.length]!;
       asph.triUp(cx, Y_ASPH, cz, a[0], Y_ASPH, a[1], b[0], Y_ASPH, b[1], K.asph);
     }
   }
   // Інші дороги з OSM (двори, вулиці) — асфальт; доріжки — плитка, лише поза проїзною частиною.
-  for (const c of data.context) {
+  for (const c of ctxRoads) {
     const pts = c.pts.map((p) => ({ x: p[0], z: p[1] }));
     if (pts.length < 2) continue;
     if (c.kind === 'footway' || c.kind === 'path' || c.kind === 'cycleway' || c.kind === 'pedestrian') {
@@ -212,6 +265,110 @@ export function buildWorld1(sim: NetSim, q: Quality, models: Models, pbr: Pbr | 
       }
       flush();
     } else ribbon(asph, pts, c.width / 2, Y_ASPH, K.asph);
+  }
+
+  // ---------- Скруглення кутів перехресть (радіус бордюру) ----------
+  // Де бічна дорога виходить на проїзну частину, її край сходиться з краєм магістралі під гострим кутом. Для кожного такого кута
+  // будуємо дугу радіуса CURB_R, дотичну до обох країв, і заливаємо асфальтом клин між кутом і дугою (шар 'fil' — над тротуаром).
+  {
+    const CURB_R = 5.5, arcSteps = 8;
+    const major2 = net.edgeList.filter((e) => e.kind === 'street' || e.kind === 'arm' || e.kind === 'cross');
+    const done = new Set<string>();
+    const fillet = (Cn: Vec2, u1: Vec2, u2: Vec2): boolean => {
+      const th = Math.acos(Math.max(-1, Math.min(1, u1.x * u2.x + u1.z * u2.z)));
+      if (th < 0.35 || th > 2.9) return false;
+      const tl = CURB_R / Math.tan(th / 2);
+      if (tl > 14) return false;
+      const T1 = { x: Cn.x + u1.x * tl, z: Cn.z + u1.z * tl };
+      const bx = u1.x + u2.x, bz = u1.z + u2.z, bl = Math.hypot(bx, bz) || 1, od = CURB_R / Math.sin(th / 2);
+      const O = { x: Cn.x + (bx / bl) * od, z: Cn.z + (bz / bl) * od };
+      const a1 = Math.atan2(T1.z - O.z, T1.x - O.x), a2 = Math.atan2(Cn.z + u2.z * tl - O.z, Cn.x + u2.x * tl - O.x);
+      let da = a2 - a1; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
+      const arc: Vec2[] = [];
+      for (let i = 0; i <= arcSteps; i++) { const aa = a1 + (da * i) / arcSteps; arc.push({ x: O.x + Math.cos(aa) * CURB_R, z: O.z + Math.sin(aa) * CURB_R }); }
+      for (let i = 0; i < arc.length - 1; i++) fil.triUp(Cn.x, Y_ASPH, Cn.z, arc[i]!.x, Y_ASPH, arc[i]!.z, arc[i + 1]!.x, Y_ASPH, arc[i + 1]!.z, K.asph);
+      ribbon(mark, arc, 0.13, Y_MARK, C.curb);
+      return true;
+    };
+    // P0 — точка на краю бічної дороги; d — одиничний напрям «до магістралі»; out — зовнішня нормаль (у бік трави); self — ребро цієї ж дороги.
+    const corner = (P0: Vec2, d: Vec2, out: Vec2, self: NetEdge | null): void => {
+      for (const e of major2) {
+        if (e === self) continue;
+        const w = e.n * e.W;
+        const b = e.ref.project(P0.x, P0.z);
+        if (b.s < 2 || b.s > e.length - 2 || b.d - w < -0.3 || b.d - w > 18) continue; // точка ззовні правого краю, не далі 18 м
+        let B = net.pose(e, b.s, w), Cn = { x: 0, z: 0 }, ok = false;
+        for (let it = 0; it < 3; it++) {
+          const tx = Math.sin(B.a), tz = -Math.cos(B.a), ni = { x: tz, z: -tx };
+          const dn = d.x * ni.x + d.z * ni.z;
+          if (dn < 0.35) { ok = false; break; }
+          const t = -((P0.x - B.x) * ni.x + (P0.z - B.z) * ni.z) / dn;
+          Cn = { x: P0.x + t * d.x, z: P0.z + t * d.z };
+          const pr = e.ref.project(Cn.x, Cn.z);
+          if (pr.s < 2 || pr.s > e.length - 2) { ok = false; break; }
+          B = net.pose(e, pr.s, w); ok = true;
+        }
+        if (!ok) continue;
+        const key = `${Math.round(Cn.x * 2)},${Math.round(Cn.z * 2)}`;
+        if (done.has(key)) continue;
+        const tx = Math.sin(B.a), tz = -Math.cos(B.a);
+        const sgn = out.x * tx + out.z * tz >= 0 ? 1 : -1;
+        if (!fillet(Cn, { x: -d.x, z: -d.z }, { x: sgn * tx, z: sgn * tz })) continue;
+        done.add(key);
+      }
+    };
+    // 0) Перетин правих країв двох магістральних ребер (хрестові перехрестя): чотири кути, по одному на пару країв.
+    {
+      const bnd = major2.map((e) => ({ e, pts: e.ref.offset(e.n * e.W).pts, bb: e.bbox }));
+      const rightOf = (h: Vec2): Vec2 => ({ x: -h.z, z: h.x });
+      for (let i = 0; i < bnd.length; i++) for (let j = i + 1; j < bnd.length; j++) {
+        const A = bnd[i]!, B = bnd[j]!;
+        if (A.bb[0] > B.bb[2] + 2 || B.bb[0] > A.bb[2] + 2 || A.bb[1] > B.bb[3] + 2 || B.bb[1] > A.bb[3] + 2) continue;
+        for (let m = 0; m < A.pts.length - 1; m++) {
+          const a0 = A.pts[m]!, a1 = A.pts[m + 1]!;
+          const ax = Math.min(a0.x, a1.x) - 1, ay = Math.max(a0.x, a1.x) + 1, az = Math.min(a0.z, a1.z) - 1, aw = Math.max(a0.z, a1.z) + 1;
+          for (let n2 = 0; n2 < B.pts.length - 1; n2++) {
+            const b0 = B.pts[n2]!, b1 = B.pts[n2 + 1]!;
+            if (Math.max(b0.x, b1.x) < ax || Math.min(b0.x, b1.x) > ay || Math.max(b0.z, b1.z) < az || Math.min(b0.z, b1.z) > aw) continue;
+            const rx = a1.x - a0.x, rz = a1.z - a0.z, sx = b1.x - b0.x, sz = b1.z - b0.z, den = rx * sz - rz * sx;
+            if (Math.abs(den) < 1e-6) continue;
+            const t = ((b0.x - a0.x) * sz - (b0.z - a0.z) * sx) / den, u = ((b0.x - a0.x) * rz - (b0.z - a0.z) * rx) / den;
+            if (t <= 0.001 || t >= 0.999 || u <= 0.001 || u >= 0.999) continue;
+            const Cn = { x: a0.x + rx * t, z: a0.z + rz * t };
+            const key = `${Math.round(Cn.x * 2)},${Math.round(Cn.z * 2)}`;
+            if (done.has(key)) continue;
+            const l1 = Math.hypot(rx, rz) || 1, l2 = Math.hypot(sx, sz) || 1;
+            const h1 = { x: rx / l1, z: rz / l1 }, h2 = { x: sx / l2, z: sz / l2 };
+            const r1 = rightOf(h1), r2 = rightOf(h2);
+            const s1 = h1.x * r2.x + h1.z * r2.z >= 0 ? 1 : -1, s2 = h2.x * r1.x + h2.z * r1.z >= 0 ? 1 : -1;
+            if (fillet(Cn, { x: s1 * h1.x, z: s1 * h1.z }, { x: s2 * h2.x, z: s2 * h2.z })) done.add(key);
+          }
+        }
+      }
+    }
+    // 1) Дороги-контекст з OSM (двори, вулиці): обидва кінці, обидва краї.
+    for (const rd of ctxRoads) {
+      if (rd.kind === 'footway' || rd.kind === 'path' || rd.kind === 'cycleway' || rd.kind === 'pedestrian' || rd.width < 3 || rd.pts.length < 2) continue;
+      const n = rd.pts.length, hw = rd.width / 2;
+      for (const end of [0, 1]) {
+        const pe = rd.pts[end === 0 ? 0 : n - 1]!;
+        let qi = end === 0 ? 1 : n - 2, q = rd.pts[qi]!, acc = Math.hypot(pe[0] - q[0], pe[1] - q[1]);
+        while (acc < 4 && qi + (end === 0 ? 1 : -1) >= 0 && qi + (end === 0 ? 1 : -1) < n) { const nx = rd.pts[qi + (end === 0 ? 1 : -1)]!; acc += Math.hypot(nx[0] - q[0], nx[1] - q[1]); q = nx; qi += end === 0 ? 1 : -1; }
+        let dx = pe[0] - q[0], dz = pe[1] - q[1]; const dl = Math.hypot(dx, dz);
+        if (dl < 1) continue;
+        dx /= dl; dz /= dl;
+        for (const k of [-1, 1]) corner({ x: pe[0] + k * hw * -dz, z: pe[1] + k * hw * dx }, { x: dx, z: dz }, { x: k * -dz, z: k * dx }, null);
+      }
+    }
+    // 2) Ребра мережі, що підходять до іншого ребра (бічні вулиці, виїзди): правий край на початку й наприкінці.
+    for (const e of net.edgeList) {
+      if (e.kind !== 'cross' && e.kind !== 'side' && e.kind !== 'driveway' && e.kind !== 'arm') continue;
+      const w = e.n * e.W;
+      const pa = net.pose(e, 0.5, w), pb = net.pose(e, e.length - 0.5, w);
+      const ta = { x: Math.sin(pa.a), z: -Math.cos(pa.a) }, tb = { x: Math.sin(pb.a), z: -Math.cos(pb.a) };
+      corner(pb, tb, { x: -tb.z, z: tb.x }, e);                                         // кінець ребра: рухаємось до магістралі
+      corner(pa, { x: -ta.x, z: -ta.z }, { x: -ta.z, z: ta.x }, e);                    // початок ребра: «до магістралі» — назад
+    }
   }
 
   // ---------- Тротуари і бордюри вздовж вулиць ----------
@@ -245,13 +402,55 @@ export function buildWorld1(sim: NetSim, q: Quality, models: Models, pbr: Pbr | 
     const L = Math.hypot(b.x - a.x, b.z - a.z) || 1, nx = (-(b.z - a.z) / L) * th / 2, nz = ((b.x - a.x) / L) * th / 2;
     g.quadUp({ x: a.x - nx, z: a.z - nz }, { x: a.x + nx, z: a.z + nz }, { x: b.x + nx, z: b.z + nz }, { x: b.x - nx, z: b.z - nz }, y, col);
   };
+  // Шляхи розворотів і лівих поворотів (вони перетинають осьову): навколо них осьова — пунктир.
+  const turnPaths = data.connectors.filter((c) => c.turn === 'uturn' || c.turn === 'left').map((c) => {
+    let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (const p of c.path) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); }
+    return { pts: c.path, x0: x0 - 2, x1: x1 + 2, z0: z0 - 2, z1: z1 + 2 };
+  });
+  const segDist2 = (px: number, pz: number, a: readonly [number, number], b: readonly [number, number]): number => {
+    const dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz;
+    const t = L2 > 0 ? Math.max(0, Math.min(1, ((px - a[0]) * dx + (pz - a[1]) * dz) / L2)) : 0;
+    const x = a[0] + dx * t - px, z = a[1] + dz * t - pz;
+    return x * x + z * z;
+  };
+  const centreGaps = (e: NetEdge, m: number): [number, number][] => {
+    const hit: boolean[] = [];
+    const n = Math.max(2, Math.ceil(e.length));
+    for (let i = 0; i <= n; i++) {
+      const p = net.pose(e, Math.min(e.length, (i * e.length) / n), -m);
+      let h = false;
+      for (const t of turnPaths) {
+        if (p.x < t.x0 || p.x > t.x1 || p.z < t.z0 || p.z > t.z1) continue;
+        for (let k = 0; k < t.pts.length - 1 && !h; k++) if (segDist2(p.x, p.z, t.pts[k]!, t.pts[k + 1]!) < 1.7 * 1.7) h = true;
+        if (h) break;
+      }
+      hit.push(h);
+    }
+    // розширюємо на 5 м в обидва боки й зливаємо в інтервали
+    const out: [number, number][] = [];
+    let a = -1;
+    for (let i = 0; i <= n; i++) {
+      const on = hit.slice(Math.max(0, i - 5), i + 6).some(Boolean);
+      if (on && a < 0) a = i;
+      if ((!on || i === n) && a >= 0) { out.push([Math.max(0, (a * e.length) / n), Math.min(e.length, ((on ? i : i - 1) * e.length) / n)]); a = -1; }
+    }
+    return out.filter(([x, y]) => y - x > 1);
+  };
   for (const e of net.edgeList) {
     if (!major(e)) continue;
     const sz = solidZones(e);
     // Осьова: подвійна / одинарна суцільна по ref.offset(−median).
     if (e.data.centreOwner && e.data.centreLine !== 'none') {
       const m = e.data.median;
-      if (e.data.centreLine === 'double') { for (const k of [-1, 1]) lineRibbon(mark, e.ref, -m + k * m * 0.5, HALF_LINE, Y_MARK, C.mark); } else lineRibbon(mark, e.ref, -m, HALF_LINE, Y_MARK, C.mark);
+      // Там, де осьову перетинають розвороти й ліві повороти (виїзди з бічних вулиць), суцільної лінії бути не повинно — лише пунктир.
+      const dz = centreGaps(e, m);
+      const solid = without(e.length, dz);
+      for (const [a, b] of solid) {
+        const seg = e.ref.slice(a, b);
+        if (e.data.centreLine === 'double') { for (const k of [-1, 1]) lineRibbon(mark, seg, -m + k * m * 0.5, HALF_LINE, Y_MARK, C.mark); } else lineRibbon(mark, seg, -m, HALF_LINE, Y_MARK, C.mark);
+      }
+      for (const [a, b] of dz) for (let t = a; t + 3 <= b + 0.01; t += 6) lineRibbon(mark, e.ref.slice(t, Math.min(b, t + 3)), -m, HALF_LINE, Y_MARK, C.mark);
     }
     // Розподіл смуг: пунктир, перед стоп-лініями/переходами — суцільна.
     for (let i = 1; i < e.n; i++) {
@@ -487,10 +686,10 @@ export function buildWorld1(sim: NetSim, q: Quality, models: Models, pbr: Pbr | 
   };
   const grassSurf = surf(P?.grass, T?.grass), asphSurf = surf(P?.asphalt, T?.asph), sideSurf = surf(P?.paving, T?.paving);
   const mats: Record<Layer, Material> = {
-    asph: base(-1, asphSurf), side: base(-2, sideSurf), edge: base(-2, null), mark: base(-4, null), props: base(0, null), glass: base(0, null, true),
+    asph: base(-1, asphSurf), side: base(-2, sideSurf), fil: base(-3, asphSurf), edge: base(-2, null), mark: base(-4, null), props: base(0, null), glass: base(0, null, true),
   };
-  const uvs: Record<Layer, number> = { asph: 1 / (P ? TILE.asphalt : 10), side: 1 / (P ? TILE.paving : 3.2), edge: 0, mark: 0, props: 0, glass: 0 };
-  const cast: Record<Layer, boolean> = { asph: false, side: false, edge: false, mark: false, props: true, glass: false };
+  const uvs: Record<Layer, number> = { asph: 1 / (P ? TILE.asphalt : 10), side: 1 / (P ? TILE.paving : 3.2), fil: 1 / (P ? TILE.asphalt : 10), edge: 0, mark: 0, props: 0, glass: 0 };
+  const cast: Record<Layer, boolean> = { asph: false, side: false, fil: false, edge: false, mark: false, props: true, glass: false };
   {
     const gm = new Mesh(ground.build(grassSurf ? 1 / (P ? TILE.grass : 8) : 0), base(0, grassSurf));
     gm.receiveShadow = true; gm.frustumCulled = false;

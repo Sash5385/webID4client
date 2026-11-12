@@ -278,8 +278,8 @@ function hud(): void {
   $('speed').textContent = String(Math.round(sim.v * 3.6));
   const n = sim.next;
   $('next').textContent = n.dist > 1 ? `Далі: ${n.text} · ${Math.round(n.dist)} м` : `Далі: ${n.text}`;
-  $('faults').textContent = mode === 'learn' ? `Помилки ${sim.minorCount}/${sim.cfg.rules.maxMinorFaults}` : 'Іспит';
-  $('faults').classList.toggle('warn', mode === 'learn' && sim.minorCount > 0);
+  $('faults').textContent = `⚠ ${sim.minorCount}/${sim.cfg.rules.maxMinorFaults}${mode === 'exam' ? ' іспит' : ''}`;
+  $('faults').classList.toggle('warn', sim.minorCount > 0);
   const tu = turnUi(sim);
   $('turn').hidden = tu.split; $('turnL').hidden = $('turnR').hidden = !tu.split;
   if (tu.split) { $('turnL').textContent = '◀ ' + tu.left; $('turnR').textContent = tu.right + ' ▶'; } else $('turn').textContent = tu.label;
@@ -304,7 +304,7 @@ function onEvents(evs: SimEvent[]): void {
   for (const e of evs) {
     if (e.type === 'fault') sound.fault(e.fault);
     else if (e.type === 'finish') sound.finish(e.result.passed);
-    if (e.type === 'fault' && mode === 'learn') toast(e.fault.message, 'fault');
+    if (e.type === 'fault') toast(`${e.fault.severity === 'serious' ? '⛔ ' : '⚠ '}${e.fault.message}`, 'fault');
     else if (e.type === 'hint') toast(e.text, 'hint');
     else if (e.type === 'info') toast(e.text, 'info');
     else if (e.type === 'finish') showResult();

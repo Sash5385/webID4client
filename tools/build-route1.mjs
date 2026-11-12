@@ -92,6 +92,8 @@ const CHAINS = [
 const RING_TRIM = RING.r + W + 6.5;
 const RING_MIN_R = 11; // зовнішня межа кільця + 6.5 м: тут кінчається рукав
 
+const LANES_FIX = new Map([466653476, 466653489, 466653473, 420204508, 470556288, 420204507, 466653470, 420204505, 466653466, 691769729].map((id) => [id, 4]));
+
 // Орієнтований ланцюжок вузлів з атрибутами сегментів.
 function chainNodes(ch) {
   const ids = [], seg = [];
@@ -110,7 +112,8 @@ function chainNodes(ch) {
     const oneway = w.tags.oneway === 'yes';
     const fwd = i1 > i0;
     if (oneway && !fwd) throw new Error(`${ch.id}: oneway ${wid} reversed`);
-    const lanesTag = +(w.tags.lanes ?? (oneway ? 1 : 2));
+    // Мрії між ДС і виїздом до кільця (за супутником — по 2 смуги в кожен бік; в OSM тег lanes=2).
+    const lanesTag = LANES_FIX.get(wid) ?? +(w.tags.lanes ?? (oneway ? 1 : 2));
     const dirTag = fwd ? w.tags['lanes:forward'] : w.tags['lanes:backward'];
     const n = oneway ? lanesTag : dirTag ? +dirTag : Math.max(1, Math.round(lanesTag / 2));
     const mh = oneway ? 0 : lanesTag >= 4 ? 0.5 : 0.1;
@@ -1186,15 +1189,18 @@ for (const c of connectors) {
   const hits = [];
   const cum = cumLen(c.path);
   for (const x of crossings) {
-    const ax = x.a[0], az = x.a[1], bx = x.b[0], bz = x.b[1];
-    const L = Math.hypot(bx - ax, bz - az);
+    // Відрізок переходу продовжуємо на 3,2 м з обох боків: пішохід біля краю зебри теж у зоні повороту (півширини авто).
+    const L0 = Math.hypot(x.b[0] - x.a[0], x.b[1] - x.a[1]) || 1, EXT = 3.2;
+    const ux = (x.b[0] - x.a[0]) / L0, uz = (x.b[1] - x.a[1]) / L0;
+    const ax = x.a[0] - ux * EXT, az = x.a[1] - uz * EXT, bx = x.b[0] + ux * EXT, bz = x.b[1] + uz * EXT;
+    const L = L0 + 2 * EXT;
     for (let i = 0; i < c.path.length - 1; i++) {
       const p = c.path[i], q = c.path[i + 1];
       const rx = q[0] - p[0], rz = q[1] - p[1], sx = bx - ax, sz = bz - az;
       const den = rx * sz - rz * sx;
       if (Math.abs(den) < 1e-9) continue;
       const t = ((ax - p[0]) * sz - (az - p[1]) * sx) / den, u = ((ax - p[0]) * rz - (az - p[1]) * rx) / den;
-      if (t >= 0 && t <= 1 && u >= 0 && u <= 1) { hits.push({ crossing: x.id, s: r2(cum[i] + t * Math.hypot(rx, rz)), u: r2(u * L) }); break; }
+      if (t >= 0 && t <= 1 && u >= 0 && u <= 1) { hits.push({ crossing: x.id, s: r2(cum[i] + t * Math.hypot(rx, rz)), u: r2(Math.max(0, Math.min(L0, u * L - EXT))) }); break; }
     }
   }
   if (hits.length) c.crossings = hits;

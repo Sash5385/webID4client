@@ -24,6 +24,7 @@ import { loadWeather, saveWeather, WEATHER_GRIP, WEATHER_LABEL, WEATHERS, type W
 import { WeatherFx } from './weatherfx';
 import { CARCOLS, CARCOL_HEX, CARCOL_LABEL, loadCarCol, saveCarCol, type CarCol } from './quality';
 import { Interior } from './interior';
+import { facadeNight } from './world';
 import { CERATO_PAINT, ID4_PAINT } from './id4';
 import { loadTod, saveTod, TODS, TOD_LABEL, type Tod } from './quality';
 import { ParkSim, PARK_LABEL, type ParkKind } from '../engine/parking';
@@ -156,6 +157,7 @@ function applyWeather(): void {
 }
 function applyWeatherBase(): void {
   $('wx').textContent = `Погода: ${WEATHER_LABEL[weather]}`;
+  sound.setWeather(weather);
   sim.setGrip(WEATHER_GRIP[weather]);
   park?.setGrip(WEATHER_GRIP[weather]);
   wfx.set(weather, quality === 'low');
@@ -195,6 +197,7 @@ function updateHeadlights(p: { x: number; z: number; a: number }): void {
 function applyTod(): void {
   $('tod').textContent = `Час: ${TOD_LABEL[tod]}`;
   headlights.visible = tod !== 'day';
+  facadeNight.value = tod === 'night' ? 1 : tod === 'evening' ? 0.5 : 0;
   world?.setNight(tod !== 'day');
   if (actors) actors.night = tod !== 'day';
   if (tod === 'day') return;
@@ -312,8 +315,18 @@ let camOverride: { p: [number, number, number]; l: [number, number, number] } | 
 const CAM_BACK = 8.5, CAM_UP = 4.2, LOOK_AHEAD = 7;
 // Обертання камери пальцем/мишею: «хапаємо» сцену. Ззаду — орбіта навколо авто, у салоні — поворот голови. Після відпускання повертається.
 let tgtYaw = 0, tgtPitch = 0, offYaw = 0, offPitch = 0;
+// Згладжена поза гравця для вигляду (камера, дзеркала, салон, фари, модель авто): курс рушія змінюється ривками на вершинах доріг.
+const sp = { x: 0, z: 0, a: 0, init: false };
+function smoothPlayer(dt: number): typeof sp {
+  const r = park ? park.player : sim.player;
+  if (!camInit) sp.init = false;
+  if (!sp.init) { sp.a = r.a; sp.init = true; }
+  sp.x = r.x; sp.z = r.z;
+  if (dt > 0) sp.a += wrapAngle(r.a - sp.a) * (1 - Math.exp(-dt * 12));
+  return sp;
+}
 function updateCamera(dt: number): void {
-  const p = park ? park.player : sim.player;
+  const p = sp;
   if (!camInit) { cx = p.x; cz = p.z; cyaw = p.a; camInit = true; }
   const kp = 1 - Math.exp(-dt * 9), ky = 1 - Math.exp(-dt * 3.2), ko = 1 - Math.exp(-dt * 6);
   cx += (p.x - cx) * kp;
@@ -361,8 +374,8 @@ function hud(): void {
   $('speed').textContent = String(Math.round(sim.v * 3.6));
   const n = sim.next;
   $('next').textContent = n.dist > 1 ? `Далі: ${n.text} · ${Math.round(n.dist)} м` : `Далі: ${n.text}`;
-  $('faults').textContent = mode === 'learn' ? `Помилки ${sim.minorCount}/${sim.cfg.rules.maxMinorFaults}` : 'Іспит';
-  $('faults').classList.toggle('warn', mode === 'learn' && sim.minorCount > 0);
+  $('faults').textContent = `⚠ ${sim.minorCount}/${sim.cfg.rules.maxMinorFaults}${mode === 'exam' ? ' іспит' : ''}`;
+  $('faults').classList.toggle('warn', sim.minorCount > 0);
   const tu = turnUi(sim);
   $('turn').hidden = tu.split; $('turnL').hidden = $('turnR').hidden = !tu.split;
   if (tu.split) { $('turnL').textContent = '◀ ' + tu.left; $('turnR').textContent = tu.right + ' ▶'; } else $('turn').textContent = tu.label;
@@ -387,7 +400,7 @@ function onEvents(evs: SimEvent[]): void {
   for (const e of evs) {
     if (e.type === 'fault') sound.fault(e.fault);
     else if (e.type === 'finish') sound.finish(e.result.passed);
-    if (e.type === 'fault' && mode === 'learn') toast(e.fault.message, 'fault');
+    if (e.type === 'fault') toast(`${e.fault.severity === 'serious' ? '⛔ ' : '⚠ '}${e.fault.message}`, 'fault');
     else if (e.type === 'hint') toast(e.text, 'hint');
     else if (e.type === 'info') toast(e.text, 'info');
     else if (e.type === 'finish') showResult();
@@ -439,6 +452,7 @@ function reportResult(r: NonNullable<AnySim['result']>): void {
 const interior = new Interior();
 scene.add(interior.group);
 let steerVis = 0, prevA = 0;
+const wob = { yaw: 0, vel: 0, dir: 1 };
 function applyCarColor(): void {
   if (!models) return;
   for (const [m, def] of [[models.id4, ID4_PAINT], [models.cerato, CERATO_PAINT]] as const) {
@@ -477,8 +491,27 @@ let park: ParkSim | null = null;
 let parkWorld: { group: import('three').Group; dispose: () => void } | null = null;
 let parkTop = true;
 let steerVal = 0, reverse = false;
-const steerEl = $<HTMLInputElement>('steer');
-function setSteer(v: number): void { steerVal = Math.max(-1, Math.min(1, v)); steerEl.value = String(Math.round(steerVal * 100)); }
+const wheelEl = $('wheel');
+let wheelHeld = false; // кермо тримають пальцем — самоповернення не діє
+const WHEEL_LOCK = 210; // градусів повороту керма до упору в кожен бік
+function setSteer(v: number): void {
+  steerVal = Math.max(-1, Math.min(1, v));
+  wheelEl.style.transform = `rotate(${(steerVal * WHEEL_LOCK).toFixed(1)}deg)`;
+  wheelEl.setAttribute('aria-valuenow', String(Math.round(steerVal * 100)));
+}
+{ // кермо крутиться пальцем: кут беремо від центру колеса, зміна кута додається до поточного повороту
+  let drag: { id: number; last: number } | null = null;
+  const ang = (e: PointerEvent): number => { const r = wheelEl.getBoundingClientRect(); return Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)); };
+  wheelEl.addEventListener('pointerdown', (e) => { e.preventDefault(); drag = { id: e.pointerId, last: ang(e) }; wheelHeld = true; wheelEl.setPointerCapture(e.pointerId); });
+  wheelEl.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const a = ang(e); let d = a - drag.last; drag.last = a;
+    if (d > Math.PI) d -= Math.PI * 2; else if (d < -Math.PI) d += Math.PI * 2;
+    setSteer(steerVal + (d * 180 / Math.PI) / WHEEL_LOCK);
+  });
+  const end = (e: PointerEvent): void => { if (drag && e.pointerId === drag.id) { drag = null; wheelHeld = false; } };
+  wheelEl.addEventListener('pointerup', end); wheelEl.addEventListener('pointercancel', end);
+}
 function syncGear(): void { $('gear').textContent = reverse ? 'Назад (Р)' : 'Вперед'; $('gear').classList.toggle('rev', reverse); }
 function setReverse(b: boolean): void { reverse = b; syncGear(); }
 
@@ -573,7 +606,6 @@ tap('again', restart);
 tap('gb', () => { gbMode = gbMode === 'auto' ? 'manual' : 'auto'; saveGb(gbMode); applyGb(); });
 tap('gUp', () => shiftBy(1));
 tap('gDn', () => shiftBy(-1));
-steerEl.addEventListener('input', () => { steerVal = Number(steerEl.value) / 100; });
 tap('steer0', () => setSteer(0));
 tap('gear', () => setReverse(!reverse));
 tap('goParallel', () => { startPark('parallel'); });
@@ -706,6 +738,11 @@ function frame(now: number): void {
   last = now;
   if (park) {
     if (!paused && !park.result) {
+      // Самоповернення керма: кермо випрямляється тим швидше, чим швидше їде авто (як у реальному авто); на місці не вертається.
+      if (!wheelHeld && steerVal !== 0) {
+        const back = Math.min(1.6, Math.max(0, Math.abs(park.v) - 0.15) * 0.55) * dt;
+        setSteer(Math.abs(steerVal) <= back ? 0 : steerVal - Math.sign(steerVal) * back);
+      }
       acc += dt;
       while (acc >= park.cfg.dt) { park.step({ gas: keys.gas, brake: keys.brake, clutch: keys.clutch, steer: steerVal, reverse }, park.cfg.dt); acc -= park.cfg.dt; if (park.result) { showParkResult(); break; } }
     }
@@ -720,26 +757,36 @@ function frame(now: number): void {
   }
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) $('toast').hidden = true; }
   resize();
+  smoothPlayer(dt);
+  { // Занос при гальмуванні на слизькій дорозі (лише вигляд): авто «виляє» кормою, тим сильніше, чим швидше і слизькіше.
+    const src = park ?? sim, g = src.grip, v = Math.abs(src.player.v);
+    if (g < 0.55 && src.player.braking && v > 6) wob.vel += wob.dir * (1 - g) * Math.min(1.6, v / 14) * 7 * dt;
+    else if (v < 1.5) wob.vel *= 0.9;
+    wob.vel += (-wob.yaw * 38 - wob.vel * 3.2) * dt; wob.yaw += wob.vel * dt;
+    if (Math.abs(wob.yaw) < 0.002 && !src.player.braking) wob.dir = Math.random() < 0.5 ? -1 : 1;
+    wob.yaw = Math.max(-0.35, Math.min(0.35, wob.yaw));
+  }
+  actors!.playerYaw = sp.a + wob.yaw;
   updateCamera(dt);
   {
     const pl = park ? park.player : sim.player, g = park ? park.gb : sim.gb;
-    const yaw = dt > 0 ? wrapAngle(pl.a - prevA) / dt : 0; prevA = pl.a;
+    const yaw = dt > 0 ? wrapAngle(sp.a - prevA) / dt : 0; prevA = sp.a;
     const tgt = park ? park.wheel : Math.max(-1, Math.min(1, yaw * 1.1));
     steerVis += (tgt - steerVis) * (1 - Math.exp(-dt * 8));
     const gaugeData = { speed: Math.abs(pl.v) * 3.6, rpm: g.rpm, manual: g.manual, gear: g.manual ? g.label : park && park.reverse ? 'R' : 'D', stalled: g.stalled, sig: park ? 0 : sim.sig, blink: Math.floor((park ? 0 : sim.player.sigT) * 3) % 2 === 0, night: tod !== 'day' };
-    interior.update(pl, steerVis, g.manual, camMode === 'cockpit' && !park, gaugeData);
+    interior.update(sp, steerVis, g.manual, camMode === 'cockpit' && !park, gaugeData);
   }
   actors!.manual = (park ? park.gb : sim.gb).manual;
   actors!.update(park ?? sim);
   wfx.update(dt, camera.position);
-  updateHeadlights(park ? park.player : sim.player);
+  updateHeadlights(sp);
   adaptDpr(dt);
   if (!park) world!.updateLights(sim);
   actors!.setPlayerVisible(park ? true : camMode !== 'cockpit');
   if (composer && quality === 'high') composer.render(); else renderer.render(scene, camera);
   if (park) sound.update(park, keys.gas, !paused && !park.result);
   if (!park) {
-    mirrors.render(sim.player, frameNo++, camera.far, camMode === 'cockpit', (v) => actors!.setPlayerVisible(v), (h) => { if (camMode === 'cockpit') interior.group.visible = !h; });
+    mirrors.render(sp, frameNo++, camera.far, camMode === 'cockpit', (v) => actors!.setPlayerVisible(v), (h) => { if (camMode === 'cockpit') interior.group.visible = !h; });
     sound.update(sim, controls().gas, !paused && !sim.result);
   }
   hud();

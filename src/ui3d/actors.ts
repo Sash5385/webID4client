@@ -3,6 +3,7 @@ import {
   BoxGeometry, BufferGeometry, CapsuleGeometry, Color, CylinderGeometry, DoubleSide, Group, InstancedMesh, Material, Matrix4, Mesh,
   AdditiveBlending, CanvasTexture, MeshBasicMaterial, MeshLambertMaterial, PlaneGeometry, Quaternion, SphereGeometry, TorusGeometry, Vector3,
 } from 'three';
+import { wrapAngle } from '../engine/geometry';
 import { Geo } from './geo';
 import { TRAFFIC_CARS, type Baked, type Models } from './models';
 import type { Quality } from './quality';
@@ -156,9 +157,14 @@ export class CarObj {
     t.position.set(0, 0.03, back);
     this.group.add(t);
   }
-  place(x: number, z: number, a: number, braking: boolean): void {
+  private ya: number | null = null;
+  // Курс авто згладжуємо (стала часу ≈ 80 мс): на вершинах ламаних і зʼєднувачах курс рушія змінюється ривками, а для ока це вигляд «смикання».
+  place(x: number, z: number, a: number, braking: boolean, dt = 0, forceA?: number): void {
     this.group.position.set(x, 0, z);
-    this.group.rotation.y = -a;
+    if (forceA !== undefined) this.ya = forceA;
+    else if (this.ya === null) this.ya = a;
+    else if (dt > 0) this.ya += wrapAngle(a - this.ya) * (1 - Math.exp(-dt * 12));
+    this.group.rotation.y = -this.ya!;
     if (braking !== this.braking) { this.braking = braking; for (const t of this.tail) t.visible = braking; for (const d of this.dim) d.visible = this.night && !braking; }
   }
   setSig(sig: -1 | 0 | 1, blinkOn: boolean, hazard = false): void {
@@ -375,6 +381,7 @@ export class Actors {
   private frame = 0;
   private lastT = 0;
   private player: CarObj | null = null;
+  playerYaw: number | undefined; // згладжений курс гравця (його рахує main і разом із камерою/дзеркалами)
   night = false; // ніч/вечір: усі авто ввімкнули ближнє
   manual = false; // механіка — авто гравця Kia Cerato, автомат — VW ID.4
   private playerKey: 'id4' | 'cerato' = 'id4';
@@ -411,7 +418,7 @@ export class Actors {
     if (this.player && this.playerKey !== want) { this.group.remove(this.player.group); this.player = null; }
     if (!this.player) { this.playerKey = want; this.player = new CarObj(this.models[want], length, true); this.group.add(this.player.group); }
     const p = sim.player;
-    this.player.place(p.x, p.z, p.a, p.braking);
+    this.player.place(p.x, p.z, p.a, p.braking, dt, this.playerYaw);
     this.player.setNight(this.night, false); // для гравця світить прожектор сцени
     this.player.setSig(p.sig, Math.floor(p.sigT * 3) % 2 === 0); // фаза від моменту ввімкнення: перше блимання одразу
     for (const c of sim.traffic.cars) {
@@ -424,7 +431,7 @@ export class Actors {
         this.cars.set(c.id, o); this.group.add(o.group);
       }
       o.seen = this.frame;
-      o.place(c.x, c.z, c.a, c.braking);
+      o.place(c.x, c.z, c.a, c.braking, dt);
       if (c.kind === 'car') o.setNight(this.night);
       const dx = c.x - p.x, dz = c.z - p.z;
       o.group.visible = dx * dx + dz * dz < R.car * R.car;

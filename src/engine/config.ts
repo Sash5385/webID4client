@@ -169,7 +169,7 @@ export const DEFAULT_CONFIG: SimConfig = {
   seed: 7,
   dt: 1 / 60,
   car: { length: 4.4, width: 1.8 },
-  player: { accel: 2.6, brake: 7, coast: 0.35, maxV: 22 },
+  player: { accel: 2.6, brake: 7, coast: 0.35, maxV: 55.6 }, // 200 км/год
   road: { laneWidth: 3.5, medianHalf: 0.5, sidewalk: 3 },
   street: { length: 950, startZ: 30 },
   ring: { radius: 14, laneWidth: 3.5, mergeAngleDeg: 25, innerAngleDeg: 10, armLength: 60, armLaneOffset: 2 },

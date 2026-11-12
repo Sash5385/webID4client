@@ -65,6 +65,8 @@ function addTree(g: Geo, x: number, z: number, s: number, y0 = 0): void {
 
 // Фасад: фото-бетон (діфуз/шорсткість/нормаль, ~3 м на тайл) + процедурні вікна й балкони з альфою поверх нього.
 // Колір будинку (vertexColor) тоНУЄ бетон, а не скло: вікна діляться на нього назад.
+// Нічне світіння вікон: спільний uniform (0 — день, 1 — ніч); частина вікон (за випадковою коміркою) світиться теплим.
+export const facadeNight = { value: 0 };
 export function facadeMaterial(c: PbrSet, windows: Texture, normal: boolean): MeshStandardMaterial {
   const rx = (FACADE_COLS * FACADE_W) / TILE.concrete, ry = (FACADE_FLOORS * FACADE_H) / TILE.concrete;
   for (const t of [c.map, c.rough, c.normal]) t?.repeat.set(rx, ry);
@@ -74,8 +76,10 @@ export function facadeMaterial(c: PbrSet, windows: Texture, normal: boolean): Me
   });
   m.onBeforeCompile = (sh): void => {
     sh.uniforms['tWin'] = { value: windows };
+    sh.uniforms['uNight'] = facadeNight;
     sh.vertexShader = 'varying vec2 vWUv;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvWUv = uv;');
-    sh.fragmentShader = 'uniform sampler2D tWin;\nvarying vec2 vWUv;\n' + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+    sh.fragmentShader = 'uniform sampler2D tWin;\nuniform float uNight;\nvarying vec2 vWUv;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      if (uNight > 0.01) { vec4 wn = texture2D(tWin, vWUv); vec2 cc = floor(vWUv * vec2(6.0, 4.0)); float h = fract(sin(dot(cc + floor(vWUv), vec2(12.9898, 78.233))) * 43758.5453); totalEmissiveRadiance += uNight * wn.a * step(0.62, h) * vec3(1.0, 0.76, 0.42) * 1.1; }`).replace('#include <map_fragment>', `#include <map_fragment>
       { vec4 w = texture2D(tWin, vWUv); vec3 tint = vec3(1.0);
       #ifdef USE_COLOR
         tint = max(vColor, vec3(0.05));
@@ -161,8 +165,14 @@ export function buildWorld(sim: Sim, q: Quality, models: Models, pbr: Pbr | null
 
   // --- Розмітка Мрії ---
   const centre = net.ref.S.offset(-mh);
-  lineRibbon(mark, centre, -mh * 0.5, HALF_LINE, Y_MARK, C.mark);
-  lineRibbon(mark, centre, mh * 0.5, HALF_LINE, Y_MARK, C.mark);
+  // Подвійна суцільна — лише між перехрестями; на перехрестях (там розвороти й повороти) — пунктир по осі.
+  const crossZ = inters.map((f) => [Math.max(0, f.zone.S[0] - 3), Math.min(centre.length, f.zone.S[1] + 3)] as [number, number]);
+  for (const [a, b] of without(centre.length, crossZ)) {
+    const seg = centre.slice(a, b);
+    lineRibbon(mark, seg, -mh * 0.5, HALF_LINE, Y_MARK, C.mark);
+    lineRibbon(mark, seg, mh * 0.5, HALF_LINE, Y_MARK, C.mark);
+  }
+  for (const [a, b] of crossZ) for (let t = a; t + 3 <= b + 0.01; t += 6) lineRibbon(mark, centre.slice(t, t + 3), 0, HALF_LINE, Y_MARK, C.mark);
   for (const d of dirs) {
     const ref = net.ref[d];
     dashes(mark, ref, W, 3, 6, HALF_LINE, Y_MARK, C.mark);

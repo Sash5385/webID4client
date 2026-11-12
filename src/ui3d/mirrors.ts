@@ -40,7 +40,7 @@ export class Mirrors {
   layout(W: number, H: number): void {
     if (W === this.W && H === this.H) return;
     this.W = W; this.H = H;
-    const sw = Math.round(Math.min(112, W * 0.27)), sh = Math.round(sw * 0.73), sy = Math.round(Math.max(H * 0.28, 140));
+    const sw = Math.round(Math.min(112, W * 0.27)), sh = Math.round(sw * 0.73), sy = 8; // бокові дзеркала — угорі, на одному рівні з салонним
     const cw = Math.round(Math.min(190, W * 0.44)), ch = Math.round(cw * 0.25);
     const rects: Rect[] = [{ x: 6, y: sy, w: sw, h: sh }, { x: W - sw - 6, y: sy, w: sw, h: sh }, { x: Math.round((W - cw) / 2), y: 6, w: cw, h: ch }];
     this.ms.forEach((m, i) => {

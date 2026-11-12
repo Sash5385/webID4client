@@ -2,8 +2,8 @@
 // Автомат рушій рахує сам; цей модуль — лише швидкість у режимі механіки. Швидкість зі знаком (назад < 0, лише в парковці).
 
 export type Transmission = 'auto' | 'manual';
-const VMAX = [2.2, 6, 11, 16, 21, 27] as const;   // м/с на кожній передачі при «відсічці» (індекс 0 — задня)
-const ACC = [1.4, 3.4, 2.5, 1.8, 1.3, 0.9] as const; // розгін при повному газі, м/с²
+const VMAX = [2.2, 6, 11, 18, 31, 56] as const;   // м/с на кожній передачі при «відсічці» (індекс 0 — задня); 5-а — до 200 км/год
+const ACC = [1.4, 3.4, 2.6, 2.2, 1.9, 1.5] as const; // розгін при повному газі, м/с²
 const IDLE_RPM = 800, MAX_RPM = 6000;
 
 export interface GearCtl { readonly gas: boolean; readonly brake: boolean; readonly clutch: boolean }
