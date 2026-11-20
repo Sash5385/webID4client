@@ -391,7 +391,7 @@ export class NetSim {
     if (fin?.kind === 'finish' && fin.edge === this.edge.id && this.s >= fin.s) { this.finish(true, 'Маршрут пройдено'); return; }
     // Зʼєднувачі, що починаються на пройденій ділянці.
     const exp = this.expectedConn();
-    if (this.armed && this.armed.conn.fromEdge === this.edge && this.s >= this.armed.conn.fromS - 0.01) {
+    if (this.armed && this.armed.conn.fromEdge === this.edge && this.s >= Math.min(this.armed.conn.fromS, this.edge.length) - 0.01) {
       this.takeArmed();
       return;
     }
@@ -1040,7 +1040,7 @@ export class NetSim {
         const left = exp.fromS - this.s;
         if (exp.turn === 'uturn' && left < 300) this.hint(`uturnPrep:${this.stepIdx}`, `Через ${Math.round(left / 10) * 10} м розворот: займіть ліву смугу, лівий покажчик, «Поворот».`);
         if (exp.turn === 'left' && left < 300) this.hint(`leftPrep:${this.stepIdx}`, `Через ${Math.round(left / 10) * 10} м: ${(this.steps[this.stepIdx + 1] as { text?: string }).text?.toLowerCase() ?? ''}. Ліва смуга, покажчик, поступіться зустрічним і пішоходам.`);
-        if (exp.turn === 'right' && left < 120) this.hint(`rightPrep:${this.stepIdx}`, `Попереду: ${(this.steps[this.stepIdx + 1] as { text?: string }).text?.toLowerCase() ?? ''}. Правий покажчик, «Поворот», пропустіть пішоходів.`);
+        if (exp.turn === 'right' && left < 120) this.hint(`rightPrep:${this.stepIdx}`, `Попереду: ${(this.steps[this.stepIdx + 1] as { text?: string }).text?.toLowerCase() ?? ''}. ${this.edge.n > 1 && this.curLane() !== exp.fromLane ? 'Займіть праву смугу, ' : ''}Правий покажчик, «Поворот», пропустіть пішоходів.`);
       }
     }
     if (this.mode === 'ring' && this.ringPlan) {
