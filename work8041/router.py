@@ -8,7 +8,7 @@ LOOSE=set()
 def L(a,b):
     p,q=xy(a,nodes),xy(b,nodes); return math.hypot(p[0]-q[0],p[1]-q[1])
 for wid,(nd,t) in ways.items():
-    if t.get('highway') not in DRIVE: continue
+    if t.get('highway') not in DRIVE and wid not in (23145427,23145431): continue
     if t.get('access') in('no','private') and t.get('highway')=='service': pass
     hw0=t.get('highway')
     ow=t.get('oneway')
@@ -78,3 +78,18 @@ def overlay(path,out,cx,cz,w,h,scale,wps=()):
         if isinstance(wp,tuple):
             p=tp(wp); d.ellipse((p[0]-5,p[1]-5,p[0]+5,p[1]+5),outline=(255,0,255),width=2)
     im.save(out)
+
+def nearest_dir(x,z,dx,dz,rad=40,hw=None,minc=0.8):
+    L=math.hypot(dx,dz); dx/=L; dz/=L
+    best=None;bd=rad
+    for n,p in pts.items():
+        d=math.hypot(p[0]-x,p[1]-z)
+        if d>=bd: continue
+        if hw is not None and hw not in nodehw.get(n,()): continue
+        for v,w,l in adj[n]:
+            q=pts[v] if v in pts else None
+            if not q: continue
+            ex,ez=q[0]-p[0],q[1]-p[1]; el=math.hypot(ex,ez) or 1
+            if (ex*dx+ez*dz)/el>=minc and n in rev:
+                bd=d;best=n;break
+    return best

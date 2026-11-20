@@ -49,7 +49,10 @@ export class NetPilot {
       if (fwd > -lonB && fwd < range && Math.abs(lat) < Math.max(lateral, 0.9 + latB + 0.35)) g = Math.min(g, fwd - lonB - 2.2 - extra);
     };
     const hw = sim.cfg.car.width / 2;
+    const wh = sim.where;
     for (const c of sim.traffic.cars) {
+      // Нерухома перешкода в іншій смузі цього ж ребра (на повороті дороги бічний зсув ловить її хибно) — не перешкода для нашої смуги.
+      if (c.kind !== 'car' && wh.mode === 'edge' && !wh.changing) { const lg = c.legs[c.leg]; if (lg && lg.kind === 'lane' && lg.edge.id === wh.edge && lg.lane !== wh.lane) continue; }
       test(c.x, c.z, c.a, c.len / 2, hw, c.kind === 'car' ? 0 : standoff);
       if (c.off !== c.offT) { const hx2 = Math.sin(c.a), hz2 = -Math.cos(c.a), dd = c.offT - c.off; test(c.x - hz2 * dd, c.z + hx2 * dd, c.a, c.len / 2, hw, 0); }
     }

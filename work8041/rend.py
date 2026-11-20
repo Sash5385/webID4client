@@ -2,7 +2,7 @@ from osmg import *
 from PIL import Image, ImageDraw, ImageFont
 import sys
 nodes,ways=load()
-COL={'motorway':(200,60,60),'motorway_link':(200,60,60),'trunk':(220,120,40),'trunk_link':(220,120,40),'primary':(230,150,40),'primary_link':(230,150,40),'secondary':(220,190,40),'secondary_link':(220,190,40),'tertiary':(90,90,90),'tertiary_link':(90,90,90),'residential':(130,130,130),'unclassified':(130,130,130),'service':(170,170,200),'living_street':(130,130,130)}
+COL={'construction':(220,190,40),'motorway':(200,60,60),'motorway_link':(200,60,60),'trunk':(220,120,40),'trunk_link':(220,120,40),'primary':(230,150,40),'primary_link':(230,150,40),'secondary':(220,190,40),'secondary_link':(220,190,40),'tertiary':(90,90,90),'tertiary_link':(90,90,90),'residential':(130,130,130),'unclassified':(130,130,130),'service':(170,170,200),'living_street':(130,130,130)}
 F=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',11)
 def render(cx,cz,w,h,scale,out,ids=True,names=True):
     # window center (m) w,h in pixels, scale m/px

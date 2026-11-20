@@ -37,10 +37,11 @@ function wayAttrs(w, fwd) {
   let n;
   if (ow) n = lt > 0 ? lt : (hw === 'primary' || hw === 'secondary' || hw === 'trunk' ? 2 : 1);
   else n = lt > 0 ? Math.max(1, Math.ceil(lt / 2)) : (hw === 'primary' || hw === 'trunk' ? 2 : 1);
+  if (t.name === 'Північний міст') n = 3; // у OSM ділянка позначена як construction без смуг
   n = Math.min(n, 4);
   const ms = parseInt(t.maxspeed, 10);
   const speed = ms >= 30 ? ms : 50;
-  return { n, ow, speed, name: t.name || '', cls: CLASS[hw] ?? 1, hw, link: /_link$/.test(hw) };
+  return { n, ow, speed, name: t.name || '', cls: t.name === 'Північний міст' ? 4 : CLASS[hw] ?? 1, hw, link: /_link$/.test(hw) };
 }
 
 function buildRoute(no, spec) {
@@ -165,10 +166,39 @@ function buildRoute(no, spec) {
   };
   // Вузли шляху з тегами → (ребро, s).
   const locate = (k) => {
-    const sQ = (rawCum[k] / totalR) * totalQ;
+    // Орієнтовна позиція за довжиною, далі точна проєкція вузла на Q у вікні ±80 м (довжини Q і сирого шляху трохи різняться).
+    const sExp = (rawCum[k] / totalR) * totalQ;
+    const i0 = Math.max(0, Math.floor((sExp - 80) / STEP)), i1 = Math.min(nQ - 2, Math.ceil((sExp + 80) / STEP));
+    const p = R[k];
+    let best = Infinity, bs = sExp;
+    for (let i = i0; i <= i1; i++) {
+      const a = Q[i], b = Q[i + 1];
+      const L = qcum[i + 1] - qcum[i];
+      if (L < 1e-9) continue;
+      const hx = (b[0] - a[0]) / L, hz = (b[1] - a[1]) / L;
+      const t = Math.max(0, Math.min(L, (p[0] - a[0]) * hx + (p[1] - a[1]) * hz));
+      const dd = Math.hypot(p[0] - (a[0] + hx * t), p[1] - (a[1] + hz * t));
+      if (dd < best) { best = dd; bs = qcum[i] + t; }
+    }
+    const sQ = bs;
     for (let e = 0; e < E.length; e++) {
       const q0 = qcum[E[e]._q0], q1 = qcum[E[e]._q1];
-      if (sQ >= q0 - 0.01 && sQ <= q1 + 0.01) return { e, s: ((sQ - q0) / Math.max(1e-6, q1 - q0)) * E[e].length };
+      if (sQ >= q0 - 0.01 && sQ <= q1 + 0.01) {
+        const E_ = E[e], sExp2 = ((sQ - q0) / Math.max(1e-6, q1 - q0)) * E_.length;
+        // Уточнення: проєкція на ref у вікні (ref зсунутий від осі, на дугах довжини Q і ref розходяться).
+        const win = 60 + 0.08 * E_.length;
+        let bd = Infinity, bsv = sExp2;
+        for (let i = 0; i + 1 < E_._ref.length; i++) {
+          if (E_._cum[i + 1] < sExp2 - win || E_._cum[i] > sExp2 + win) continue;
+          const a = E_._ref[i], b = E_._ref[i + 1], L = E_._cum[i + 1] - E_._cum[i];
+          if (L < 1e-9) continue;
+          const hx = (b[0] - a[0]) / L, hz = (b[1] - a[1]) / L;
+          const t = Math.max(0, Math.min(L, (p[0] - a[0]) * hx + (p[1] - a[1]) * hz));
+          const dd = Math.hypot(p[0] - (a[0] + hx * t), p[1] - (a[1] + hz * t));
+          if (dd < bd) { bd = dd; bsv = E_._cum[i] + t; }
+        }
+        return { e, s: bsv };
+      }
     }
     return null;
   };

@@ -109,7 +109,7 @@ export class NetSim {
     this.d = this.net.laneD(this.edge, this.lane);
     this.stepIdx = this.steps.findIndex((q) => q.kind === 'edge' && q.edge === st.edge);
     this.updatePose();
-    const street = this.net.edgeList.filter((e) => e.kind === 'street' && e.n >= 2);
+    const street = this.net.edgeList.filter((e) => e.kind === 'street' && e.n >= 2 && !e.data.noAi);
     this.traffic.placeObstacles(this.body(), street, this.leftKeep(), this.rightKeep());
     this.populateRiders(rng);
     this.peds.populateAmbient(this.net.edgeList.filter((e) => e.kind === 'street'));
