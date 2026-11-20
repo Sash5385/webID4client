@@ -40,7 +40,8 @@ export function mulberry32(seed: number): () => number {
 export interface World {
   readonly group: Group;
   updateLights(sim: AnySim): void;
-  setNight(on: boolean): void; // нічне світіння ліхтарів і світлофорів (лише маршрути на мережі OSM)
+  setNight(on: boolean, wet?: boolean): void; // нічне світіння ліхтарів і світлофорів (лише маршрути на мережі OSM); wet — дощ/ожеледь: більші ореоли
+  readonly lampPts?: readonly (readonly [number, number])[]; // позиції ліхтарів (для справжніх джерел світла)
   dispose(): void;
 }
 

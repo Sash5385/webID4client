@@ -238,7 +238,7 @@ export class Route7Sim {
     this.events.push({ type: 'fault', fault: f });
     if (f.severity === 'serious') this.finish(false, message);
     // Іспит: дрібні помилки накопичуються, їзда не обривається; вердикт — після фінішу (4 і більше = «Не склав»). У навчанні — як раніше.
-    else if (this.cfg.mode !== 'exam' && this.minorCount >= this.cfg.rules.maxMinorFaults) this.finish(false, `Набрано ${this.minorCount} помилки`);
+    else if (this.cfg.mode === 'exam' && this.minorCount >= this.cfg.rules.maxMinorFaults) this.finish(false, `Набрано ${this.minorCount} помилки`);
   }
 
   private finish(passed: boolean, reason: string): void {

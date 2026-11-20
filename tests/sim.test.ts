@@ -47,8 +47,8 @@ describe('дрібні помилки', () => {
     expect(codes(sim)).toContain('speeding');
   });
 
-  it('без покажчиків — 4 помилки й «Не склав»', () => {
-    const sim = new Sim(DEFAULT_CONFIG);
+  it('без покажчиків — в іспиті 4 помилки й «Не склав»', () => {
+    const sim = new Sim(withConfig({ mode: 'exam' }));
     run(sim, { noSignals: true });
     expect(sim.result?.passed).toBe(false);
     expect(sim.result?.minor).toBe(4);

@@ -8,12 +8,17 @@ import { DEFAULT_CONFIG, type SimConfig } from './config';
 import { NetSim } from './net/sim';
 import type { RouteData } from './net/types';
 import { Route7Sim } from './sim7';
+import { DATA_8041 } from '../data/route8041-index';
 
 export * from './sim7';
 export { NetSim } from './net/sim';
 // Маршрути на мережі OSM (NetSim) і схематичний маршрут №7.
 export const NET_ROUTES = ['route1', 'route3', 'route4', 'route5', 'route6', 'route9', 'route10', 'route12', 'route13', 'route14', 'route15'] as const;
-export type NetRouteId = (typeof NET_ROUTES)[number];
+// ТСЦ № 8041: кожен маршрут — окрема мережа OSM (src/data/route8041_N.json).
+export const NET_ROUTES_8041 = ['r8041_1', 'r8041_2', 'r8041_3', 'r8041_4', 'r8041_5'] as const;
+export const data8041 = (r: string): RouteData | undefined => DATA_8041[r.slice(6)] as RouteData | undefined;
+export const has8041 = (r: string): boolean => !!data8041(r);
+export type NetRouteId = (typeof NET_ROUTES)[number] | (typeof NET_ROUTES_8041)[number];
 export type RouteId = NetRouteId | 'route7';
 export type AnySim = Route7Sim | NetSim;
 
@@ -28,6 +33,7 @@ interface SimCtor {
 
 // Конструктор-функція: `new` повертає обʼєкт потрібного класу.
 export const Sim = function (cfg: SimConfig = DEFAULT_CONFIG, route: RouteId = 'route7'): AnySim {
+  if (route.startsWith('r8041_')) { const d = data8041(route); if (!d) throw new Error('Немає даних маршруту ' + route); return new NetSim(cfg, d, route as NetRouteId); }
   if ((NET_ROUTES as readonly string[]).includes(route)) return new NetSim(cfg, ROUTE1_DATA, route as NetRouteId);
   if (route !== 'route7') throw new Error('Невідомий маршрут: ' + String(route));
   return new Route7Sim(cfg);

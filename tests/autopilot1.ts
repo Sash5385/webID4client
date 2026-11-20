@@ -49,7 +49,10 @@ export class NetPilot {
       if (fwd > -lonB && fwd < range && Math.abs(lat) < Math.max(lateral, 0.9 + latB + 0.35)) g = Math.min(g, fwd - lonB - 2.2 - extra);
     };
     const hw = sim.cfg.car.width / 2;
+    const wh = sim.where;
     for (const c of sim.traffic.cars) {
+      // Нерухома перешкода в іншій смузі цього ж ребра (на повороті дороги бічний зсув ловить її хибно) — не перешкода для нашої смуги.
+      if (c.kind !== 'car' && wh.mode === 'edge' && !wh.changing) { const lg = c.legs[c.leg]; if (lg && lg.kind === 'lane' && lg.edge?.id === wh.edge && lg.lane !== wh.lane) continue; }
       test(c.x, c.z, c.a, c.len / 2, hw, c.kind === 'car' ? 0 : standoff);
       if (c.off !== c.offT) { const hx2 = Math.sin(c.a), hz2 = -Math.cos(c.a), dd = c.offT - c.off; test(c.x - hz2 * dd, c.z + hx2 * dd, c.a, c.len / 2, hw, 0); }
     }
@@ -186,10 +189,12 @@ export class NetPilot {
     return maxLane;
   }
 
+  dbg: { gap: number; target: number } = { gap: 0, target: 0 };
   controls(dt: number): Controls {
     const sim = this.sim, w = sim.where, v = sim.v;
     if (sim.sig !== 0) this.sigWait += dt;
     let target = this.o.target ?? 12;
+    if (w.mode === 'edge' && w.edge) target = Math.min(target, sim.net.edge(w.edge).data.speedKmh / 3.6 - 1.2); // не перевищувати обмеження ребра
     let gap = w.mode === 'edge' ? Infinity : this.carsAhead(40);
     const half = sim.cfg.car.length / 2;
 
@@ -287,7 +292,7 @@ export class NetPilot {
         const urgent = (exp !== null && toTurn < 250) || prepL < 410;
         if (b && !b.stat && (b.rel > -8 || urgent)) target = Math.min(target, Math.max(3, b.v - 3)); // пропустити вперед
         const laneEnds = ((): boolean => { const n0 = sim.steps_[w.step + 1]; if (n0?.kind !== 'edge') return false; const ne0 = sim.net.edge(n0.edge); return ne0.n <= w.lane; })();
-        const ready = (this.o.noSignals || this.sigWait > 3.3) && !b && !this.inSolid(e, w.s) && (e.length - w.s > 15 || laneEnds);
+        const ready = (this.o.noSignals || this.sigWait > 3.3) && !b && !this.inSolid(e, w.s) && (e.length - w.s > 6 || laneEnds);
         // Останнє місце, де ще можна перестроїтись до повороту (поза суцільними): чекати перед ним.
         const turnS = exp && wantLane === exp.fromLane ? exp.fromS : prepL < 410 && wantLane === 0 ? w.s + prepL : Infinity;
         if (urgent && turnS < Infinity && !ready) {
@@ -339,6 +344,7 @@ export class NetPilot {
       if (this.o.wrongTurnRight && this.sideTarget(e)) { this.want(1); if (this.sigWait > 3.4) sim.turn(1); }
     }
 
+    this.dbg = { gap, target };
     const vt = Math.min(target, Math.sqrt(2 * 3 * Math.max(0, gap - 1)));
     if (v > vt + 0.3) return { gas: false, brake: true };
     if (v < vt - 0.3) return { gas: true, brake: false };

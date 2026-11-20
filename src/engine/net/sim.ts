@@ -109,14 +109,14 @@ export class NetSim {
     this.d = this.net.laneD(this.edge, this.lane);
     this.stepIdx = this.steps.findIndex((q) => q.kind === 'edge' && q.edge === st.edge);
     this.updatePose();
-    const street = this.net.edgeList.filter((e) => e.kind === 'street' && e.n >= 2);
+    const street = this.net.edgeList.filter((e) => e.kind === 'street' && e.n >= 2 && !e.data.noAi);
     this.traffic.placeObstacles(this.body(), street, this.leftKeep(), this.rightKeep());
     this.populateRiders(rng);
     this.peds.populateAmbient(this.net.edgeList.filter((e) => e.kind === 'street'));
     this.traffic.populate(this.body(), this.riders.bodies());
     this.planJaywalker(rng);
     const ringStep = this.steps.find((q) => q.kind === 'ring');
-    this.hint('start', route === 'route1' || !ringStep
+    this.hint('start', route.startsWith('r8041') ? 'Рушайте за маршрутом (стрілки на схемі ТСЦ 8041). Покажчики, «Поворот» на перехрестях.' : route === 'route1' || !ringStep
       ? 'Рушайте до кільця. Поступіться тим, хто на кільці. Зʼїзд — другий, на вул. Стеценка: правий покажчик і «Зʼїзд».'
       : `Рушайте до кільця. Поступіться тим, хто на кільці. ${ringStep.text.replace('Кільце: ', '')}: правий покажчик і «Зʼїзд».`);
   }
@@ -241,7 +241,7 @@ export class NetSim {
     this.events.push({ type: 'fault', fault: f });
     if (f.severity === 'serious') this.finish(false, message);
     // Іспит: дрібні помилки накопичуються, їзда не обривається; вердикт — після фінішу (4 і більше = «Не склав»). У навчанні — як раніше.
-    else if (this.cfg.mode !== 'exam' && this.minorCount >= this.cfg.rules.maxMinorFaults) this.finish(false, `Набрано ${this.minorCount} помилки`);
+    else if (this.cfg.mode === 'exam' && this.minorCount >= this.cfg.rules.maxMinorFaults) this.finish(false, `Набрано ${this.minorCount} помилки`);
   }
   private finish(passed: boolean, reason: string): void {
     if (passed && this.minorCount >= this.cfg.rules.maxMinorFaults) { passed = false; reason = `Набрано ${this.minorCount} дрібних помилок`; }

@@ -748,9 +748,11 @@ export function buildWorld1(sim: NetSim, q: Quality, models: Models, pbr: Pbr | 
     x.fillStyle = g; x.fillRect(0, 0, 64, 64);
     return new CanvasTexture(c);
   })();
+  let lampPoolMat: MeshBasicMaterial | null = null, lampPointsMat: PointsMaterial | null = null;
   if (lampPts.length) {
     if (q !== 'low') { // тепла пляма на асфальті під ліхтарем
-      const pm = new InstancedMesh(new PlaneGeometry(15, 15), new MeshBasicMaterial({ map: glowTex, color: 0xffd59a, transparent: true, opacity: 0.5, blending: AdditiveBlending, depthWrite: false, fog: true }), lampPts.length);
+      lampPoolMat = new MeshBasicMaterial({ map: glowTex, color: 0xffd59a, transparent: true, opacity: 0.5, blending: AdditiveBlending, depthWrite: false, fog: true });
+      const pm = new InstancedMesh(new PlaneGeometry(15, 15), lampPoolMat, lampPts.length);
       const m4 = new Matrix4().makeRotationX(-Math.PI / 2);
       lampPts.forEach(([x, z], i) => { pm.setMatrixAt(i, new Matrix4().makeTranslation(x, 0.07, z).multiply(m4)); });
       pm.instanceMatrix.needsUpdate = true; pm.frustumCulled = false; pm.renderOrder = 2;
@@ -758,7 +760,8 @@ export function buildWorld1(sim: NetSim, q: Quality, models: Models, pbr: Pbr | 
     }
     const lg = new BufferGeometry();
     lg.setAttribute('position', new Float32BufferAttribute(lampPts.flatMap(([x, z]) => [x, 7.3, z]), 3));
-    const lp = new Points(lg, new PointsMaterial({ map: glowTex, color: 0xffe2b0, size: 3.2, sizeAttenuation: true, transparent: true, opacity: 0.9, blending: AdditiveBlending, depthWrite: false }));
+    lampPointsMat = new PointsMaterial({ map: glowTex, color: 0xffe2b0, size: 3.2, sizeAttenuation: true, transparent: true, opacity: 0.9, blending: AdditiveBlending, depthWrite: false });
+    const lp = new Points(lg, lampPointsMat);
     lp.frustumCulled = false; glow.add(lp);
   }
   let sigHalo: Points | null = null;
@@ -799,7 +802,14 @@ export function buildWorld1(sim: NetSim, q: Quality, models: Models, pbr: Pbr | 
         for (const mt of Array.isArray(m.material) ? m.material : [m.material]) if (!mt.userData['shared']) mt.dispose();
       });
     },
-    setNight(on: boolean): void { glow.visible = on; },
+    lampPts,
+    setNight(on: boolean, wet = false): void {
+      glow.visible = on;
+      // Дощ/ожеледь: ореоли ліхтарів і світлофорів більші та яскравіші (мокре скло, вологе повітря).
+      if (lampPoolMat) lampPoolMat.opacity = wet ? 0.95 : 0.5;
+      if (lampPointsMat) lampPointsMat.size = wet ? 4.6 : 3.2;
+      if (sigHalo) (sigHalo.material as PointsMaterial).size = wet ? 2.6 : 1.7;
+    },
     updateLights(s0: AnySim): void {
       if (s0.route === 'route7') return;
       const s = s0, p = s.player;

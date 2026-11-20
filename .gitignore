@@ -1,3 +1,6 @@
 node_modules
 dist
 data/raw/*.osm
+data/raw8041/
+work8041/g.pkl
+work8041/*.png

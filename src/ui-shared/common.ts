@@ -9,11 +9,13 @@ const KEY = 'route.pick';
 
 export const ROUTE_LABEL: Record<RouteId, string> = {
   route1: 'Маршрут 1 · пл. Марченка', route3: 'Маршрут 3 · вул. Мрії до Салютної', route4: 'Маршрут 4 · Щербаківського, Салютна', route5: 'Маршрут 5 · вул. Щербаківського', route9: 'Маршрут 9 · бульвар Вірського, Корчака', route10: 'Маршрут 10 · Салютна, Ружинська, Вірського', route12: 'Маршрут 12 · Стеценка на ПнЗ, пл. Марченка', route13: 'Маршрут 13 · як №12 (Стеценка на ПнЗ)', route14: 'Маршрут 14 · вул. Виговського', route15: 'Маршрут 15 · Берестейський проспект', route6: 'Маршрут 6 · вул. Мрії до Турчина', route7: 'Маршрут 7 · вул. Мрії',
+  r8041_1: 'ТСЦ 8041 · маршрут 1', r8041_2: 'ТСЦ 8041 · маршрут 2', r8041_3: 'ТСЦ 8041 · маршрут 3', r8041_4: 'ТСЦ 8041 · маршрут 4', r8041_5: 'ТСЦ 8041 · маршрут 5',
 };
-export const ROUTE_SHORT: Record<RouteId, string> = { route1: 'Маршрут 1', route3: 'Маршрут 3', route4: 'Маршрут 4', route5: 'Маршрут 5', route6: 'Маршрут 6', route9: 'Маршрут 9', route10: 'Маршрут 10', route12: 'Маршрут 12', route13: 'Маршрут 13', route14: 'Маршрут 14', route15: 'Маршрут 15', route7: 'Маршрут 7' };
+export const ROUTE_SHORT: Record<RouteId, string> = { route1: 'Маршрут 1', route3: 'Маршрут 3', route4: 'Маршрут 4', route5: 'Маршрут 5', route6: 'Маршрут 6', route9: 'Маршрут 9', route10: 'Маршрут 10', route12: 'Маршрут 12', route13: 'Маршрут 13', route14: 'Маршрут 14', route15: 'Маршрут 15', route7: 'Маршрут 7', r8041_1: '8041 · №1', r8041_2: '8041 · №2', r8041_3: '8041 · №3', r8041_4: '8041 · №4', r8041_5: '8041 · №5' };
 // Перелік маршрутів (номер — як на схемах ТСЦ № 8042); кнопки в page.html — у тому ж порядку.
-export const ROUTE_ORDER: readonly RouteId[] = ['route1', 'route3', 'route4', 'route5', 'route6', 'route7', 'route9', 'route10', 'route12', 'route13', 'route14', 'route15'];
-export const routeNo = (r: RouteId): number => Number(r.slice(5));
+export const ROUTE_ORDER: readonly RouteId[] = ['route1', 'route3', 'route4', 'route5', 'route6', 'route7', 'route9', 'route10', 'route12', 'route13', 'route14', 'route15', 'r8041_1', 'r8041_2', 'r8041_3', 'r8041_4', 'r8041_5'];
+// Номер для БД: ТСЦ 8042 — 1…15; ТСЦ 8041 — 8041.1…8041.5.
+export const routeNo = (r: RouteId): number => (r.startsWith('r8041_') ? Number((8041 + Number(r.slice(6)) / 10).toFixed(1)) : Number(r.slice(5)));
 const FROM_PARAM: Record<string, RouteId> = Object.fromEntries(ROUTE_ORDER.flatMap((r) => [[String(routeNo(r)), r], [r, r]]));
 
 // ?route=N (номер зі схем ТСЦ) перекриває збережений вибір; типово — маршрут 1.
@@ -42,6 +44,7 @@ export function makeSim(route: RouteId, mode: 'learn' | 'exam', seedParam: strin
 }
 
 export function startHintText(route: RouteId): string {
+  if (route.startsWith('r8041_')) return 'Рушайте за схемою маршруту ТСЦ № 8041. Покажчик за 3 с до маневру; «Поворот» — на перехрестях, світлофор і «Дай дорогу» — за знаками.';
   const base = 'Рушайте до кільця. Поступіться тим, хто на кільці. ';
   if (route === 'route1') return base + 'Зʼїзд — другий, на вул. Стеценка: правий покажчик і «Зʼїзд».';
   if (route === 'route7') return base + 'Зʼїзд — перший, на вул. Мрії: правий покажчик і «Зʼїзд».';

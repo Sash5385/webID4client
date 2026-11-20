@@ -4,7 +4,7 @@
 import './datafetch';
 import {
   ACESFilmicToneMapping, Color, DirectionalLight, Fog, HemisphereLight, NoToneMapping, PCFShadowMap, PCFSoftShadowMap,
-  Group, MeshPhysicalMaterial, PerspectiveCamera, PMREMGenerator, Scene, SpotLight, Vector2, Vector3, WebGLRenderer, type Material, type Mesh, type Texture,
+  Group, MeshPhysicalMaterial, PerspectiveCamera, PMREMGenerator, PointLight, Scene, SpotLight, Vector2, Vector3, WebGLRenderer, type Material, type Mesh, type Texture,
 } from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -193,12 +193,25 @@ function updateHeadlights(p: { x: number; z: number; a: number }): void {
     sp.target.updateMatrixWorld();
   });
 }
+// Ліхтарі: до 3 найближчих (≤ 80 м) справжніх джерел світла на нічних маршрутах OSM (середня/висока якість).
+const lampLights: PointLight[] = [];
+for (let i = 0; i < 3; i++) { const l = new PointLight(0xffe19a, 70, 30, 1.6); l.visible = false; lampLights.push(l); scene.add(l); }
+let lampFrame = 0;
+function updateLamps(p: { x: number; z: number }): void {
+  const on = tod !== 'day' && quality !== 'low' && !!world?.lampPts?.length && !park;
+  for (const l of lampLights) l.visible = on;
+  if (!on || ++lampFrame % 10 !== 1) return;
+  const near: { x: number; z: number; d: number }[] = [];
+  for (const [x, z] of world!.lampPts!) { const d = (x - p.x) ** 2 + (z - p.z) ** 2; if (d < 80 * 80) near.push({ x, z, d }); }
+  near.sort((a, b) => a.d - b.d);
+  lampLights.forEach((l, i) => { const q = near[i]; if (q) l.position.set(q.x, 7, q.z); else l.visible = false; });
+}
 // Час доби накладається поверх погоди: колір неба/туману, світло сонця/місяця, фари.
 function applyTod(): void {
   $('tod').textContent = `Час: ${TOD_LABEL[tod]}`;
   headlights.visible = tod !== 'day';
   facadeNight.value = tod === 'night' ? 1 : tod === 'evening' ? 0.5 : 0;
-  world?.setNight(tod !== 'day');
+  world?.setNight(tod !== 'day', weather === 'rain' || weather === 'ice');
   if (actors) actors.night = tod !== 'day';
   if (tod === 'day') return;
   const night = tod === 'night';
@@ -274,7 +287,7 @@ function rebuildWorld(): void {
   worldVerts = 0;
   w.group.traverse((o) => { const m = o as Mesh; if (m.isMesh) worldVerts += (m.geometry.getAttribute('position')?.count ?? 0); });
   world = Object.assign(w, { route: sim.route });
-  w.setNight(tod !== 'day');
+  w.setNight(tod !== 'day', weather === 'rain' || weather === 'ice');
   scene.add(world.group);
   scene.traverse((o) => { // нові матеріали потребують компіляції під поточні тіні/тон-мапінг
     const m = (o as Mesh).material as Material | Material[] | undefined;
@@ -334,7 +347,8 @@ function updateCamera(dt: number): void {
   cyaw += wrapAngle(p.a - cyaw) * ky;
   offYaw += (tgtYaw - offYaw) * ko; offPitch += (tgtPitch - offPitch) * ko;
   const hx = Math.sin(cyaw), hz = -Math.cos(cyaw);
-  const wantFov = fovBase + (camMode === 'cockpit' ? 8 : 0), wantNear = camMode === 'cockpit' && !park ? 0.15 : 0.6;
+  const kmh = Math.abs((park ?? sim).player.v) * 3.6;
+  const wantFov = fovBase + (camMode === 'cockpit' ? 8 : 0) + Math.min(16, Math.max(0, kmh - 60) * 0.12), wantNear = camMode === 'cockpit' && !park ? 0.15 : 0.6;
   if (camera.fov !== wantFov || camera.near !== wantNear) { camera.fov = wantFov; camera.near = wantNear; camera.updateProjectionMatrix(); }
   camera.up.set(0, 1, 0);
   if (park && parkTop) {
@@ -360,6 +374,13 @@ function updateCamera(dt: number): void {
     camera.position.set(cx - Math.sin(ya) * dist * Math.cos(el), dist * Math.sin(el), cz + Math.cos(ya) * dist * Math.cos(el));
     const k = Math.min(1, (Math.abs(offYaw) + Math.abs(offPitch)) / 0.4); // при обертанні дивимось на авто, а не вперед
     camera.lookAt(cx + hx * LOOK_AHEAD * (1 - k), 0.8 + 0.4 * k, cz + hz * LOOK_AHEAD * (1 - k));
+  }
+  { // Швидкість > 90 км/год: легка тряска камери.
+    const k = Math.pow(Math.max(0, kmh - 90) / 110, 1.4) * (camMode === 'cockpit' ? 0.03 : 0.045);
+    if (k > 0) {
+      const t = performance.now() / 1e3, dx = (Math.sin(t * 41) + Math.sin(t * 67.3) * 0.6) * k, dy = (Math.sin(t * 53.7) + Math.sin(t * 29.1) * 0.7) * k;
+      camera.position.x += dx; camera.position.y += dy * 0.8; camera.position.z += dx * 0.5;
+    }
   }
   sun.position.set(p.x + sunOff.x, sunOff.y, p.z + sunOff.z);
   sun.target.position.set(p.x, 0, p.z);
@@ -453,6 +474,7 @@ const interior = new Interior();
 scene.add(interior.group);
 let steerVis = 0, prevA = 0;
 const wob = { yaw: 0, vel: 0, dir: 1 };
+let absT = 0, absHint = false, absActive = false; // ABS: час останнього «тріску», показана підказка, зараз працює
 function applyCarColor(): void {
   if (!models) return;
   for (const [m, def] of [[models.id4, ID4_PAINT], [models.cerato, CERATO_PAINT]] as const) {
@@ -758,6 +780,21 @@ function frame(now: number): void {
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) $('toast').hidden = true; }
   resize();
   smoothPlayer(dt);
+  { // Слизька дорога: значок «❄ погода» / «ABS» (мигає), «тріск» ABS і підказка; швидкість: віньєтка з розмиттям по краях.
+    const src = park ?? sim, badge = $('absBadge'), slippery = src.grip < 0.55;
+    absActive = slippery && src.player.braking && Math.abs(src.player.v) > 4;
+    badge.hidden = !slippery;
+    if (slippery) {
+      const flash = absActive && Math.floor(performance.now() / 110) % 2 === 0;
+      badge.textContent = absActive ? 'ABS' : `❄ ${WEATHER_LABEL[weather].toLowerCase()}`;
+      badge.classList.toggle('abs', absActive && flash);
+      if (absActive && performance.now() - absT > 90) { absT = performance.now(); if (!sound.muted) sound.absPulse(); }
+      if (absActive && !absHint) { absHint = true; toast('Слизько: ABS працює — гальмуйте плавніше й заздалегідь', 'info'); }
+    }
+    if (!absActive) absHint = false;
+    const kmh = Math.abs(src.player.v) * 3.6;
+    $('speedfx').style.opacity = String(Math.max(0, Math.min(1, (kmh - 90) / 110)).toFixed(2));
+  }
   { // Занос при гальмуванні на слизькій дорозі (лише вигляд): авто «виляє» кормою, тим сильніше, чим швидше і слизькіше.
     const src = park ?? sim, g = src.grip, v = Math.abs(src.player.v);
     if (g < 0.55 && src.player.braking && v > 6) wob.vel += wob.dir * (1 - g) * Math.min(1.6, v / 14) * 7 * dt;
@@ -773,13 +810,14 @@ function frame(now: number): void {
     const yaw = dt > 0 ? wrapAngle(sp.a - prevA) / dt : 0; prevA = sp.a;
     const tgt = park ? park.wheel : Math.max(-1, Math.min(1, yaw * 1.1));
     steerVis += (tgt - steerVis) * (1 - Math.exp(-dt * 8));
-    const gaugeData = { speed: Math.abs(pl.v) * 3.6, rpm: g.rpm, manual: g.manual, gear: g.manual ? g.label : park && park.reverse ? 'R' : 'D', stalled: g.stalled, sig: park ? 0 : sim.sig, blink: Math.floor((park ? 0 : sim.player.sigT) * 3) % 2 === 0, night: tod !== 'day' };
+    const gaugeData = { speed: Math.abs(pl.v) * 3.6, rpm: g.rpm, manual: g.manual, gear: g.manual ? g.label : park && park.reverse ? 'R' : 'D', stalled: g.stalled, sig: park ? 0 : sim.sig, blink: Math.floor((park ? 0 : sim.player.sigT) * 3) % 2 === 0, night: tod !== 'day', abs: absActive, slip: (park ?? sim).grip < 0.55 };
     interior.update(sp, steerVis, g.manual, camMode === 'cockpit' && !park, gaugeData);
   }
   actors!.manual = (park ? park.gb : sim.gb).manual;
   actors!.update(park ?? sim);
   wfx.update(dt, camera.position);
   updateHeadlights(sp);
+  updateLamps(sp);
   adaptDpr(dt);
   if (!park) world!.updateLights(sim);
   actors!.setPlayerVisible(park ? true : camMode !== 'cockpit');

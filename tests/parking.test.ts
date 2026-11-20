@@ -49,7 +49,7 @@ describe('парковка', () => {
   const SOLUTIONS: Record<ParkKind, Seg[]> = {
     parallel: [{ rev: false, steer: 0, sec: 1.36, gas: true }, { rev: true, steer: 0.6, sec: 3.38, gas: true }, { rev: true, steer: 0, sec: 2.47, gas: true }, { rev: true, steer: -1, sec: 0.58, gas: true }],
     garage: [{ rev: false, steer: 0, sec: 4.84, gas: true }, { rev: true, steer: -1, sec: 2.78, gas: true }, { rev: true, steer: 1, sec: 3.32, gas: true }, { rev: true, steer: 0, sec: 1.88, gas: true }],
-    turn: [{ rev: false, steer: -1, sec: 4.378, gas: true }, { rev: true, steer: -1, sec: 3.986, gas: true }, { rev: false, steer: -1, sec: 2.842, gas: true }],
+    turn: [{ rev: false, steer: -0.6, sec: 2.51, gas: true }, { rev: true, steer: 1, sec: 3.878, gas: true }, { rev: false, steer: -1, sec: 4.078, gas: true }], // вулиця 9 м: рівно три прийоми
   };
   for (const kind of ['parallel', 'garage', 'turn'] as const) {
     it(`${kind}: вправа розвʼязувана`, () => {

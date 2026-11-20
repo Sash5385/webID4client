@@ -202,17 +202,16 @@ describe('погода: занос', () => {
 });
 
 describe('іспит: накопичення дрібних помилок', () => {
-  it('у навчанні 4 дрібні помилки закінчують заїзд, в іспиті — ні (вердикт після фінішу)', () => {
+  it('у навчанні дрібні помилки накопичуються (вердикт після фінішу), в іспиті 4 дрібні закінчують заїзд', () => {
     const learn = new Sim(withConfig({ mode: 'learn' }), 'route1') as any;
-    for (let i = 0; i < 4; i++) learn.fault('noSignal');
-    expect(learn.result?.passed).toBe(false);
+    for (let i = 0; i < 5; i++) learn.fault('noSignal');
+    expect(learn.result).toBeNull();
+    expect(learn.minorCount).toBe(5);
+    learn.finish(true, 'Маршрут пройдено');
+    expect(learn.result.passed).toBe(false);
     const ex = new Sim(withConfig({ mode: 'exam' }), 'route1') as any;
-    for (let i = 0; i < 5; i++) ex.fault('noSignal');
-    expect(ex.result).toBeNull();
-    expect(ex.minorCount).toBe(5);
-    ex.finish(true, 'Маршрут пройдено');
-    expect(ex.result.passed).toBe(false);
-    ex.fault('crash'); // після результату нічого не змінюється
+    for (let i = 0; i < 4; i++) ex.fault('noSignal');
+    expect(ex.result?.passed).toBe(false);
     const ex2 = new Sim(withConfig({ mode: 'exam' }), 'route1') as any;
     ex2.fault('crash');
     expect(ex2.result.passed).toBe(false);

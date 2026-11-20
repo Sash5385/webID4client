@@ -78,12 +78,13 @@ function garageLayout(): Layout {
 }
 
 // Розворот у три прийоми («ластівка»): вузька вулиця 9 м між бордюрами, старт біля правого бордюру; потрібно стати назад по ходу, у правій смузі.
+export const TURN = { width: 9 }; // ширина вулиці між бордюрами, м
 function turnLayout(): Layout {
-  const Z0 = -8.0, Z1 = 3.4;
+  const Z0 = 3.4 - TURN.width, Z1 = 3.4;
   return {
     obstacles: [box('curb', -30, 40, Z1, Z1 + 0.3, 0.15), box('curb', -30, 40, Z0 - 0.3, Z0, 0.15)],
-    cars: [], start: { x: 0, z: 2.0, a: Math.PI / 2 }, bounds: { x0: -26, x1: 34, z0: -11, z1: 8 },
-    zone: { x: 0, z: -5.0, hl: 6, hw: 1.2, a: Math.PI / 2 },
+    cars: [], start: { x: 0, z: 2.0, a: Math.PI / 2 }, bounds: { x0: -26, x1: 34, z0: Z0 - 3, z1: 8 },
+    zone: { x: 0, z: (3.4 + 2 * Z0) / 3 + 0.4, hl: 6, hw: 1.2, a: Math.PI / 2 },
     hint: 'Розворот у три прийоми: вперед із кермом уліво до лівого бордюру, назад із розворотом керма, і знову вперед — і їдьте назад по правій смузі. Бордюрів не торкайтесь.',
   };
 }
@@ -207,7 +208,7 @@ export class ParkSim {
       const inside = cs.every(([x]) => x > z.x - z.hl + 0.3 && x < z.x + z.hl - 0.3);
       return Math.abs(m.angle) < 8 && m.curb !== null && m.curb <= 0.6 && inside;
     }
-    if (this.kind === 'turn') return Math.abs(m.angle) < 12 && this.z < -2.3 && this.z > -7.1;
+    if (this.kind === 'turn') { const z0 = 3.4 - TURN.width; return Math.abs(m.angle) < 12 && this.z < (3.4 + z0) / 2 && this.z > z0 + 0.9; }
     const gz = this.layout.zone;
     const inside = cs.every(([x, z]) => x > gz.x - gz.hw - 0.02 && x < gz.x + gz.hw + 0.02 && z > 3.2);
     return Math.abs(m.angle) < 8 && inside;

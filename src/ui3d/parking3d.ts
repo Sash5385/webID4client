@@ -4,7 +4,7 @@ import {
   BoxGeometry, CylinderGeometry, DoubleSide, Group, IcosahedronGeometry, Mesh, MeshLambertMaterial, MeshStandardMaterial, PlaneGeometry, RepeatWrapping, Vector2,
   type BufferGeometry, type Material, type Texture,
 } from 'three';
-import type { Obb, ParkSim } from '../engine/parking';
+import { TURN, type Obb, type ParkSim } from '../engine/parking';
 import type { Models } from './models';
 import type { Pbr, PbrSet } from './pbr';
 import type { Quality } from './quality';
@@ -63,7 +63,7 @@ export function buildParkWorld(sim: ParkSim, models: Models | null, pbr: Pbr | n
   const side = (x0: number, x1: number, z0: number, z1: number): void => { plane(x0, x1, z0, z1, 0.02, P(pbr?.paving, TILE.paving, x1 - x0, z1 - z0, 0xb9b3a6)); };
   plane(-120, 120, -120, 120, -0.02, P(pbr?.grass, TILE.grass, 240, 240, 0x6f9a55)); // трава
   let roadZ0: number, roadZ1: number;
-  if (sim.kind === 'turn') { roadZ0 = -8.0; roadZ1 = 3.4; }
+  if (sim.kind === 'turn') { roadZ0 = 3.4 - TURN.width; roadZ1 = 3.4; }
   else if (sim.kind === 'parallel') { roadZ0 = -4.6; roadZ1 = 2.9; }
   else { roadZ0 = -6.3; roadZ1 = 3.0; }
   asph(-30, 40, roadZ0, roadZ1);
