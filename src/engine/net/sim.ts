@@ -56,6 +56,7 @@ export class NetSim {
   private armedExit: string | null = null;
   private armPendingRing = false;
   private armed: { conn: NetConn; dir: -1 | 1 } | null = null;
+  private pendingTurn: { dir: -1 | 0 | 1; edge: string } | null = null; // «Поворот» натиснуто зарано (> 70 м) — виконається при підʼїзді
   private stepIdx = 0;
   private readonly steps: readonly RouteStepData[];
   private hold = false;
@@ -279,6 +280,12 @@ export class NetSim {
     if (this.edge.ringEntry && this.edge.length - this.s < 80 && act.dir !== -1) { this.armPendingRing = true; return; }
     const exp = this.expectedConn();
     let dir: -1 | 1 | 0 = act.dir;
+    // Зарано (> 70 м до повороту за маршрутом): запамʼятати натискання, а не губити його (інакше авто стає на кінці ребра й чекає).
+    if (exp && exp.fromS - this.s >= 70 && (dir === 0 || dir === (exp.dir === 0 ? 1 : exp.dir) || this.sig === (exp.dir === 0 ? 1 : exp.dir))) {
+      this.pendingTurn = { dir: act.dir, edge: this.edge.id };
+      this.info('Поворот буде виконано при підʼїзді до перехрестя');
+      return;
+    }
     if (dir === 0) {
       if (exp && exp.fromS - this.s < 70 && exp.fromS - this.s > -2) dir = exp.dir === 0 ? 1 : exp.dir;
       else if (this.sig !== 0) dir = this.sig;
@@ -286,7 +293,11 @@ export class NetSim {
     if (dir === 0) { this.info('Тут поворот неможливий'); return; }
     // Найближчий зʼїзд у цьому напрямку попереду (до 70 м), з будь-якої смуги.
     const cands = this.edge.departures.filter((c) => c.dir === dir && c.fromS > this.s - 2 && c.fromS - this.s < 70);
-    if (!cands.length) { this.info(dir === -1 ? 'Тут поворот ліворуч неможливий' : 'Тут поворот праворуч неможливий'); return; }
+    if (!cands.length) {
+      const other = this.edge.departures.some((c) => c.dir === -dir && c.fromS > this.s - 2 && c.fromS - this.s < 70);
+      this.info(other ? `Тут поворот ${dir === -1 ? 'праворуч' : 'ліворуч'} — натисніть іншу кнопку` : dir === -1 ? 'Тут поворот ліворуч неможливий' : 'Тут поворот праворуч неможливий');
+      return;
+    }
     const near = Math.min(...cands.map((c) => c.fromS));
     const atPoint = cands.filter((c) => c.fromS - near < 3);
     const mine = atPoint.find((c) => c === exp && c.fromLane === this.curLane()) ?? atPoint.find((c) => c.fromLane === this.curLane()) ?? atPoint.find((c) => c === exp) ?? atPoint[0]!;
@@ -385,6 +396,10 @@ export class NetSim {
       return;
     }
     if (this.armed && this.s > this.armed.conn.fromS + 3) this.armed = null;
+    if (this.pendingTurn) {
+      if (this.pendingTurn.edge !== this.edge.id) this.pendingTurn = null;
+      else if (exp && exp.fromS - this.s < 70) { const pt = this.pendingTurn; this.pendingTurn = null; this.apply({ type: 'turn', dir: pt.dir }); }
+    }
     if (exp && this.s > exp.fromS + 3 && exp.fromS < this.edge.length - 0.5) {
       this.fault('offRoute', `Пропущено: ${(this.steps[this.stepIdx + 1] as { text: string }).text}`);
       return;
@@ -994,6 +1009,7 @@ export class NetSim {
     const prep = this.prepDistances();
     if (prep.left < R.uturnPrepDist || prep.ring < R.ringPrepDist) return;
     if (this.inSolidZone()) return;
+    { const nx = this.steps[this.stepIdx + 1]; if (nx?.kind === 'edge' && this.net.edge(nx.edge).n < this.edge.n) { this.hogT = 0; return; } } // смуга праворуч закінчується — лівою їхати треба
     const e = this.edge;
     const busy = [...this.traffic.cars, ...this.riders.list].some((c) => {
       if (Math.abs(c.x - this.x) > 120 || Math.abs(c.z - this.z) > 120) return false;
