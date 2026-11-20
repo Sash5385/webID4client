@@ -116,7 +116,7 @@ export class NetSim {
     this.traffic.populate(this.body(), this.riders.bodies());
     this.planJaywalker(rng);
     const ringStep = this.steps.find((q) => q.kind === 'ring');
-    this.hint('start', route === 'route1' || !ringStep
+    this.hint('start', route.startsWith('r8041') ? 'Рушайте за маршрутом (стрілки на схемі ТСЦ 8041). Покажчики, «Поворот» на перехрестях.' : route === 'route1' || !ringStep
       ? 'Рушайте до кільця. Поступіться тим, хто на кільці. Зʼїзд — другий, на вул. Стеценка: правий покажчик і «Зʼїзд».'
       : `Рушайте до кільця. Поступіться тим, хто на кільці. ${ringStep.text.replace('Кільце: ', '')}: правий покажчик і «Зʼїзд».`);
   }

@@ -32,6 +32,7 @@ export interface EdgeData {
   readonly speedKmh: number;
   readonly median: number;          // половина ширини осьової (для двосторонніх; від осі дороги до ref)
   readonly centreLine: 'double' | 'single' | 'none'; // розмітка по ref.offset(−median)
+  readonly noAi?: boolean;          // без ІІ-трафіку (двори, службові проїзди)
   readonly centreOwner: boolean;    // малювати осьову з цього ребра (щоб не двічі)
   readonly length: number;
   readonly prev: readonly string[];

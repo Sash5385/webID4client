@@ -186,10 +186,12 @@ export class NetPilot {
     return maxLane;
   }
 
+  dbg: { gap: number; target: number } = { gap: 0, target: 0 };
   controls(dt: number): Controls {
     const sim = this.sim, w = sim.where, v = sim.v;
     if (sim.sig !== 0) this.sigWait += dt;
     let target = this.o.target ?? 12;
+    if (w.mode === 'edge' && w.edge) target = Math.min(target, sim.net.edge(w.edge).data.speedKmh / 3.6 - 1.2); // не перевищувати обмеження ребра
     let gap = w.mode === 'edge' ? Infinity : this.carsAhead(40);
     const half = sim.cfg.car.length / 2;
 
@@ -339,6 +341,7 @@ export class NetPilot {
       if (this.o.wrongTurnRight && this.sideTarget(e)) { this.want(1); if (this.sigWait > 3.4) sim.turn(1); }
     }
 
+    this.dbg = { gap, target };
     const vt = Math.min(target, Math.sqrt(2 * 3 * Math.max(0, gap - 1)));
     if (v > vt + 0.3) return { gas: false, brake: true };
     if (v < vt - 0.3) return { gas: true, brake: false };

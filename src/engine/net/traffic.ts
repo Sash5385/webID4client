@@ -96,7 +96,7 @@ export class NetTraffic {
 
   constructor(private readonly cfg: SimConfig, private readonly net: Network, private readonly rng: Rng) {
     this.sideT = rng.range(4, 10);
-    this.streetEdges = net.edgeList.filter((e) => e.kind === 'street' || e.kind === 'arm' || e.kind === 'cross');
+    this.streetEdges = net.edgeList.filter((e) => (e.kind === 'street' || e.kind === 'arm' || e.kind === 'cross') && !e.data.noAi);
   }
 
   // ---- Замки ----
@@ -122,12 +122,12 @@ export class NetTraffic {
     const atEnd = (d: NetConn): boolean => d.fromLaneS >= ln.length - 1.5;
     const mid = deps.filter((d) => !atEnd(d));
     const endConns = deps.filter(atEnd);
-    const cont = e.next.filter((n) => lane < n.n);
+    const cont = e.next.filter((n) => lane < n.n && !n.data.noAi); // ІІ не їде на ребра без ІІ (перекриття ділянок маршруту)
     const ringE = e.ringEntry;
     type Opt = { kind: 'mid' | 'endc' | 'cont' | 'ring' | 'sink'; conn?: NetConn; next?: NetEdge };
     const ends: Opt[] = [...endConns.map((d) => ({ kind: 'endc' as const, conn: d })), ...cont.map((n) => ({ kind: 'cont' as const, next: n }))];
     if (ringE) ends.push({ kind: 'ring' });
-    const dying = !ends.length && (e.next.length > 0 || e.departures.some((d) => d.fromLane === lane && !d.data.playerOnly && atEnd(d)));
+    const dying = !ends.length && (e.next.some((n) => !n.data.noAi) || e.departures.some((d) => d.fromLane === lane && !d.data.playerOnly && atEnd(d)));
     if (!ends.length && !dying) ends.push({ kind: 'sink' });
     let pick: Opt | null = null;
     const share = this.cfg.turners.share;
