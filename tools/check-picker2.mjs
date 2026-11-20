@@ -1,0 +1,30 @@
+// Меню вибору маршруту на телефоні: прокрутка і вибір пункту внизу списку. node tools/check-picker2.mjs
+import { chromium } from 'playwright';
+const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell', args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const ctx = await browser.newContext({ viewport: { width: 360, height: 640 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
+const page = await ctx.newPage();
+const errors = [];
+page.on('pageerror', (e) => errors.push(String(e)));
+await page.goto('file://' + process.cwd() + '/dist/route7-3d.html?route=1&q=low&dbg=1&paused=1');
+await page.waitForFunction(() => window.__dbg && window.__dbg.ready(), null, { timeout: 90000 });
+await page.tap('#rt');
+await page.waitForTimeout(400);
+const info = await page.evaluate(() => { const c = document.querySelector('#picker .card'); const r = c.getBoundingClientRect(); return { sh: c.scrollHeight, ch: c.clientHeight, top: Math.round(r.top), bottom: Math.round(r.bottom), vh: innerHeight, n: document.querySelectorAll('.pick').length }; });
+console.log('before', JSON.stringify(info));
+// свайп пальцем по списку (touch): CDP dispatchTouchEvent
+const cdp = await ctx.newCDPSession(page);
+const sw = async (x, y0, y1) => { await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: y0 }] }); for (let i = 1; i <= 8; i++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y0 + ((y1 - y0) * i) / 8 }] }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); };
+await page.mouse.move(180, 300); await page.mouse.wheel(0, 300); await page.waitForTimeout(300);
+console.log('scrollTop after wheel', await page.evaluate(() => document.querySelector('#picker .card').scrollTop));
+await page.evaluate(() => { document.querySelector('#picker .card').scrollTop = 0; });
+const routeBefore = await page.textContent('#rt');
+await cdp.send('Input.synthesizeScrollGesture', { x: 180, y: 380, yDistance: -250, gestureSourceType: 'touch', speed: 800 });
+await page.waitForTimeout(500);
+const st = await page.evaluate(() => document.querySelector('#picker .card').scrollTop);
+const routeAfterSwipe = await page.textContent('#rt');
+console.log('scrollTop after swipe', st, '| route label before/after swipe:', routeBefore, '/', routeAfterSwipe);
+await page.tap('#pick-route14');
+await page.waitForTimeout(1200);
+console.log('after tap route14:', await page.textContent('#rt'), 'picker hidden:', await page.evaluate(() => document.getElementById('picker').hidden));
+console.log('errors', errors);
+await browser.close();

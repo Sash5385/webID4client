@@ -1,0 +1,11 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell', args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+const errs = []; p.on('pageerror', (e) => errs.push(String(e)));
+await p.goto('http://localhost:8765/embed-test.html');
+const fr = p.frames().find((f) => f.url().includes('route7-3d'));
+await fr.waitForFunction(() => window.__dbg && window.__dbg.ready(), null, { timeout: 120000 });
+await fr.evaluate(() => { window.dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowUp' })); window.__dbg.advanceUntil((s) => !!s.result, 400); });
+await p.waitForTimeout(500);
+console.log(JSON.stringify(await p.evaluate(() => window.msgs), null, 1).slice(0, 900), 'errors', errs);
+await b.close();

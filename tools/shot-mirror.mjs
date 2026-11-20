@@ -1,0 +1,20 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell', args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+const errors = [];
+page.on('pageerror', (e) => errors.push(String(e)));
+page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+const base = 'file://' + process.cwd() + '/dist/route7-3d.html?q=high';
+await page.goto(base);
+await page.waitForTimeout(2500);
+await page.screenshot({ path: 'dist/mir-1-chase.png' });
+// орбіта: перетягнути по сцені
+await page.mouse.move(195, 300); await page.mouse.down(); await page.mouse.move(300, 300, { steps: 8 });
+await page.waitForTimeout(800);
+await page.screenshot({ path: 'dist/mir-2-orbit.png' });
+await page.mouse.up();
+await page.evaluate(() => document.getElementById('cam').click());
+await page.waitForTimeout(1500);
+await page.screenshot({ path: 'dist/mir-3-cockpit.png' });
+console.log('errors:', errors);
+await browser.close();
