@@ -289,7 +289,7 @@ export class NetPilot {
         const urgent = (exp !== null && toTurn < 250) || prepL < 410;
         if (b && !b.stat && (b.rel > -8 || urgent)) target = Math.min(target, Math.max(3, b.v - 3)); // пропустити вперед
         const laneEnds = ((): boolean => { const n0 = sim.steps_[w.step + 1]; if (n0?.kind !== 'edge') return false; const ne0 = sim.net.edge(n0.edge); return ne0.n <= w.lane; })();
-        const ready = (this.o.noSignals || this.sigWait > 3.3) && !b && !this.inSolid(e, w.s) && (e.length - w.s > 15 || laneEnds);
+        const ready = (this.o.noSignals || this.sigWait > 3.3) && !b && !this.inSolid(e, w.s) && (e.length - w.s > 6 || laneEnds);
         // Останнє місце, де ще можна перестроїтись до повороту (поза суцільними): чекати перед ним.
         const turnS = exp && wantLane === exp.fromLane ? exp.fromS : prepL < 410 && wantLane === 0 ? w.s + prepL : Infinity;
         if (urgent && turnS < Infinity && !ready) {

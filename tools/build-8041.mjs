@@ -264,6 +264,26 @@ function buildRoute(no, spec) {
       signs.push({ kind: 'pedCrossing', edge: edge.id, s: r2(s - 3), x: r2(sgn.x), z: r2(sgn.z), a: r2(sgn.a) });
     }
   }
+  // Перехід може перетинати й інші ребра маршруту (паралельні проїзні частини, повторний прохід): додаємо їм ділянку й особливість,
+  // щоб пішохід на переході був видимий кожному, хто їде цією смугою.
+  for (const cr of crossings) {
+    const L = Math.hypot(cr.b[0] - cr.a[0], cr.b[1] - cr.a[1]);
+    const ux = (cr.b[0] - cr.a[0]) / L, uz = (cr.b[1] - cr.a[1]) / L;
+    for (let ei = 0; ei < E.length; ei++) {
+      const e = E[ei];
+      if (cr.spans.some((sp) => sp.edge === e.id)) continue;
+      let hits = 0, u0 = Infinity, u1 = -Infinity, sSum = 0;
+      for (let u = 0; u <= L; u += 1) {
+        const pt = [cr.a[0] + ux * u, cr.a[1] + uz * u];
+        const q = project(e._ref, e._cum, pt);
+        if (q.dist < e.lanes * W + 2 && q.d > -0.3 && q.d < e.lanes * W + 0.3 && q.s > 1 && q.s < e.length - 1) { hits++; u0 = Math.min(u0, u); u1 = Math.max(u1, u); sSum += q.s; }
+      }
+      if (hits < 3) continue;
+      const sMid = sSum / hits;
+      cr.spans.push({ edge: e.id, s: r2(sMid), u0: r2(u0), u1: r2(u1) });
+      addFeature(ei, { id: `${cr.id}@${e.id}`, kind: 'crossing', crossing: cr.id, s: r2(sMid), zone: [r2(sMid - 2), r2(sMid + 2)], stop: r2(sMid - 3) });
+    }
+  }
   // «Дай дорогу» перед зʼєднувачами rank 0 (без світлофора).
   for (const c of conns) {
     if (!c._giveWay || c.ctrl) continue;
@@ -282,9 +302,9 @@ function buildRoute(no, spec) {
     for (let k = 0; k < E[i]._ref.length; k += 3) {
       tot++;
       const p = E[i]._ref[k];
-      if (E.some((o) => !chain.has(o.id) && o._ref.some((q, j) => j % 2 === 0 && Math.abs(q[0] - p[0]) < 14 && Math.abs(q[1] - p[1]) < 14 && dist(q, p) < 14))) hit++;
+      if (E.some((o) => !chain.has(o.id) && o._ref.some((q, j) => j % 2 === 0 && Math.abs(q[0] - p[0]) < 12 && Math.abs(q[1] - p[1]) < 12 && dist(q, p) < 12))) hit++;
     }
-    if (hit / Math.max(1, tot) > 0.1) E[i].noAi = true;
+    if (hit > 0) E[i].noAi = true;
   }
   // Сортуємо особливості.
   for (const e of E) e.features.sort((a, b) => a.s - b.s);
