@@ -22,6 +22,7 @@ it('dbg', () => {
     if (Math.floor(sim.t) % 20 === 0 && Math.floor(sim.t) !== last) { last = Math.floor(sim.t); console.log(Math.floor(sim.t), w.mode, w.edge ?? w.conn, 'lane', w.lane, 's', w.s.toFixed(0), 'v', sim.player.v.toFixed(1), 'step', w.step); }
   }
   if (sim.result && !sim.result.passed) { const sm = sim as any; console.log('NEAR', JSON.stringify(sm.traffic.cars.filter((c: any) => Math.hypot(c.x - sim.player.x, c.z - sim.player.z) < 30).map((c: any) => [c.kind, Math.round(c.x - sim.player.x), Math.round(c.z - sim.player.z), c.v.toFixed(1), c.legs.map((l: any) => l.edge?.id ?? l.conn?.id).slice(0, 4).join('>')]))); }
+  if (sim.result && !sim.result.passed) console.log('PEDEND', JSON.stringify(sim.peds.list.filter((q: any) => Math.hypot(q.x - sim.player.x, q.z - sim.player.z) < 25).map((q: any) => [q.kind, Math.round(q.x - sim.player.x), Math.round(q.z - sim.player.z), q.started, q.featureId, JSON.stringify(Object.keys(q)).length > 0 ? q.u?.toFixed?.(1) : 0])), 'dbg', JSON.stringify(pilot.dbg), 'v', sim.player.v);
   console.log('WHERE', JSON.stringify(sim.where));
   console.log('END', sim.t.toFixed(0), JSON.stringify(sim.result), sim.faults.map((f) => f.code + ':' + (f.message ?? '')).join(' | '));
 }, 300000);

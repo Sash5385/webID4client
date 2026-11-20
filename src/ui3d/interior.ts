@@ -1,7 +1,7 @@
 // Салон для виду «з салону»: передня панель, кермо (крутиться), стійки й стеля, важіль КПП (на механіці). Стоїть у системі авто (вперед −Z, праворуч +X).
 import { BoxGeometry, CanvasTexture, CylinderGeometry, Group, Mesh, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry, TorusGeometry, type BufferGeometry, type Material } from 'three';
 
-export interface Gauges { speed: number; rpm: number; manual: boolean; gear: string; stalled: boolean; sig: -1 | 0 | 1; blink: boolean; night: boolean }
+export interface Gauges { speed: number; rpm: number; manual: boolean; gear: string; stalled: boolean; sig: -1 | 0 | 1; blink: boolean; night: boolean; abs?: boolean; slip?: boolean }
 
 export class Interior {
   readonly group = new Group();
@@ -89,6 +89,11 @@ export class Interior {
     c.font = '700 54px system-ui, sans-serif';
     c.fillStyle = g.sig === -1 && g.blink ? '#35e06a' : '#12301c'; c.fillText('◀', 232, 58);
     c.fillStyle = g.sig === 1 && g.blink ? '#35e06a' : '#12301c'; c.fillText('▶', 280, 58);
+    // Слизька дорога (❄) і робота ABS.
+    c.font = '700 26px system-ui, sans-serif';
+    if (g.slip) { c.fillStyle = '#8fd3ff'; c.fillText('❄', 224, 118); }
+    if (g.abs) { c.fillStyle = '#ffc247'; c.font = '800 28px system-ui, sans-serif'; c.fillText('ABS', 292, 118); }
+    c.font = '700 54px system-ui, sans-serif';
     if (g.stalled) { c.fillStyle = '#ff5a4e'; c.font = '700 22px system-ui, sans-serif'; c.fillText('ДВИГУН ЗАГЛУХ', 256, 186); }
     else if (g.night) { c.fillStyle = '#6fb6ff'; c.font = '600 18px system-ui, sans-serif'; c.fillText('ближнє світло', 256, 186); }
     this.tex.needsUpdate = true;

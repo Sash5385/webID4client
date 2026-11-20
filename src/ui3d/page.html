@@ -108,6 +108,37 @@ body { background: var(--bg); color: var(--fg); font-family: var(--display); ove
 #wx, #qual, #rt { background: rgba(16,20,28,.7); border: 1px solid var(--fog-line); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 #toast, #result .card, #picker .card { background: rgba(21,27,41,.94); border: 1px solid var(--fog-line); border-radius: 18px; }
 .pick { border-radius: 16px; } .pick.cur { border-color: var(--accent); }
+/* Швидкість: віньєтка з розмиттям по краях (з 90 км/год, сильніше до 200) */
+#speedfx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  background: radial-gradient(ellipse at 50% 55%, transparent 45%, rgba(0,0,0,.5) 100%);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 55%, transparent 40%, #000 95%);
+  mask-image: radial-gradient(ellipse at 50% 55%, transparent 40%, #000 95%);
+}
+#absBadge {
+  position: absolute;
+  left: 8px;
+  top: 98px;
+  z-index: 2;
+  padding: 4px 9px;
+  border-radius: 10px;
+  font: 700 13px var(--display);
+  background: rgba(16,20,28,.78);
+  border: 1px solid var(--fog-line);
+  color: #bfe3ff;
+  pointer-events: none;
+}
+#absBadge.abs {
+  color: #1a1205;
+  background: #ffc247;
+  border-color: transparent;
+}
 </style>
 <div id="app">
   <div id="hud">
@@ -134,6 +165,8 @@ body { background: var(--bg); color: var(--fg); font-family: var(--display); ove
     <button class="mini" id="qual" aria-label="Якість графіки">Якість: Середня</button>
     </div>
     <button class="mini" id="rt" aria-label="Вибір маршруту">Маршрут 7 ▾</button>
+    <div id="speedfx" aria-hidden="true"></div>
+    <div id="absBadge" hidden></div>
     <div id="toast" hidden></div>
     <div id="picker" hidden>
       <div class="card">

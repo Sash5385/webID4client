@@ -150,6 +150,9 @@ export class Sound {
     else this.tone(520, 0.16, 'triangle', 0.3);
   }
 
+  // Короткий «тріск» ABS при гальмуванні на слизькому.
+  absPulse(): void { if (this.ctx) this.tone(140, 0.035, 'square', 0.05); }
+
   finish(passed: boolean): void {
     if (!this.ctx) return;
     const notes = passed ? [523, 659, 784, 1047] : [392, 349, 294, 220];

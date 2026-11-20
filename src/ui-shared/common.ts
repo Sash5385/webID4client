@@ -15,7 +15,7 @@ export const ROUTE_SHORT: Record<RouteId, string> = { route1: 'Маршрут 1'
 // Перелік маршрутів (номер — як на схемах ТСЦ № 8042); кнопки в page.html — у тому ж порядку.
 export const ROUTE_ORDER: readonly RouteId[] = ['route1', 'route3', 'route4', 'route5', 'route6', 'route7', 'route9', 'route10', 'route12', 'route13', 'route14', 'route15', 'r8041_1', 'r8041_2', 'r8041_3', 'r8041_4', 'r8041_5'];
 // Номер для БД: ТСЦ 8042 — 1…15; ТСЦ 8041 — 8041.1…8041.5.
-export const routeNo = (r: RouteId): number => (r.startsWith('r8041_') ? 8041 + Number(r.slice(6)) / 10 : Number(r.slice(5)));
+export const routeNo = (r: RouteId): number => (r.startsWith('r8041_') ? Number((8041 + Number(r.slice(6)) / 10).toFixed(1)) : Number(r.slice(5)));
 const FROM_PARAM: Record<string, RouteId> = Object.fromEntries(ROUTE_ORDER.flatMap((r) => [[String(routeNo(r)), r], [r, r]]));
 
 // ?route=N (номер зі схем ТСЦ) перекриває збережений вибір; типово — маршрут 1.
