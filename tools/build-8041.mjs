@@ -249,7 +249,10 @@ function buildRoute(no, spec) {
       kind = lat < 0 ? 'uturn' : 'right';
     }
     const la = kind === 'right' ? A.lanes - 1 : 0;
-    const lb = kind === 'right' ? B.lanes - 1 : 0;
+    let lb = kind === 'right' ? B.lanes - 1 : 0;
+    { // після повороту не потрапляти в смугу, що закінчується далі на цьому ж ланцюжку (інакше «Смуга закінчується» одразу після повороту)
+      let q = B, guard = 0; while (q.next.length && guard++ < 4) { q = E.find((x) => x.id === q.next[0]); lb = Math.min(lb, q.lanes - 1); }
+    }
     const p0 = lanePose(A, la, A.length), p3 = lanePose(B, lb, 0);
     const D = dist([p0.x, p0.z], [p3.x, p3.z]);
     const sharp = Math.abs(region.total) > 2.0; // шпилька / розворот: довші «плечі» Безьє, щоб радіус не був меншим за ~3 м
