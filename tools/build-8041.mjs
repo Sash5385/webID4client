@@ -56,7 +56,7 @@ function buildRoute(no, spec) {
   }
   // Ресемплінг і згладжування.
   let Q = resample(R, STEP);
-  Q = smoothPts(Q, 2);
+  Q = smoothPts(smoothPts(smoothPts(Q, 2), 3), 3); // три проходи: без вигинів з радіусом менше ширини смуги
   const qcum = cumLen(Q);
   const nQ = Q.length;
   const totalQ = qcum[nQ - 1], totalR = rawCum[rawCum.length - 1];
@@ -163,7 +163,19 @@ function buildRoute(no, spec) {
   const ID = (k) => `e${k}`;
   const E = edges.map((e, k) => {
     const C = Q.slice(e.i0, e.i1 + 1);
-    const ref = e.leftOff ? offsetPts(C, -e.leftOff) : C;
+    // Зсув ref від осі: у середині ребра — своя ширина (кількість смуг), на стиках з сусіднім ребром — середнє значення, плавний перехід ~40 м.
+    const offA = edges[k].contPrev ? (edges[k - 1].leftOff + e.leftOff) / 2 : e.leftOff;
+    const offB = k + 1 < edges.length && edges[k + 1].contPrev ? (edges[k + 1].leftOff + e.leftOff) / 2 : e.leftOff;
+    const cc = cumLen(C), LC = cc[cc.length - 1], RAMP = Math.min(40, LC / 2);
+    const ss = (t) => t * t * (3 - 2 * t);
+    const offs = C.map((_, i) => {
+      const dA = cc[i], dB = LC - cc[i];
+      let o = e.leftOff;
+      if (dA < RAMP) o = offA + (e.leftOff - offA) * ss(dA / RAMP);
+      if (dB < RAMP) o = o + (offB - o) * (1 - ss(dB / RAMP)) ;
+      return -o;
+    });
+    const ref = e.leftOff || offA || offB ? offsetPts(C, offs) : C;
     const cum = cumLen(ref);
     const a = e.attr;
     return {
@@ -230,12 +242,20 @@ function buildRoute(no, spec) {
   for (let t = 0; t < turns.length; t++) {
     const { fromEdge, toEdge, region } = turns[t];
     const A = E[fromEdge], B = E[toEdge];
-    const kind = region.total > 0 ? 'right' : Math.abs(region.total) > 2.35 ? 'uturn' : 'left';
+    let kind = region.total > 0 ? 'right' : Math.abs(region.total) > 2.35 ? 'uturn' : 'left';
+    if (Math.abs(region.total) > 2.0) { // шпилька/розворот: знак кута неоднозначний (≈ ±π) — напрям за розташуванням початку ребра B відносно кінця A
+      const ea = lanePose(A, A.lanes - 1, A.length), sb = lanePose(B, 0, 0);
+      const lat = (sb.x - ea.x) * -ea.hz + (sb.z - ea.z) * ea.hx; // > 0 — праворуч
+      kind = lat < 0 ? 'uturn' : 'right';
+    }
     const la = kind === 'right' ? A.lanes - 1 : 0;
     const lb = kind === 'right' ? B.lanes - 1 : 0;
     const p0 = lanePose(A, la, A.length), p3 = lanePose(B, lb, 0);
     const D = dist([p0.x, p0.z], [p3.x, p3.z]);
-    const d0 = Math.max(3, Math.min(16, D * 0.45)), d1 = d0;
+    const sharp = Math.abs(region.total) > 2.0; // шпилька / розворот: довші «плечі» Безьє, щоб радіус не був меншим за ~3 м
+    // Шпилька: плече Безьє від кута θ і хорди D — наближення дуги кола (без петлі): R = D/(2 sin θ/2), d = 4/3·tan(θ/4)·R.
+    const th = Math.min(Math.PI, Math.abs(region.total)), Rr = D / (2 * Math.sin(th / 2));
+    const d0 = sharp ? Math.max(1.2, (4 / 3) * Math.tan(th / 4) * Rr) : Math.max(3, Math.min(16, D * 0.45)), d1 = d0;
     let path = bezier(p0, p3, d0, d1, 28);
     const aSpec = wayInfo(A), bSpec = wayInfo(B);
     // Другорядна → головна: «Дай дорогу».
@@ -243,7 +263,7 @@ function buildRoute(no, spec) {
     const c = {
       id: `c${t}`, junction: null, turn: kind, rank: giveWay ? 0 : kind === 'right' ? 2 : 1,
       from: { edge: A.id, lane: la, s: A.length }, to: { edge: B.id, lane: lb, s: 0 },
-      path: path.map((q) => [r2(q[0]), r2(q[1])]), lock: `L${t}`, minRadius: 6, playerOnly: true,
+      path: path.map((q) => [r2(q[0]), r2(q[1])]), lock: `L${t}`, minRadius: sharp ? Math.max(2, Math.min(8, Rr)) : 6, playerOnly: true,
       _kind: kind, _t: t, _giveWay: giveWay, _fromIdx: fromEdge, _toIdx: toEdge,
     };
     conns.push(c); turnAt.set(fromEdge, c);
@@ -337,8 +357,11 @@ function buildRoute(no, spec) {
         const ua = (q0.x - cr.a[0]) * ux + (q0.z - cr.a[1]) * uz, ub = (q1.x - cr.a[0]) * ux + (q1.z - cr.a[1]) * uz;
         u0 = Math.min(ua, ub); u1 = Math.max(ua, ub);
       }
-      cr.spans.push({ edge: e.id, s: r2(sMid), u0: r2(u0), u1: r2(u1) });
-      addFeature(ei, { id: `${cr.id}@${e.id}`, kind: 'crossing', crossing: cr.id, s: r2(sMid), zone: [r2(sMid - 2), r2(sMid + 2)], stop: r2(sMid - 3) });
+      // s — перетин осі переходу (середина смуг ребра) з ref ребра, а не середнє по точках дотику
+      const um = (u0 + u1) / 2, pm = [cr.a[0] + ux * um, cr.a[1] + uz * um];
+      const sx = project(e._ref, e._cum, pm).s;
+      cr.spans.push({ edge: e.id, s: r2(sx), u0: r2(u0), u1: r2(u1) });
+      addFeature(ei, { id: `${cr.id}@${e.id}`, kind: 'crossing', crossing: cr.id, s: r2(sx), zone: [r2(sx - 2), r2(sx + 2)], stop: r2(sx - 3) });
     }
   }
   // Подовжуємо переходи так, щоб усі їхні ділянки лежали всередині a→b (+1,5 м тротуару з кожного боку).
