@@ -5,7 +5,7 @@ import { has8041, NET_ROUTES_8041, Sim } from '../src/engine/sim';
 import { NetPilot } from './autopilot1';
 
 const IGNORED = new Set(['forcedBraking', 'leftLaneHog', 'solidLine']); // solidLine: автопілот інколи перестроюється біля густих переходів OSM
-const ONLY = process.env.R8041;
+const ONLY = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.R8041;
 
 describe('ТСЦ 8041: маршрути проходяться автопілотом', () => {
   for (const id of NET_ROUTES_8041) {

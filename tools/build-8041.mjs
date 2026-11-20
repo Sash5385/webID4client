@@ -117,6 +117,28 @@ function buildRoute(no, spec) {
       }
     }
     cuts.push(i1);
+    // Самоперетин: ребро не має проходити те саме місце двічі (інакше переходи/особливості мають лише одну позицію s на ребро).
+    {
+      const extra = [];
+      const cell = new Map();
+      let lastCut = i0;
+      for (let j = i0; j <= i1; j++) {
+        const key = Math.round(Q[j][0] / 8) + ',' + Math.round(Q[j][1] / 8);
+        let hit = -1;
+        for (let dx = -1; dx <= 1 && hit < 0; dx++) for (let dz = -1; dz <= 1 && hit < 0; dz++) {
+          const k2 = (Math.round(Q[j][0] / 8) + dx) + ',' + (Math.round(Q[j][1] / 8) + dz);
+          const q = cell.get(k2);
+          if (q !== undefined && j - q > 30 && q >= lastCut && dist(Q[q], Q[j]) < 10) hit = q;
+        }
+        if (hit >= 0) {
+          const c = Math.floor((hit + j) / 2);
+          if (c - lastCut >= 4 && i1 - c >= 4) { extra.push(c); lastCut = c; for (const [k3, v3] of cell) if (v3 < c) cell.delete(k3); }
+        }
+        cell.set(key, j);
+      }
+      for (const c of extra) cuts.splice(cuts.length - 1, 0, c);
+      cuts.sort((a, b) => a - b);
+    }
     for (let c = 0; c + 1 < cuts.length; c++) {
       const a = cuts[c], b = cuts[c + 1];
       if (b - a < 2) continue;
@@ -274,7 +296,7 @@ function buildRoute(no, spec) {
       if (e > 0 && edges[e].contPrev === false && s < 20) continue;  // одразу після повороту
       const id = `x${fn.id}`;
       const twoWay = !edge._ow;
-      const signalCross = fn.tg.crossing === 'traffic_signals';
+      const signalCross = false; // світлофорні переходи без нашої голови світлофора — звичайні зебри (піший світлофор не змодельовано)
       let cr = crossings.find((q) => q.id === id);
       if (!cr) {
         const wLeft = twoWay ? edge.lanes * W + 1.5 : 1.5;
@@ -303,15 +325,31 @@ function buildRoute(no, spec) {
       const e = E[ei];
       if (cr.spans.some((sp) => sp.edge === e.id)) continue;
       let hits = 0, u0 = Infinity, u1 = -Infinity, sSum = 0;
-      for (let u = 0; u <= L; u += 1) {
+      for (let u = 0; u <= L; u += 0.5) {
         const pt = [cr.a[0] + ux * u, cr.a[1] + uz * u];
         const q = project(e._ref, e._cum, pt);
         if (q.dist < e.lanes * W + 2 && q.d > -0.3 && q.d < e.lanes * W + 0.3 && q.s > 1 && q.s < e.length - 1) { hits++; u0 = Math.min(u0, u); u1 = Math.max(u1, u); sSum += q.s; }
       }
-      if (hits < 3) continue;
+      if (hits < 1) continue;
       const sMid = sSum / hits;
+      { // повна ширина проїзної частини ребра в проєкції на вісь переходу (а не лише кілька точок дотику)
+        const q0 = refPose(e, sMid, 0), q1 = refPose(e, sMid, e.lanes * W);
+        const ua = (q0.x - cr.a[0]) * ux + (q0.z - cr.a[1]) * uz, ub = (q1.x - cr.a[0]) * ux + (q1.z - cr.a[1]) * uz;
+        u0 = Math.min(ua, ub); u1 = Math.max(ua, ub);
+      }
       cr.spans.push({ edge: e.id, s: r2(sMid), u0: r2(u0), u1: r2(u1) });
       addFeature(ei, { id: `${cr.id}@${e.id}`, kind: 'crossing', crossing: cr.id, s: r2(sMid), zone: [r2(sMid - 2), r2(sMid + 2)], stop: r2(sMid - 3) });
+    }
+  }
+  // Подовжуємо переходи так, щоб усі їхні ділянки лежали всередині a→b (+1,5 м тротуару з кожного боку).
+  for (const cr of crossings) {
+    const L = Math.hypot(cr.b[0] - cr.a[0], cr.b[1] - cr.a[1]);
+    const ux = (cr.b[0] - cr.a[0]) / L, uz = (cr.b[1] - cr.a[1]) / L;
+    const lo = Math.min(0, Math.min(...cr.spans.map((sp) => sp.u0)) - 1.5), hi = Math.max(L, Math.max(...cr.spans.map((sp) => sp.u1)) + 1.5);
+    if (lo < -0.01 || hi > L + 0.01) {
+      const a0 = cr.a;
+      cr.a = [r2(a0[0] + ux * lo), r2(a0[1] + uz * lo)]; cr.b = [r2(a0[0] + ux * hi), r2(a0[1] + uz * hi)];
+      cr.spans = cr.spans.map((sp) => ({ ...sp, u0: r2(sp.u0 - lo), u1: r2(sp.u1 - lo) }));
     }
   }
   // «Дай дорогу» перед зʼєднувачами rank 0 (без світлофора).

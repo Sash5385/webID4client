@@ -201,7 +201,7 @@ export class NetTraffic {
     for (const e of edges) {
       const share = e.length / total;
       const widen = e.prev.some((q) => q.n < e.n); // після розширення (1 → 2 смуги) перешкод немає: гравець зі вузької частини має час перестроїтись
-      const slots = this.freeSlots(e, O.clearBeforeStop, O.clearAfterZone, widen ? 130 : 40, e.length - 40);
+      const slots = this.freeSlots(e, O.clearBeforeStop, O.clearAfterZone, widen || this.net.data.id.startsWith('r8041') ? 130 : 40, e.length - 40); // ТСЦ 8041: після повороту/стику ребер — 130 м без перешкод (є час перестроїтись)
       for (let i = slots.length - 1; i > 0; i--) { const j = Math.floor(this.rng.next() * (i + 1)); [slots[i], slots[j]] = [slots[j]!, slots[i]!]; }
       const kinds: NetCarKind[] = [];
       const nb = Math.round(int(O.brokenPerDir) * 2 * share + this.rng.next() * 0.5);
