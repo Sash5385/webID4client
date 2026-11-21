@@ -97,7 +97,7 @@ export function saveCam(c: CamMode): void {
 
 // Скін інтерфейсу 1…10 (лише вигляд, див. page.html). Зберігається окремо; ?ui=N — для знімків.
 export const UI_SKINS = 10;
-export const UI_NAMES = ['Туман', 'Скло', 'Панель', 'Світлий', 'Неон', 'Спорт', 'Еко', 'Ретро', 'Контраст', 'Графіт'] as const;
+export const UI_NAMES = ['Класика', 'Педалі справа', 'Педалі зліва', 'Широкі педалі', 'Круглі', 'Стовпи', 'Смуги з країв', 'Ретро', 'Великі', 'Педалі з країв'] as const;
 const UKEY = 'route7.ui';
 export function loadUi(): number {
   const ok = (n: number): boolean => Number.isInteger(n) && n >= 1 && n <= UI_SKINS;
