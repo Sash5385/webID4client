@@ -1,7 +1,7 @@
-const { chromium } = require('playwright');
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 let bad = 0;
 (async () => {
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--no-sandbox'] });
+const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--no-sandbox'] });
 for (const n of [1, 2, 3, 4, 5]) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();

@@ -135,10 +135,28 @@ export function buildWorld1(sim: NetSim, q: Quality, models: Models, pbr: Pbr | 
   const junc = data.junctions.map((j) => ({ poly: j.poly, x0: Math.min(...j.poly.map((p) => p[0])), x1: Math.max(...j.poly.map((p) => p[0])), z0: Math.min(...j.poly.map((p) => p[1])), z1: Math.max(...j.poly.map((p) => p[1])) }));
   const connBox = net.connList.map((c) => { let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity; for (const p of c.path.pts) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); } return { c, x0: x0 - 4, z0: z0 - 4, x1: x1 + 4, z1: z1 + 4 }; });
   // Чи лежить точка на проїзній частині (ребра окрім skip, зʼєднувачі, перехрестя, кільце) з запасом m.
+  // Сітка 32 м → ребра, чиї смуги (ref + ширина + запас 4 м) заходять у клітинку: на довгих ребрах рамка охоплює пів мапи, а сітка — лише околицю.
+  const GC = 32, grid = new Map<number, NetEdge[]>();
+  const gkey = (i: number, j: number): number => (i + 4096) * 8192 + (j + 4096);
+  for (const e of net.edgeList) {
+    const pad = e.n * e.W + 4, seen = new Set<number>();
+    for (let k = 0; k < e.ref.pts.length - 1; k++) {
+      const a = e.ref.pts[k]!, b = e.ref.pts[k + 1]!;
+      const i0 = Math.floor((Math.min(a.x, b.x) - pad) / GC), i1 = Math.floor((Math.max(a.x, b.x) + pad) / GC);
+      const j0 = Math.floor((Math.min(a.z, b.z) - pad) / GC), j1 = Math.floor((Math.max(a.z, b.z) + pad) / GC);
+      for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+        const kk = gkey(i, j);
+        if (seen.has(kk)) continue;
+        seen.add(kk);
+        let l = grid.get(kk); if (!l) grid.set(kk, l = []);
+        l.push(e);
+      }
+    }
+  }
   const onRoad = (x: number, z: number, m: number, skip?: NetEdge): boolean => {
     const rr = Math.hypot(x - ring.cx, z - ring.cz);
     if (rr < ring.r + ring.laneWidth + m) return true;
-    for (const e of net.edgeList) {
+    for (const e of grid.get(gkey(Math.floor(x / GC), Math.floor(z / GC))) ?? []) {
       if (e === skip) continue;
       const [x0, z0, x1, z1] = e.bbox;
       if (x < x0 - m || x > x1 + m || z < z0 - m || z > z1 + m) continue;
@@ -190,9 +208,11 @@ export function buildWorld1(sim: NetSim, q: Quality, models: Models, pbr: Pbr | 
       let best = 0;
       for (const e of net.edgeList) {
         if (e.kind !== 'street' && e.kind !== 'arm' && e.kind !== 'cross') continue;
+        const w = e.n * e.W, bx = e.bbox;
+        if (pe[0] < bx[0] - w - 10 || pe[0] > bx[2] + w + 10 || pe[1] < bx[1] - w - 10 || pe[1] > bx[3] + w + 10) continue;
         const pr = e.ref.project(pe[0], pe[1]);
         if (pr.s < 2 || pr.s > e.length - 2) continue;
-        const w = e.n * e.W, gap = pr.d - w; // відстань за правим краєм
+        const gap = pr.d - w; // відстань за правим краєм
         if (gap < 0.5 || gap > 9) continue;
         const B = net.pose(e, pr.s, w);
         const toward = dx * -Math.cos(B.a) + dz * -Math.sin(B.a); // компонента напряму «до осі» (вісь ліворуч від напряму ребра)
@@ -295,6 +315,8 @@ export function buildWorld1(sim: NetSim, q: Quality, models: Models, pbr: Pbr | 
       for (const e of major2) {
         if (e === self) continue;
         const w = e.n * e.W;
+        const bx = e.bbox; // відкидаємо ребра, до яких точка заведомо далі за w + 18 м (bbox уже з запасом)
+        if (P0.x < bx[0] - w - 20 || P0.x > bx[2] + w + 20 || P0.z < bx[1] - w - 20 || P0.z > bx[3] + w + 20) continue;
         const b = e.ref.project(P0.x, P0.z);
         if (b.s < 2 || b.s > e.length - 2 || b.d - w < -0.3 || b.d - w > 18) continue; // точка ззовні правого краю, не далі 18 м
         let B = net.pose(e, b.s, w), Cn = { x: 0, z: 0 }, ok = false;
