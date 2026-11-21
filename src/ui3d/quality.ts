@@ -97,6 +97,7 @@ export function saveCam(c: CamMode): void {
 
 // Скін інтерфейсу 1…10 (лише вигляд, див. page.html). Зберігається окремо; ?ui=N — для знімків.
 export const UI_SKINS = 10;
+const UI_DEFAULT = 6; // «Стовпи»
 export const UI_NAMES = ['Класика', 'Педалі справа', 'Педалі зліва', 'Широкі педалі', 'Круглі', 'Стовпи', 'Смуги з країв', 'Ретро', 'Великі', 'Педалі з країв'] as const;
 const UKEY = 'route7.ui';
 export function loadUi(): number {
@@ -104,7 +105,7 @@ export function loadUi(): number {
   const q = Number(new URLSearchParams(location.search).get('ui'));
   if (ok(q)) return q;
   try { const s = Number(localStorage.getItem(UKEY)); if (ok(s)) return s; } catch { /* без збереження */ }
-  return 1;
+  return UI_DEFAULT;
 }
 export function saveUi(n: number): void {
   try { localStorage.setItem(UKEY, String(n)); } catch { /* ігноруємо */ }
