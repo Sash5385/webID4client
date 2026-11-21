@@ -115,6 +115,7 @@ const mirrors = new Mirrors(renderer, scene, $('stage'));
 
 // Середня/висока: HDRI Poly Haven як фон і PMREM-середовище (один раз), сонце — за напрямком у HDRI. Висока ще й ACES + GTAO + bloom.
 const sunOff = new Vector3(28, 55, 18);
+let shSize = 42, shMap = 1024; // розмір і роздільність карти тіні (для прив'язки до текселів)
 let pbr: Pbr | null = null;
 let envTex: Texture | null = null;
 let composer: EffectComposer | null = null;
@@ -166,6 +167,7 @@ function applyWeatherBase(): void {
   sim.setGrip(WEATHER_GRIP[weather]);
   park?.setGrip(WEATHER_GRIP[weather]);
   wfx.set(weather, quality === 'low');
+  sun.shadow.intensity = ({ clear: 1, fog: 0.12, rain: 0.22, snow: 0.3, ice: 0.5 } as const)[weather]; // під хмарами тіні м'які й слабкі
   if (weather === 'clear') return;
   const sky: Record<string, [number, number, number, number]> = { // колір, туман near/far (середня+), приглушення сонця
     fog: [0xc4cbd2, 4, 58, 0.35], rain: [0x7d8793, 6, 80, 0.3], snow: [0xdde3e8, 4, 62, 0.45], ice: [0xbfd3e2, 10, 110, 0.6],
@@ -245,7 +247,8 @@ function applyQuality(q: Quality): void {
   renderer.toneMapping = hi ? ACESFilmicToneMapping : NoToneMapping;
   renderer.toneMappingExposure = hi ? 0.95 : 0.5;
   sun.castShadow = !lo;
-  const SH = hi ? 46 : 42, ms = hi ? 2048 : 1024;
+  const SH = hi ? 42 : 34, ms = hi ? 2048 : 1024;
+  shSize = SH; shMap = ms;
   Object.assign(sun.shadow.camera, { left: -SH, right: SH, top: SH, bottom: -SH, near: 1, far: 190 });
   sun.shadow.camera.updateProjectionMatrix();
   sun.shadow.mapSize.set(ms, ms);
@@ -388,9 +391,17 @@ function updateCamera(dt: number): void {
       camera.position.x += dx; camera.position.y += dy * 0.8; camera.position.z += dx * 0.5;
     }
   }
-  sun.position.set(p.x + sunOff.x, sunOff.y, p.z + sunOff.z);
-  sun.target.position.set(p.x, 0, p.z);
-  sun.target.updateMatrixWorld();
+  { // Тінь прив'язана до сітки текселів у просторі світла: інакше при русі краї тіней «плавають» (шиммер).
+    const dl = Math.hypot(sunOff.x, sunOff.y, sunOff.z) || 1, dx = sunOff.x / dl, dy = sunOff.y / dl, dz = sunOff.z / dl;
+    let rx = dz, rz = -dx; const rl = Math.hypot(rx, rz) || 1; rx /= rl; rz /= rl;        // right = up × dir
+    const ux = dy * rz, uy = dz * rx - dx * rz, uz = -dy * rx;                               // up2 = dir × right
+    const tex = (2 * shSize) / shMap, pu = p.x * rx + p.z * rz, pv = p.x * ux + p.z * uz;
+    const du = Math.round(pu / tex) * tex - pu, dv = Math.round(pv / tex) * tex - pv;
+    const tx = p.x + du * rx + dv * ux, ty = dv * uy, tz = p.z + du * rz + dv * uz;
+    sun.position.set(tx + sunOff.x, ty + sunOff.y, tz + sunOff.z);
+    sun.target.position.set(tx, ty, tz);
+    sun.target.updateMatrixWorld();
+  }
 }
 
 // ---------- HUD ----------
