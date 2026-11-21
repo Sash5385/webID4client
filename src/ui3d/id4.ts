@@ -188,13 +188,21 @@ function buildCar(ST: St[], o: Opts): Baked {
       B[RUBBER]!.mesh(tyre, T(k * o.wheelX, R, zz));
       const rim = cyl(R * 0.72, 0.27, 20); rim.rotateZ(Math.PI / 2);
       B[CHROME]!.mesh(rim, T(k * o.wheelX, R, zz));
-      for (let sp = 0; sp < 5; sp++) { const a = (sp / 5) * Math.PI * 2; B[BLACK]!.mesh(box, T(k * (o.wheelX + 0.135), R + Math.sin(a) * R * 0.34, zz + Math.cos(a) * R * 0.34, 0.012, R * 0.52, 0.05, Math.PI / 2 - a)); }
+      const lip = cyl(R * 0.77, 0.02, 24); lip.rotateZ(Math.PI / 2); B[BLACK]!.mesh(lip, T(k * (o.wheelX + 0.118), R, zz)); // темний борт обода
+      for (let sp = 0; sp < 10; sp++) { const a = (sp / 10) * Math.PI * 2, long = sp % 2 === 0; B[BLACK]!.mesh(box, T(k * (o.wheelX + 0.137), R + Math.sin(a) * R * (long ? 0.38 : 0.3), zz + Math.cos(a) * R * (long ? 0.38 : 0.3), 0.012, R * (long ? 0.5 : 0.34), long ? 0.04 : 0.028, Math.PI / 2 - a)); }
+      const cap = cyl(R * 0.2, 0.03, 14); cap.rotateZ(Math.PI / 2); B[CHROME]!.mesh(cap, T(k * (o.wheelX + 0.145), R, zz));
       const hub = cyl(R * 0.16, 0.28, 10); hub.rotateZ(Math.PI / 2);
       B[BLACK]!.mesh(hub, T(k * o.wheelX, R, zz));
     }
     // Дзеркала: корпус у колір кузова + чорне дзеркало.
     B[PAINT]!.mesh(box, T(k * o.mirror[0], at(o.mirror[1]).ys + 0.02, o.mirror[1], 0.16, 0.1, 0.2));
     B[BLACK]!.mesh(box, T(k * o.mirror[0], at(o.mirror[1]).ys + 0.02, o.mirror[1] + 0.1, 0.14, 0.085, 0.01));
+    // Мовдінг порога, хромована лінія по лінії скла, кронштейн і поворотник дзеркала, протитуманні фари.
+    { const z0 = o.wheelZ[0] + o.wheelR + 0.1, z1 = o.wheelZ[1] - o.wheelR - 0.1, zm = (z0 + z1) / 2, s = at(zm);
+      B[BLACK]!.mesh(box, T(k * (s.hw + 0.004), s.yb + 0.085, zm, 0.024, 0.1, z1 - z0)); }
+    for (let z = o.pillar - 1.35; z < o.pillar + 1.5; z += 0.2) { const s = at(z); B[o.rails ? BLACK : CHROME]!.mesh(box, T(k * (s.hw * 0.995 + 0.003), s.ys + 0.006, z, 0.01, 0.014, 0.21)); }
+    { const ms = at(o.mirror[1]); B[BLACK]!.mesh(box, T(k * (o.mirror[0] - 0.1), ms.ys - 0.04, o.mirror[1] + 0.03, 0.1, 0.03, 0.05)); B[LAMP]!.mesh(box, T(k * (o.mirror[0] + 0.001), ms.ys + 0.065, o.mirror[1] - 0.06, 0.1, 0.012, 0.03)); }
+    B[LAMP]!.mesh(box, T(k * 0.52, 0.4, zf + 0.04, 0.14, 0.035, 0.05));
     // Корпуси фар і ліхтарів по кутах.
     B[LAMP]!.mesh(box, T(k * o.lampX[0], o.lampY[0], zf + 0.1, 0.36, 0.1, 0.16));
     B[TAIL]!.mesh(box, T(k * o.lampX[1], o.lampY[1], zr - 0.06, 0.38, 0.12, 0.1));
@@ -215,6 +223,21 @@ function buildCar(ST: St[], o: Opts): Baked {
     const el = cyl(0.1, 0.02, 20); el.rotateX(Math.PI / 2);
     B[CHROME]!.mesh(el, T(0, 0.585, zf - 0.012, 1, 0.55, 1)); B[CHROME]!.mesh(el, T(0, 0.9, zr + 0.01, 1, 0.55, 1));
     B[TAIL]!.mesh(box, T(0, 0.93, zr - 0.006, 0.5, 0.03, 0.02));
+  }
+  // Двірники, нижні накладки бамперів, антена/спойлер/вихлоп залежно від авто.
+  { const wz = o.badge === 'vw' ? -0.97 : -0.9, wy = at(wz).ys + 0.02;
+    B[BLACK]!.mesh(box, T(-0.3, wy, wz, 0.62, 0.012, 0.022, 0, 0.05)); B[BLACK]!.mesh(box, T(0.28, wy, wz - 0.01, 0.5, 0.012, 0.022, 0, -0.05)); }
+  B[CHROME]!.mesh(box, T(0, 0.35, zf + 0.04, 0.8, 0.03, 0.05)); B[CHROME]!.mesh(box, T(0, 0.35, zr - 0.04, 0.8, 0.03, 0.05));
+  if (o.badge === 'vw') {
+    const sz = zr - 0.34; B[BLACK]!.mesh(box, T(0, at(sz).yr + 0.03, sz, 1.08, 0.04, 0.16, 0.12)); // козирок-спойлер даху
+    B[BLACK]!.mesh(box, T(0, 0.31, zr - 0.06, 1.12, 0.1, 0.12)); // дифузор
+    B[BLACK]!.mesh(box, T(0, at(zr - 0.28).yr - 0.12, zr - 0.3, 0.012, 0.28, 0.02, 0.5)); // двірник заднього скла
+    B[LAMP]!.mesh(box, T(0, 0.44, zf + 0.05, 0.9, 0.02, 0.03)); // нижня LED-смуга повітрозабірника
+  } else {
+    const fz = 0.9; B[PAINT]!.mesh(box, T(0, at(fz).yr + 0.03, fz, 0.035, 0.06, 0.2)); // антена-плавник
+    B[PAINT]!.mesh(box, T(0, 1.0, zr - 0.15, 1.2, 0.03, 0.14, -0.2)); // губа-спойлер на кришці багажника
+    const ex = cyl(0.035, 0.12, 14); ex.rotateX(Math.PI / 2); B[CHROME]!.mesh(ex, T(0.46, 0.33, zr + 0.02)); // вихлоп
+    B[BLACK]!.mesh(box, T(0, 0.42, zf + 0.06, 0.8, 0.05, 0.04)); // нижня решітка
   }
   for (const [z, y, sgn] of [[zf - 0.002, o.plateY[0], -1], [zr + 0.004, o.plateY[1], 1]] as const) {
     B[PLATE]!.mesh(box, T(0, y, z, 0.52, 0.115, 0.012));
