@@ -27,6 +27,18 @@ const tailOn = new MeshBasicMaterial({ color: 0xff2a22, toneMapped: false });
 const sigOn = new MeshBasicMaterial({ color: 0xffa81c, toneMapped: false });
 const headOn = new MeshBasicMaterial({ color: 0xfff7e0, toneMapped: false });
 const tailDim = new MeshBasicMaterial({ color: 0x9a1812, toneMapped: false });
+// М'яка тінь-пляма під авто для «Низької» якості (справжніх тіней там немає). Один матеріал на всіх.
+let blobMat: MeshBasicMaterial | null = null;
+function blobShadow(): MeshBasicMaterial {
+  if (blobMat) return blobMat;
+  const N = 64, c = document.createElement('canvas'); c.width = c.height = N;
+  const ctx = c.getContext('2d')!, g = ctx.createRadialGradient(N / 2, N / 2, N * 0.08, N / 2, N / 2, N / 2);
+  g.addColorStop(0, 'rgba(0,0,0,0.78)'); g.addColorStop(0.55, 'rgba(0,0,0,0.42)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, N, N);
+  blobMat = new MeshBasicMaterial({ map: new CanvasTexture(c), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+  blobMat.userData['shared'] = true;
+  return blobMat;
+}
 // Пляма світла від ближнього світла на дорозі (адитивна, градієнт): 5 м завширшки, 11 м вперед. Одна на всіх.
 let poolMat: MeshBasicMaterial | null = null;
 const poolGeo = new PlaneGeometry(5, 11);
@@ -110,6 +122,7 @@ export class CarObj {
   private readonly head: Mesh[] = [];
   private readonly dim: Mesh[] = [];
   private poolM: Mesh | null = null;
+  private blobM: Mesh | null = null;
   private night = false;
   seen = 0;
   private braking = false;
@@ -135,6 +148,11 @@ export class CarObj {
       const h = lamp(headOn, k * hw * 0.58, 0.72, zf - 0.01, 0.3, 0.13, 0.06); this.head.push(h);
       const d = lamp(tailDim, k * hw * 0.52, 1.0, zr + 0.015, 0.3, 0.11, 0.06); this.dim.push(d);
     }
+    { // пляма-тінь під кузовом (видима лише на «Низькій»)
+      const bm = new Mesh(new PlaneGeometry(hw * 2 + 0.7, zr - zf + 0.9), blobShadow());
+      bm.rotation.x = -Math.PI / 2; bm.position.set(0, 0.03, (zf + zr) / 2); bm.renderOrder = 1; bm.visible = false;
+      this.blobM = bm; this.group.add(bm);
+    }
     if (withTail) {
       const pm = new Mesh(poolGeo, pool());
       pm.rotation.x = -Math.PI / 2; pm.position.set(0, 0.045, zf - 5.0); pm.renderOrder = 2; pm.visible = false;
@@ -142,6 +160,7 @@ export class CarObj {
     }
     for (const l of [...this.tail, ...this.sigL, ...this.sigR, ...this.head, ...this.dim]) this.group.add(l);
   }
+  setBlob(on: boolean): void { if (this.blobM && this.blobM.visible !== on) this.blobM.visible = on; }
   // Ніч: фари й габарити горять (пляма світла — лише якщо showPool).
   setNight(on: boolean, showPool = true): void {
     if (on !== this.night) {
@@ -419,6 +438,7 @@ export class Actors {
     if (!this.player) { this.playerKey = want; this.player = new CarObj(this.models[want], length, true); this.group.add(this.player.group); }
     const p = sim.player;
     this.player.place(p.x, p.z, p.a, p.braking, dt, this.playerYaw);
+    this.player.setBlob(this.quality === 'low');
     this.player.setNight(this.night, false); // для гравця світить прожектор сцени
     this.player.setSig(p.sig, Math.floor(p.sigT * 3) % 2 === 0); // фаза від моменту ввімкнення: перше блимання одразу
     for (const c of sim.traffic.cars) {
@@ -431,6 +451,7 @@ export class Actors {
         this.cars.set(c.id, o); this.group.add(o.group);
       }
       o.seen = this.frame;
+      o.setBlob(this.quality === 'low');
       o.place(c.x, c.z, c.a, c.braking, dt);
       if (c.kind === 'car') o.setNight(this.night);
       const dx = c.x - p.x, dz = c.z - p.z;
