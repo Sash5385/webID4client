@@ -139,6 +139,76 @@ body { background: var(--bg); color: var(--fg); font-family: var(--display); ove
   background: #ffc247;
   border-color: transparent;
 }
+/* ===== Скіни інтерфейсу (data-ui на <html>; 1 — поточний «Туман»). Лише вигляд: id і розмітка не змінюються. Вибір: ?ui=N або кнопка в «Налаштуваннях». ===== */
+html[data-ui="2"] { --panel: rgba(12,16,26,.42); --key: rgba(255,255,255,.13); --fog-line: rgba(255,255,255,.26); --fog-btn: linear-gradient(165deg,#a5d8ff,#74b9ff); }
+html[data-ui="2"] #hud, html[data-ui="2"] #pad { background: rgba(12,16,26,.38); backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5); border: 1px solid var(--fog-line); border-radius: 22px; }
+html[data-ui="2"] #hud { margin: 8px 8px 0; } html[data-ui="2"] #pad { margin: 0 8px 8px; }
+html[data-ui="2"] .k { border-radius: 20px; box-shadow: inset 0 1px 0 rgba(255,255,255,.28); } html[data-ui="2"] .mini { border-radius: 14px; }
+html[data-ui="2"] body, html[data-ui="2"] #app { background: #0b0f17; }
+
+html[data-ui="3"] { --bg: #070708; --panel: #0d0d10; --key: #1b1c21; --key-down: rgba(255,176,32,.3); --accent: #ffb020; --fog-btn: linear-gradient(#ffc24a,#ff9d00); --fog-line: rgba(255,176,32,.35); --hint: #ffb020; --muted: #b9a98a; }
+html[data-ui="3"] #hud { border-bottom: 2px solid #ffb020; } html[data-ui="3"] #pad { border-top: 2px solid #ffb020; }
+html[data-ui="3"] #speed { font-family: ui-monospace, "SF Mono", Menlo, monospace; color: #ffb020; font-size: 38px; text-shadow: 0 0 10px rgba(255,176,32,.55); }
+html[data-ui="3"] .k, html[data-ui="3"] .mini, html[data-ui="3"] .pick { border-radius: 6px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
+html[data-ui="3"] .k { font-size: 13px; background: linear-gradient(#24252b,#17181c); }
+html[data-ui="3"] .mini.armed, html[data-ui="3"] .k.on, html[data-ui="3"] #again { color: #1a1205; box-shadow: 0 0 14px rgba(255,176,32,.5); }
+
+html[data-ui="4"] { --bg: #e9eef5; --panel: rgba(255,255,255,.96); --key: rgba(18,32,52,.07); --key-down: rgba(29,111,224,.22); --fg: #14202e; --muted: #56677d; --accent: #1d6fe0; --fog-btn: linear-gradient(165deg,#4d97f5,#1d6fe0); --fog-line: rgba(18,32,52,.14); --hint: #1d6fe0; --ok: #12924a; --bad: #d92d20; color-scheme: light; }
+html[data-ui="4"] #hud, html[data-ui="4"] #pad { background: rgba(255,255,255,.96); box-shadow: 0 0 18px rgba(18,32,52,.14); }
+html[data-ui="4"] .mini.armed, html[data-ui="4"] .k.on, html[data-ui="4"] #again { color: #fff; box-shadow: 0 6px 16px rgba(29,111,224,.3); }
+html[data-ui="4"] #gas { background: rgba(34,170,84,.2); border-color: rgba(34,170,84,.5); } html[data-ui="4"] #brake { background: rgba(220,50,50,.16); border-color: rgba(220,50,50,.45); }
+html[data-ui="4"] #toast, html[data-ui="4"] #result .card, html[data-ui="4"] #picker .card { background: rgba(255,255,255,.97); color: #14202e; }
+html[data-ui="4"] #toast.fault { color: #a4160b; } html[data-ui="4"] #toast.hint { color: #0b4aa5; }
+html[data-ui="4"] #wx, html[data-ui="4"] #qual, html[data-ui="4"] #rt, html[data-ui="4"] #cam, html[data-ui="4"] #cfg, html[data-ui="4"] #tod, html[data-ui="4"] #gb { background: rgba(255,255,255,.88); color: #14202e; }
+
+html[data-ui="5"] { --bg: #05050d; --panel: rgba(7,7,18,.92); --key: rgba(0,240,255,.07); --key-down: rgba(255,0,200,.3); --accent: #00f0ff; --fog-btn: linear-gradient(135deg,#00f0ff,#c800ff); --fog-line: rgba(0,240,255,.5); --hint: #00f0ff; --muted: #94a3d8; }
+html[data-ui="5"] #hud, html[data-ui="5"] #pad { box-shadow: 0 0 18px rgba(0,240,255,.22); }
+html[data-ui="5"] #speed { color: #00f0ff; text-shadow: 0 0 12px rgba(0,240,255,.8); }
+html[data-ui="5"] .k, html[data-ui="5"] .mini { box-shadow: 0 0 8px rgba(0,240,255,.18), inset 0 0 8px rgba(0,240,255,.08); }
+html[data-ui="5"] .mini.armed, html[data-ui="5"] .k.on, html[data-ui="5"] #again { color: #05050d; box-shadow: 0 0 18px rgba(200,0,255,.6); }
+html[data-ui="5"] #gas { background: rgba(0,255,156,.14); border-color: #00ff9c; box-shadow: 0 0 12px rgba(0,255,156,.35); } html[data-ui="5"] #brake { background: rgba(255,45,122,.14); border-color: #ff2d7a; box-shadow: 0 0 12px rgba(255,45,122,.35); }
+
+html[data-ui="6"] { --bg: #08080a; --panel: #0e0e11; --key: #1a1a1e; --key-down: rgba(255,45,45,.35); --accent: #ff2d2d; --fog-btn: linear-gradient(#ff5a4e,#d81414); --fog-line: rgba(255,255,255,.12); --hint: #ff5a4e; }
+html[data-ui="6"] #hud, html[data-ui="6"] #pad { background: repeating-linear-gradient(45deg,#101013 0 4px,#0b0b0d 4px 8px); border-top: 3px solid #ff2d2d; border-bottom: 0; }
+html[data-ui="6"] #hud { border-top: 0; border-bottom: 3px solid #ff2d2d; }
+html[data-ui="6"] #speed { font-style: italic; font-size: 40px; letter-spacing: -.02em; }
+html[data-ui="6"] .k, html[data-ui="6"] .mini { border-radius: 4px; transform: skewX(-8deg); font-style: italic; text-transform: uppercase; font-weight: 800; letter-spacing: .03em; }
+html[data-ui="6"] .mini.armed, html[data-ui="6"] .k.on, html[data-ui="6"] #again { color: #fff; box-shadow: 0 4px 14px rgba(255,45,45,.45); }
+html[data-ui="6"] #wheel { transform: none; }
+
+html[data-ui="7"] { --bg: #0b1511; --panel: #0f1b16; --key: rgba(74,222,128,.09); --key-down: rgba(74,222,128,.3); --accent: #4ade80; --fog-btn: linear-gradient(165deg,#86efac,#4ade80); --fog-line: rgba(74,222,128,.25); --hint: #4ade80; --muted: #a3c2b0; }
+html[data-ui="7"] .k { border-radius: 22px; } html[data-ui="7"] .mini { border-radius: 16px; }
+html[data-ui="7"] #hud, html[data-ui="7"] #pad { background: rgba(15,27,22,.94); }
+html[data-ui="7"] .mini.armed, html[data-ui="7"] .k.on, html[data-ui="7"] #again { color: #052e16; box-shadow: 0 6px 16px rgba(74,222,128,.3); }
+html[data-ui="7"] #gas { background: rgba(74,222,128,.28); border-color: rgba(74,222,128,.55); } html[data-ui="7"] #brake { background: rgba(251,146,60,.22); border-color: rgba(251,146,60,.5); }
+
+html[data-ui="8"] { --bg: #1d1710; --panel: #2a2118; --key: #3a2e22; --key-down: rgba(224,160,64,.35); --fg: #f3e6cf; --muted: #c9b896; --accent: #e0a040; --fog-btn: linear-gradient(#f0b85a,#d08a28); --fog-line: #5a4630; --hint: #e0a040; }
+html[data-ui="8"] #hud, html[data-ui="8"] #pad { background: #2a2118; border-color: #5a4630; }
+html[data-ui="8"] .k, html[data-ui="8"] .mini, html[data-ui="8"] .pick { border: 2px solid #5a4630; border-radius: 12px; box-shadow: inset 0 -3px 0 rgba(0,0,0,.35); }
+html[data-ui="8"] #speed { font-family: ui-monospace, Menlo, monospace; color: #f0b85a; }
+html[data-ui="8"] #next, html[data-ui="8"] #resTitle, html[data-ui="8"] #picker h2 { font-family: ui-serif, Georgia, "Times New Roman", serif; }
+html[data-ui="8"] .mini.armed, html[data-ui="8"] .k.on, html[data-ui="8"] #again { color: #2a1a05; }
+html[data-ui="8"] #gas { background: #3f5a2a; } html[data-ui="8"] #brake { background: #6b2a22; }
+
+html[data-ui="9"] { --bg: #000; --panel: #000; --key: #000; --key-down: #333; --fg: #fff; --muted: #f0f0f0; --accent: #ffe600; --fog-btn: #ffe600; --fog-line: #fff; --hint: #ffe600; --bad: #ff6b5e; --ok: #4dff88; }
+html[data-ui="9"] #hud, html[data-ui="9"] #pad { background: #000; border-color: #fff; } html[data-ui="9"] #hud { border-bottom: 3px solid #fff; } html[data-ui="9"] #pad { border-top: 3px solid #fff; }
+html[data-ui="9"] .k, html[data-ui="9"] .mini, html[data-ui="9"] .pick { border: 3px solid #fff; border-radius: 10px; font-weight: 800; }
+html[data-ui="9"] .k { font-size: 17px; } html[data-ui="9"] #next { font-size: 17px; } html[data-ui="9"] #speed { font-size: 40px; }
+html[data-ui="9"] .mini.armed, html[data-ui="9"] .k.on, html[data-ui="9"] #again { color: #000; box-shadow: none; }
+html[data-ui="9"] #gas { background: #006b1f; border-color: #4dff88; } html[data-ui="9"] #brake { background: #8a0f0f; border-color: #ff6b5e; }
+html[data-ui="9"] #toast, html[data-ui="9"] #result .card, html[data-ui="9"] #picker .card { background: #000; border: 3px solid #fff; }
+html[data-ui="9"] #wx, html[data-ui="9"] #qual, html[data-ui="9"] #rt, html[data-ui="9"] #cam, html[data-ui="9"] #cfg, html[data-ui="9"] #tod, html[data-ui="9"] #gb { background: #000; border: 2px solid #fff; }
+
+html[data-ui="10"] { --bg: #101113; --panel: transparent; --key: transparent; --key-down: rgba(255,255,255,.22); --accent: #f2f2f2; --fog-btn: #f2f2f2; --fog-line: rgba(255,255,255,.5); --hint: #f2f2f2; --muted: #a9adb5; }
+html[data-ui="10"] #hud, html[data-ui="10"] #pad { background: #101113; border-color: rgba(255,255,255,.18); }
+html[data-ui="10"] .k, html[data-ui="10"] .mini, html[data-ui="10"] .pick { border: 1.5px solid rgba(255,255,255,.5); border-radius: 10px; background: transparent; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; font-size: 12.5px; }
+html[data-ui="10"] .mini.armed, html[data-ui="10"] .k.on, html[data-ui="10"] #again { background: #f2f2f2; color: #101113; box-shadow: none; }
+html[data-ui="10"] #gas { border-color: #7ee787; color: #7ee787; background: transparent; } html[data-ui="10"] #brake { border-color: #ff7b72; color: #ff7b72; background: transparent; }
+html[data-ui="10"] #gas.down { background: rgba(126,231,135,.25); } html[data-ui="10"] #brake.down { background: rgba(255,123,114,.25); }
+html[data-ui="10"] #speed { font-weight: 300; font-size: 40px; letter-spacing: -.03em; }
+html[data-ui="3"] .mini, html[data-ui="6"] .mini, html[data-ui="10"] .mini { font-size: 11px; padding: 0 6px; min-width: 30px; letter-spacing: 0; }
+html[data-ui="8"] .mini, html[data-ui="9"] .mini { padding: 0 5px; min-width: 30px; }
+html[data-ui="9"] .mini { border-width: 2px; font-size: 12px; }
 </style>
 <div id="app">
   <div id="hud">
@@ -163,6 +233,7 @@ body { background: var(--bg); color: var(--fg); font-family: var(--display); ove
     <button class="mini" id="gb" aria-label="Коробка передач">Коробка: Автомат</button>
     <button class="mini" id="wx" aria-label="Погода">Погода: Ясно</button>
     <button class="mini" id="qual" aria-label="Якість графіки">Якість: Середня</button>
+    <button class="mini" id="ui" aria-label="Вигляд інтерфейсу">Інтерфейс: 1</button>
     </div>
     <button class="mini" id="rt" aria-label="Вибір маршруту">Маршрут 7 ▾</button>
     <div id="speedfx" aria-hidden="true"></div>

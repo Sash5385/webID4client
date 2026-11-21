@@ -30,6 +30,7 @@ import { CERATO_PAINT, ID4_PAINT } from './id4';
 import { loadTod, saveTod, TODS, TOD_LABEL, type Tod } from './quality';
 import { ParkSim, PARK_LABEL, type ParkKind } from '../engine/parking';
 import { buildParkWorld } from './parking3d';
+import { loadUi, saveUi, UI_NAMES, UI_SKINS } from './quality';
 import { loadQuality, QUALITIES, QUALITY_LABEL, saveQuality, type Quality } from './quality';
 import { buildWorld, type World } from './world';
 import { buildWorld1 } from './world1';
@@ -675,6 +676,10 @@ syncCam();
   const end = (e: PointerEvent): void => { if (drag && e.pointerId === drag.id) { drag = null; tgtYaw = 0; tgtPitch = 0; } };
   canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
 }
+let uiSkin = loadUi();
+const applyUi = (): void => { document.documentElement.dataset['ui'] = String(uiSkin); $('ui').textContent = `Інтерфейс: ${uiSkin} · ${UI_NAMES[uiSkin - 1]}`; };
+applyUi();
+tap('ui', () => { uiSkin = uiSkin % UI_SKINS + 1; saveUi(uiSkin); applyUi(); });
 tap('col', () => { carCol = CARCOLS[(CARCOLS.indexOf(carCol) + 1) % CARCOLS.length]!; saveCarCol(carCol); applyCarColor(); });
 $('cfg').addEventListener('click', () => { const p = $('cfgPanel'); p.hidden = !p.hidden; });
 tap('tod', () => {
