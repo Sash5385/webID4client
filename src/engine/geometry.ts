@@ -19,6 +19,7 @@ export const headingOf = (hx: number, hz: number): number => Math.atan2(hx, -hz)
 export const wrapAngle = (a: number): number => { let r = (a + Math.PI) % TAU; if (r < 0) r += TAU; return r - Math.PI; };
 export const mod = (a: number, m: number): number => ((a % m) + m) % m;
 
+const BLK = 16;
 export class Polyline implements Path {
   readonly pts: readonly Vec2[];
   readonly cum: readonly number[];
@@ -26,6 +27,8 @@ export class Polyline implements Path {
 
   // Межі сегментів (для швидкого відкидання в project; на результат не впливають).
   private readonly bb: Float64Array | null;
+  // Рамки блоків по BLK сегментів: відкидаємо цілий блок одним порівнянням.
+  private readonly blk: Float64Array | null;
 
   constructor(pts: readonly Vec2[]) {
     if (pts.length < 2) throw new Error('Polyline needs 2+ points');
@@ -44,7 +47,15 @@ export class Polyline implements Path {
         bb[i * 4] = Math.min(a.x, b.x); bb[i * 4 + 1] = Math.max(a.x, b.x); bb[i * 4 + 2] = Math.min(a.z, b.z); bb[i * 4 + 3] = Math.max(a.z, b.z);
       }
       this.bb = bb;
-    } else this.bb = null;
+      const nb = Math.ceil((pts.length - 1) / BLK);
+      const blk = new Float64Array(nb * 4);
+      for (let j = 0; j < nb; j++) {
+        let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+        for (let i = j * BLK; i < Math.min(pts.length - 1, (j + 1) * BLK); i++) { x0 = Math.min(x0, bb[i * 4]!); x1 = Math.max(x1, bb[i * 4 + 1]!); z0 = Math.min(z0, bb[i * 4 + 2]!); z1 = Math.max(z1, bb[i * 4 + 3]!); }
+        blk[j * 4] = x0; blk[j * 4 + 1] = x1; blk[j * 4 + 2] = z0; blk[j * 4 + 3] = z1;
+      }
+      this.blk = blk;
+    } else { this.bb = null; this.blk = null; }
   }
 
   seg(s: number): number {
@@ -67,8 +78,15 @@ export class Polyline implements Path {
   project(x: number, z: number): Projection {
     let best = Infinity, bs = 0, bd = 0;
     const n = this.pts.length;
-    const bb = this.bb;
+    const bb = this.bb, blk = this.blk;
     for (let i = 0; i < n - 1; i++) {
+      // Початок блоку: якщо весь блок далі за найкращий результат — перескочити (перший/останній сегменти не пропускаємо).
+      if (blk !== null && i % BLK === 0 && i > 0 && i < n - 2 && best < Infinity) {
+        const k = (i / BLK) * 4;
+        const dx = x < blk[k]! ? blk[k]! - x : x > blk[k + 1]! ? x - blk[k + 1]! : 0;
+        const dz = z < blk[k + 2]! ? blk[k + 2]! - z : z > blk[k + 3]! ? z - blk[k + 3]! : 0;
+        if (dx >= best || dz >= best || dx * dx + dz * dz >= best * best) { i = Math.min(i + BLK, n - 2) - 1; continue; }
+      }
       // Середні сегменти: відкинути, якщо їхня рамка далі за найкращий результат (перший/останній — з продовженням).
       if (bb !== null && i > 0 && i < n - 2) {
         const k = i * 4;

@@ -4,7 +4,7 @@
 import './datafetch';
 import {
   ACESFilmicToneMapping, Color, DirectionalLight, Fog, HemisphereLight, NoToneMapping, PCFShadowMap, PCFSoftShadowMap,
-  Group, MeshPhysicalMaterial, PerspectiveCamera, PMREMGenerator, PointLight, Scene, SpotLight, Vector2, Vector3, WebGLRenderer, type Material, type Mesh, type Texture,
+  Group, HalfFloatType, MeshPhysicalMaterial, PerspectiveCamera, PMREMGenerator, PointLight, Scene, SpotLight, Vector2, Vector3, WebGLRenderer, WebGLRenderTarget, type Material, type Mesh, type Texture,
 } from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -133,7 +133,8 @@ async function ensurePbr(): Promise<void> {
 
 function ensureComposer(): EffectComposer {
   if (composer) return composer;
-  const c = new EffectComposer(renderer);
+  // MSAA у цілі композера: нативне antialias канвасу на пост-обробку не поширюється (без цього «висока» давала драбинки по краях).
+  const c = new EffectComposer(renderer, new WebGLRenderTarget(1, 1, { type: HalfFloatType, samples: devDpr < 2 ? 4 : 2 }));
   c.addPass(new RenderPass(scene, camera));
   const gtao = new GTAOPass(scene, camera, 100, 100);
   gtao.updateGtaoMaterial({ radius: 0.8, distanceExponent: 1.4, thickness: 1, scale: 1 });
@@ -276,6 +277,7 @@ function applyQuality(q: Quality): void {
 }
 
 let buildMs = 0;
+let mainInfo = { calls: 0, triangles: 0, ms: 0 }; // лише ?dbg=1: статистика основного проходу
 let worldVerts = 0;
 // Світ будується під маршрут поточного рушія (№1: комірки з OSM; №7: схематична вулиця).
 function rebuildWorld(): void {
@@ -821,7 +823,10 @@ function frame(now: number): void {
   adaptDpr(dt);
   if (!park) world!.updateLights(sim);
   actors!.setPlayerVisible(park ? true : camMode !== 'cockpit');
+  if (DBG) { renderer.info.autoReset = false; renderer.info.reset(); }
+  const tr0 = DBG ? performance.now() : 0;
   if (composer && quality === 'high') composer.render(); else renderer.render(scene, camera);
+  if (DBG) { mainInfo = { calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, ms: performance.now() - tr0 }; }
   if (park) sound.update(park, keys.gas, !paused && !park.result);
   if (!park) {
     mirrors.render(sp, frameNo++, camera.far, camMode === 'cockpit', (v) => actors!.setPlayerVisible(v), (h) => { if (camMode === 'cockpit') interior.group.visible = !h; });
@@ -848,7 +853,7 @@ Promise.all([loadModels(), quality !== 'low' ? ensurePbr() : Promise.resolve()])
 
 // Відладочний handle (лише ?dbg=1 / ?auto=1): прогін рушія без рендера, камера довільно.
 if (DBG) {
-  interface Dbg { sim(): AnySim; advance(sec: number): void; advanceUntil(pred: (s: AnySim) => boolean, maxSec: number): boolean; pause(b: boolean): void; cam(o: typeof camOverride): void; ready(): boolean; setQuality(q: Quality): void; setRoute(r: RouteId): void; stats(): { calls: number; triangles: number; buildMs: number; worldVerts: number; geometries: number; textures: number } }
+  interface Dbg { sim(): AnySim; advance(sec: number): void; advanceUntil(pred: (s: AnySim) => boolean, maxSec: number): boolean; pause(b: boolean): void; cam(o: typeof camOverride): void; ready(): boolean; setQuality(q: Quality): void; setRoute(r: RouteId): void; stats(): { main: { calls: number; triangles: number; ms: number }; calls: number; triangles: number; buildMs: number; worldVerts: number; geometries: number; textures: number } }
   const dbg: Dbg = {
     sim: () => sim,
     advance(sec) { for (let i = 0, n = Math.round(sec / sim.cfg.dt); i < n && !sim.result; i++) onEvents(sim.step(controls(), sim.cfg.dt)); },
@@ -860,7 +865,7 @@ if (DBG) {
     cam(o) { camOverride = o; },
     ready: () => actors !== null && (!AUTO || pilotMake !== null),
     setRoute: (r) => setRoute(r),
-    stats: () => ({ calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, buildMs, worldVerts, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures }),
+    stats: () => ({ main: mainInfo, calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, buildMs, worldVerts, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures }),
     setQuality(q) { if (q !== 'low' && !pbr) void ensurePbr().then(() => applyQuality(q)); else applyQuality(q); },
   };
   (window as unknown as { __dbg: Dbg }).__dbg = dbg;

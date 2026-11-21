@@ -4,3 +4,6 @@ data/raw/*.osm
 data/raw8041/
 work8041/g.pkl
 work8041/*.png
+work8041/*.html
+work8041/*.cjs
+work8041/*.mjs

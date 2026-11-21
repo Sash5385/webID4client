@@ -63,7 +63,7 @@ export class Mirrors {
     m.cam.position.set(px, y, pz);
     const out = m.side * 0.22;
     m.cam.lookAt(this.tmp.set(px - hx + rx * out, y - 0.04, pz - hz + rz * out));
-    m.cam.far = far; m.cam.updateProjectionMatrix();
+    m.cam.far = Math.min(far, 180); m.cam.updateProjectionMatrix(); // у дзеркалі далі ~180 м не видно (туман), тож далекі комірки не малюємо
     const ac = r.autoClear, au = r.shadowMap.autoUpdate;
     r.autoClear = true; r.shadowMap.autoUpdate = false; // тіні не перераховуємо: беремо з основного кадру
     setPlayerVisible(false); hideExtra?.(true);
