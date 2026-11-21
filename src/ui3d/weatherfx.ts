@@ -5,6 +5,22 @@ import type { Weather } from './quality';
 const BOX = 16; // півсторона куба опадів навколо камери, м
 const H = 14;   // висота куба
 
+// Калюжі: маска за шумом у світових координатах (не рухається разом із шаром, що їде за камерою). У калюжі шар темніший, густіший і майже дзеркальний.
+function puddles(m: MeshStandardMaterial): void {
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vWxz;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWxz = (modelMatrix * vec4(position, 1.0)).xz;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+varying vec2 vWxz;
+float ph(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float pn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(ph(i), ph(i + vec2(1.0, 0.0)), f.x), mix(ph(i + vec2(0.0, 1.0)), ph(i + vec2(1.0, 1.0)), f.x), f.y); }
+float puddle(){ return smoothstep(0.52, 0.60, pn(vWxz * 0.22) * 0.65 + pn(vWxz * 0.9) * 0.35); }`)
+      .replace('#include <color_fragment>', '#include <color_fragment>\nfloat pud = puddle(); diffuseColor.a = mix(diffuseColor.a * 0.8, 0.7, pud);')
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.015, pud);');
+  };
+}
+
 export class WeatherFx {
   readonly group = new Group();
   private kind: Weather = 'clear';
@@ -50,6 +66,7 @@ export class WeatherFx {
       const o = { color: new Color(cov.c), transparent: true, opacity: cov.o, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 };
       // Мокрий асфальт і лід віддзеркалюють небо (середовище сцени) — лише на середній/високій якості.
       const m: Material = !low && (kind === 'rain' || kind === 'ice') ? new MeshStandardMaterial({ ...o, roughness: kind === 'ice' ? 0.04 : 0.1, metalness: 0.2, envMapIntensity: 1.6 }) : new MeshBasicMaterial(o);
+      if (!low && kind === 'rain') puddles(m as MeshStandardMaterial);
       this.cover = new Mesh(new PlaneGeometry(400, 400), m);
       this.cover.rotation.x = -Math.PI / 2;
       this.cover.renderOrder = 1;

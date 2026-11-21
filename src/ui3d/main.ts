@@ -22,6 +22,7 @@ import { loadCam, saveCam, CAM_LABEL, type CamMode } from './quality';
 import { GB_LABEL, loadGb, saveGb, type Gb } from './quality';
 import { loadWeather, saveWeather, WEATHER_GRIP, WEATHER_LABEL, WEATHERS, type Weather } from './quality';
 import { WeatherFx } from './weatherfx';
+import { SkyFx } from './skyfx';
 import { CARCOLS, CARCOL_HEX, CARCOL_LABEL, loadCarCol, saveCarCol, type CarCol } from './quality';
 import { Interior } from './interior';
 import { facadeNight } from './world';
@@ -152,9 +153,12 @@ let models: Models | null = null;
 // Погода: «Туман» — сіра дымка, видимість ~55 м, приглушене сонце (лише вигляд; на правила не впливає).
 const wfx = new WeatherFx();
 scene.add(wfx.group);
+const sky = new SkyFx(); // хмари й силует міста (лише середня/висока, ясно)
+scene.add(sky.group);
 function applyWeather(): void {
   applyWeatherBase();
   applyTod();
+  sky.configure(quality !== 'low' && weather === 'clear', tod, scene.fog instanceof Fog ? scene.fog.color : HAZE);
 }
 function applyWeatherBase(): void {
   $('wx').textContent = `Погода: ${WEATHER_LABEL[weather]}`;
@@ -818,6 +822,7 @@ function frame(now: number): void {
   actors!.manual = (park ? park.gb : sim.gb).manual;
   actors!.update(park ?? sim);
   wfx.update(dt, camera.position);
+  sky.update(now / 1000, camera.position.x, camera.position.z, !park);
   updateHeadlights(sp);
   updateLamps(sp);
   adaptDpr(dt);
